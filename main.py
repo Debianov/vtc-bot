@@ -1,5 +1,6 @@
 import discord # TODO отсутствуют stubs-ы.
-from command_handler import Guild, UserMessage
+# TODO import objects
+from objects.user_objects import Guild, UserMessage, Content
 
 intents = discord.Intents.all()
 
@@ -10,14 +11,14 @@ client = discord.Client(intents=intents)
 
 @client.event
 async def on_message(message_instance: discord.Message) -> None:
-	guild_instance = Guild("sudo", "")
+	guild = Guild("sudo", "")
+	content = Content(message_instance.content)
 	message = UserMessage(message_instance.id, message_instance.author,
-	guild_instance, message_instance.content, message_instance.channel, 111)
-	# TODO timer object; переопределение __init__ discord.Message
-	# TODO (https://translated.turbopages.org/proxy_u/en-ru.ru.747df279-63a06915-
-	# TODO dc461e37-74722d776562/https/stackoverflow.com/questions/394770/
-	# TODO override-a-method-at-instance-level)
-	await message.handle()
+	111, guild, content, message_instance.channel) # TODO timer object.
+	if message.isCommand():
+		await message.reply()
+	else:
+		await message.handle()  # TODO антиспам, антифлуд, логирование и проч., и проч.
 
 with open("secret.sec") as text:
 	client.run(text.readline())

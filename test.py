@@ -1,8 +1,14 @@
+from objects.user_objects import Guild, UserMessage, Content
 import asyncio
-from command_handler import Guild, UserMessage
 
-guild_inst = Guild("sudo", "")
-msg = UserMessage(34, "Aboba", guild_inst, "sudo log 1 56456 323232 243423 342324 432423 432234 24324342 342243", "AS", 3)
-async def test():
-	await msg.handle()
-asyncio.run(test())
+async def on_message() -> None:
+	guild = Guild("sudo", "")
+	content = Content("sudo log 1 -name 324234 -target 234234 -act 23424324")
+	message = UserMessage(1231242, "ads",
+	111, guild, content, "232342342332") # TODO timer object.
+	if message.isCommand():
+		await message.reply()
+	else:
+		await message.handle()  # TODO антиспам, антифлуд, логирование и проч., и проч.
+
+asyncio.run(on_message())
