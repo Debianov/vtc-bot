@@ -4,14 +4,14 @@ import inspect
 def getCallSignature(instance: Callable[[Any], Any]) -> Dict[str, str]:
 	result: Dict[str, str] = {}
 	check_obj = instance.__call__ if inspect.isclass(instance) else instance
-
+	key_exceptions = ["channel","self", "return"]
 	for key in inspect.getfullargspec(check_obj).args:
-		if key != "channel" and key != "self": # TODO убрать self/channel, если
-			# TODO всё-таки не понадобится в процессе дальнейшей разработки commands.
+		if key not in key_exceptions:
 			result[key] = ""
 	annot_args = inspect.getfullargspec(check_obj).annotations
 	for (key, value) in annot_args.items():
-		result[key] = value
+		if key not in key_exceptions:
+			result[key] = value
 	return result
 
 def getKeyByValue(collection: Dict[Any, Any], check_value: Any) ->\

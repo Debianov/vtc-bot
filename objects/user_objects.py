@@ -1,8 +1,9 @@
-from typing import Union, List, Dict, Callable, Tuple, Callable, Any
+from typing import Union, List, Dict, Callable, Tuple, Callable, Any, get_args, get_origin, _SpecialForm
 import discord
 
 from .commands import commands_collection, dummyCommand
 from utils import getCallSignature
+from .stubs import ChannelMentionType
 
 class UserAction:
 
@@ -28,8 +29,10 @@ class Guild:
 
 class Content:
 
-	def __init__(self, text: str) -> None:
+	def __init__(self, text: str, user_mentions: List[discord.abc.User], channel_mentions: List[Union[discord.abc.GuildChannel, discord.Thread]]) -> None:
 		self.text = text
+		self.user_mentions = user_mentions
+		self.channel_mentions = channel_mentions
 		self.func: Callable[[Any], None] = dummyCommand
 		self.global_prefix: str = ""
 		self.access_prefix: str = ""
@@ -83,34 +86,70 @@ class Content:
 						self.func = value
 					break
 
-	def checkValueMatchToParametrType(self, value: Any, parametrType: Any) -> bool:
-		if isinstance(parametrType, typing):
-			# TODO нужно match на каждый type и соответствующие преобразования (попытки). В аннотациях свои типы лучше поставить. Только куда их классы ставить.
-
 	def extractParametrs(self) -> None: # TODO обработка обязательных аргументов +
 		# TODO кавычки как разделение + обработка пар параметров.
 		received_parameters = getCallSignature(self.func)
-		user_args = list(self.copy_text.split()) if isinstance(self.copy_text, str)\
+		user_parametrs = list(self.copy_text.split()) if isinstance(self.copy_text, str)\
 		else self.copy_text
-		for (parametr, value) in received_parameters.items():
-			if "-" + parametr in user_args:
-				matching_arg_index = user_args.index("-" + parametr) # TODO здесь тоже
-				# TODO лучше учитывать аннотации.
-				try:
-					print(parametr, value, dir(value._typevar_types))
-				except:
-					print('Ачибка!')
-				received_parameters[parametr] = user_args.pop(matching_arg_index + 1)
-				user_args.pop(matching_arg_index)
-			# elif value is TypeContent:
-			# 	received_parameters[parametr] = Content(" ".join(user_args[:]),
-			# 	self.guild_global_prefix, self.guild_access_prefix)
-			# 	user_args.clear()
-			elif not value and user_args:
-				received_parameters[parametr] = user_args.pop(0) # TODO учёт аннотаций.
-		if user_args:
-			print("Еррур") # TODO
-		self.parametrs = received_parameters
+		user_parametrs_cursor = 0
+		while user_parametrs_cursor < len(user_parametrs):
+			parametr_or_arg = user_parametrs[user_parametrs_cursor] # TODO user_parametr как отдельный класс, в котором при индексировании будут + курсоры сами.
+			print("1", parametr_or_arg)
+			user_parametrs_cursor += 1
+			if parametr_or_arg.startswith("-"):
+				parametr = parametr_or_arg
+				arg = user_parametrs[user_parametrs_cursor]
+				user_parametrs_cursor += 1
+				print("2", arg)
+				parametr_without_prefix = parametr.removeprefix("-")
+				if parametr_without_prefix in received_parameters:
+					parametr_types = received_parameters[parametr_without_prefix]
+					check_types = []
+					union_args = get_args(parametr_types)
+					if union_args:
+						for parametr_type in union_args:
+							check_types.append(parametr_type)
+					else:
+						check_types.append(parametr_types)
+					for check_type in check_types:
+						try:
+							converted_arg = check_type(arg)
+							print(converted_arg)
+						except:
+							print("Ачибка!")
+						else:
+							received_parameters[parametr_without_prefix] = converted_arg
+							break
+			# else:
+			# 	pass
+				# arg = parametr_or_arg
+				# for (parametr, parametr_type) in received_parameters.items():
+				# 	if isinstance(arg, parametr_type):
+				# 		received_parameters[parametr] = arg
+				# 		break
+				# else:
+				# 	print("Ачибка!")
+
+
+		# for (parametr, value) in received_parameters.items():
+		# 	if "-" + parametr in user_args:
+		# 		matching_arg_index = user_args.index("-" + parametr) # TODO здесь тоже
+		# 		user_args.pop(matching_arg_index)
+		# 		sent_parametr = user_args.pop(matching_arg_index + 1)
+		# 	# elif value is TypeContent:
+		# 	# 	received_parameters[parametr] = Content(" ".join(user_args[:]),
+		# 	# 	self.guild_global_prefix, self.guild_access_prefix)
+		# 	# 	user_args.clear()
+		# 	elif user_args:
+		# 		sent_parametr = user_args.pop(0) # TODO учёт аннотаций.
+		# 	if value
+		# 	if isinstance(sent_parametr, value):
+		# 		received_parameters[parametr] = sent_parametr
+		# 	else:
+		# 		print("Еррур") # TODO
+		# if user_args:
+		# 	print("Еррур") # TODO
+		# self.parametrs = received_parameters
 
 class UserMessage(UserAction):
 
@@ -134,6 +173,6 @@ class UserMessage(UserAction):
 		self.content.extractAccessPrefix(self.guild)
 		self.content.extractCommand(commands_collection)
 		self.content.extractParametrs()
-		method = self.content.getCommand()
-		parametrs = self.content.getParametrs()
+		# method = self.content.getCommand()
+		# parametrs = self.content.getParametrs()
 		# await method(self.channel, **parametrs)

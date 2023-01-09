@@ -1,5 +1,6 @@
 from typing import Union
 import discord
+from .stubs import ChannelMentionType
 
 class UserLog:
 
@@ -11,7 +12,7 @@ class UserLog:
 	# 	# self.parametrs: dict = {}
 
 	@staticmethod
-	async def create(channel: discord.TextChannel, name: Union[str, int], target: Union[discord.TextChannel, discord.Member], act: Union[str, int], d_in: Union[discord.TextChannel, discord.Member], 
+	async def create(channel: ChannelMentionType, name: Union[StrContentType, IntContentType], target: Union[discord.TextChannel, discord.Member], act: Union[str, int], d_in: Union[discord.TextChannel, discord.Member], 
 	priority: int, output: Union[str, int], other: Union[str, int]) -> None:
 		print(name, target, other)
 		# targetInstance = TargetLog(name, target, act, d_in, output, priority, other)
