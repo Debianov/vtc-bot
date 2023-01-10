@@ -10,13 +10,6 @@ def getCallSignature(instance: Callable[[Any], Any]) -> Dict[str, Text]:
 	for (argument, annotations) in get_annotations(check_obj).items():
 		if argument not in key_exceptions:
 			result[argument] = annotations
-	# for key in inspect.getfullargspec(check_obj).args:
-	# 	if key not in key_exceptions:
-	# 		result[key] = ""
-	# annot_args = inspect.getfullargspec(check_obj).annotations
-	# for (key, value) in annot_args.items():
-	# 	if key not in key_exceptions:
-	# 		result[key] = value
 	return result
 
 def getKeyByValue(collection: Dict[Any, Any], check_value: Any) ->\
