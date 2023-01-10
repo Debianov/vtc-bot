@@ -1,10 +1,11 @@
 from typing import Dict, Callable, Any, Union
+from objects.stubs import Text
 import inspect
 
-def getCallSignature(instance: Callable[[Any], Any]) -> Dict[str, str]:
+def getCallSignature(instance: Callable[[Any], Any]) -> Dict[str, Text]:
 	result: Dict[str, str] = {}
-	check_obj = instance.__call__ if inspect.isclass(instance) else instance
-	key_exceptions = ["channel","self", "return"]
+	check_obj = instance
+	key_exceptions = ["channel", "self", "return"]
 	for key in inspect.getfullargspec(check_obj).args:
 		if key not in key_exceptions:
 			result[key] = ""
