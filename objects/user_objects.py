@@ -112,18 +112,17 @@ class Content:
 				converted_arg = self.checkArgType(parameter_types[1], arg)
 			else:
 				converted_arg = self.checkArgType(parameter_types, arg)
-			self.checkConvertedType(converted_arg, parameter, found_parameters)	
+			self.checkConvertedArg(converted_arg, parameter, found_parameters)	
 		return found_parameters
 
 	def extractImplicitParameter(self, arg: str) -> Dict[str, Text]:
 		found_parameters: Dict[str, Text] = {}
-		for (parameter, parameter_types) in self.parameters.items(): # TODO также стоит подумать над выводом ошибок и начать их реализацию
-			# TODO в первую очередь перед стартом бизнес-логики.
+		for (parameter, parameter_types) in self.parameters.items():
 			if isinstance(parameter_types, tuple):
 				converted_arg = self.checkArgType(parameter_types[1], arg)
 			else:
 				converted_arg = self.checkArgType(parameter_types, arg)
-			if self.checkConvertedType(converted_arg, parameter, found_parameters):
+			if self.checkConvertedArg(converted_arg, parameter, found_parameters):
 				break
 		self.parameters.pop(parameter)
 		return found_parameters
