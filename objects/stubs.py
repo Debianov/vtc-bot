@@ -16,17 +16,20 @@ class Text:
 	def processText(self) -> None:
 		pass
 
+class DummyText(Text):
+	pass
+
 class StrOrIntText(Text):
 
 	def checkText(self) -> None:
 		if not self.text.isprintable():
-			raise Exception # TODO
+			raise WrongTextTypeSignal
 
 class IntText(Text):
 
 	def checkText(self) -> None:
 		if not self.text.isdigit():
-			raise Exception()
+			raise WrongTextTypeSignal
 
 class MentionText(Text):
 	
@@ -35,9 +38,9 @@ class MentionText(Text):
 
 	def checkText(self) -> None:
 		if not self.text.startswith(self.INDICATOR):
-			raise Exception # TODO
+			raise WrongTextTypeSignal
 		if not self.text[1:].isdigit():
-			raise Exception
+			raise WrongTextTypeSignal
 
 	def processText(self) -> None:
 		self.text = self.text.removeprefix(self.LEFT_BRACKET)
@@ -50,3 +53,6 @@ class ChannelMentionText(MentionText):
 class UserMentionText(MentionText):
 
 	INDICATOR: Final = "@"
+
+class WrongTextTypeSignal(Exception):
+	pass
