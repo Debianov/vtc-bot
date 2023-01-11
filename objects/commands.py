@@ -1,6 +1,9 @@
 from typing import Union
 import discord
-from .stubs import ChannelMentionType
+from .stubs import ChannelMentionText, UserMentionText, StrOrIntText, IntText
+
+class Required:
+	pass
 
 class UserLog:
 
@@ -12,8 +15,9 @@ class UserLog:
 	# 	# self.parametrs: dict = {}
 
 	@staticmethod
-	async def create(channel: ChannelMentionType, name: Union[StrContentType, IntContentType], target: Union[discord.TextChannel, discord.Member], act: Union[str, int], d_in: Union[discord.TextChannel, discord.Member], 
-	priority: int, output: Union[str, int], other: Union[str, int]) -> None:
+	async def create(channel: discord.TextChannel, name: StrOrIntText, target: (Required, Union[ChannelMentionText, UserMentionText]), act: (Required, StrOrIntText), d_in: (Required, Union[ChannelMentionText, UserMentionText]),
+	output: StrOrIntText, priority: IntText, other: StrOrIntText) -> None:
+		# TODO в стандарт d_name как нейминг в случае, если name уже есть в Python built-in.
 		print(name, target, other)
 		# targetInstance = TargetLog(name, target, act, d_in, output, priority, other)
 		# return targetInstance
@@ -22,7 +26,7 @@ class UserLog:
 	# remaining_content: Content) -> None: # TODO обработка обязательных
 	# # TODO аргументов + кавычки как разделение
 	# 	self.channel = channel
-	# 	self.content = remaining_content #! якорь
+	# 	self.content = remaining_content
 	# 	# self.getCommand(point)
 	# 	self.content.handle(self.points_collection)
 	# 	await self.content.command(self.channel, **self.content.parametrs)
@@ -30,9 +34,6 @@ class UserLog:
 	# 	# self.command = parserInstance.getCommand()
 	# 	# self.parametrs = parserInstance.getParametrs()
 	# 	# await self.command(self, **self.parametrs)
-
-class DummyTextChannel:
-	pass # TODO
 
 async def dummyCommand(channel: discord.TextChannel) -> None:
 	await channel.send("Не очень успешно!")
