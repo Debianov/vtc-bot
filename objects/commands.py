@@ -1,6 +1,6 @@
 from typing import Union
 import discord
-from .stubs import ChannelMentionText, UserMentionText, StrOrIntText, IntText
+from .stubs import ChannelMentionText, UserMentionText, StrOrIntText, IntText, ActText
 
 class Required:
 	pass

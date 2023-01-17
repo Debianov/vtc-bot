@@ -16,13 +16,26 @@ class Text:
 	def processText(self) -> None:
 		pass
 
+class ActText(Text):
+
+	ADD_ACT: Final = "+"
+	DELETE_ACT: Final = "-"
+	CHANGE_ACT: Final = ">"
+
+	def checkText(self):
+		for act_element in [self.ADD_ACT, self.DELETE_ACT, self.CHANGE_ACT]:
+			if act_element not in self.text:
+				raise WrongActSignal
+			else:
+				break
+
 class DummyText(Text):
 	pass
 
 class StrOrIntText(Text):
 
 	def checkText(self) -> None:
-		if not self.text.isprintable():
+		if not self.text.isprintable(): # TODO проверка на несовпадения с упоминаниями и другими типами.
 			raise WrongTextTypeSignal
 
 class IntText(Text):
@@ -46,7 +59,7 @@ class MentionText(Text):
 		self.text = self.text.removeprefix(self.LEFT_BRACKET)
 		self.text = self.text.removesuffix(self.RIGHT_BRACKET)
 
-class ChannelMentionText(MentionText): 
+class ChannelMentionText(MentionText):
 
 	INDICATOR: Final = "#"
 
@@ -55,4 +68,7 @@ class UserMentionText(MentionText):
 	INDICATOR: Final = "@"
 
 class WrongTextTypeSignal(Exception):
+	pass
+
+class WrongActSignal(Exception):
 	pass
