@@ -1,9 +1,10 @@
 from typing import Union, List, Dict, Callable, Tuple, Callable, Any, get_args, get_origin, _SpecialForm, Final
+from types import UnionType
 import discord
 
-from .commands import commands_collection, dummyCommand, Required
+from .commands import commands_collection, dummyCommand, Required, ActText
 from utils import getCallSignature
-from .stubs import Text, ChannelMentionText, DummyText, WrongTextTypeSignal
+from .stubs import Text, ChannelMentionText, DummyText, WrongTextTypeSignal, WrongActSignal
 
 class UserAction:
 
@@ -108,46 +109,61 @@ class Content:
 		parameter_without_prefix = parameter.removeprefix("-")
 		if parameter_without_prefix in self.parameters:
 			parameter_types = self.parameters[parameter_without_prefix]
-			if isinstance(parameter_types, tuple):
-				converted_arg = self.checkArgType(parameter_types[1], arg)
-			else:
-				converted_arg = self.checkArgType(parameter_types, arg)
-			self.checkConvertedArg(converted_arg, parameter, found_parameters)	
+			converted_arg = self.convertedArg(parameter, parameter_types, arg)
+			self.checkConvertedArg(converted_arg, parameter, found_parameters)
 		return found_parameters
 
 	def extractImplicitParameter(self, arg: str) -> Dict[str, Text]:
 		found_parameters: Dict[str, Text] = {}
 		for (parameter, parameter_types) in self.parameters.items():
-			if isinstance(parameter_types, tuple):
-				converted_arg = self.checkArgType(parameter_types[1], arg)
-			else:
-				converted_arg = self.checkArgType(parameter_types, arg)
+			converted_arg = self.convertedArg(parameter, parameter_types, arg)
 			if self.checkConvertedArg(converted_arg, parameter, found_parameters):
 				break
 		self.parameters.pop(parameter)
 		return found_parameters
 
-	def checkForNotFoundParameters(self) -> None:
+	def checkForNotFoundParameters(self) -> None: # TODO чё за нейминг?
 		not_found_parameters = self.parameters
 		for (parameter, parameter_types) in not_found_parameters.items():
 			if Required in parameter_types:
 				raise DeterminingParameterError(list(not_found_parameters.keys())[0])
 
-	def checkArgType(self, parameter_types: Text, target_arg: str) -> Text:
-			union_args = get_args(parameter_types)
-			check_types = []
-			for parameter_type in union_args:
-				check_types.append(parameter_type)
-			if not check_types:
-				check_types.append(parameter_types)
-			for check_type in check_types:
-				try:
-					converted_arg = check_type(target_arg)
-				except WrongTextTypeSignal:
-					pass
-				else:
-					return converted_arg
-			return DummyText
+	def convertedArg(self, parameter: str, parameter_types: Union[Text, Tuple[Required, Text]], target_arg: str) -> Text:
+		check_types: List[Text] = []
+		self.generateCheckTypes(parameter_types, check_types)
+		for check_type in check_types:
+			try:
+				converted_arg = check_type(target_arg)
+			except WrongTextTypeSignal:
+				pass
+			except WrongActSignal:
+				raise ActParameterError(parameter)
+			else:
+				return converted_arg
+		return DummyText
+
+	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required, Text]], check_types: List[Text]) -> None:
+		if isinstance(parameter_types, tuple) and parameter_types is not Required: # Required не трогаем. Он проверяется отдельно (checkForNotFoundParameters).
+			for parameter_type in parameter_types:
+				print(parameter_type, Text)
+				if self.isUnionType(parameter_type):
+					check_types.extend(self.extractUnionType(parameter_type))
+				elif issubclass(parameter_type, Text):
+					check_types.append(parameter_type)
+		else:
+			check_types.append(parameter_types)
+
+	def isUnionType(self, parameter_type: Union[UnionType, Text, Required]) -> bool:
+		if get_origin(parameter_type) is Union:
+			return True
+		return False
+
+	def extractUnionType(self, parameter_type: Union) -> List[Text]:
+		union_args = get_args(parameter_type)
+		result: List[Text] = []
+		for parameter_type in union_args:
+			result.append(parameter_type)
+		return result
 
 	def checkConvertedArg(self, converted_arg: Text, parameter: str, found_parameters: Dict[str, Text]) -> bool:
 		if not converted_arg is DummyText:
@@ -190,6 +206,20 @@ class DeterminingParameterError(Exception):
 		self.error_parameter = error_parameter
 		self.processParameterName()
 		self.error_text = "Убедитесь, что вы указали все обязательные аргументы, либо указали параметры явно. Не найденные параметры: {}".format(self.error_parameter) # TODO embedded
+
+	def getErrorText(self) -> str:
+		return self.error_text
+
+	def processParameterName(self) -> None:
+		if self.error_parameter.startswith("d_"):
+			self.error_parameter = self.error_parameter.removeprefix("d_")
+
+class ActParameterError(Exception):
+
+	def __init__(self, error_parameter: str):
+		self.error_parameter = error_parameter
+		self.processParameterName()
+		self.error_text = "Убедитесь, что вы указали знак действия в параметре {}".format(self.error_parameter) # TODO embedded
 
 	def getErrorText(self) -> str:
 		return self.error_text
