@@ -1,6 +1,7 @@
-from inspect import get_annotations
-from typing import Dict, Callable, Any, Union
+from inspect import getfullargspec
+from typing import Dict, Callable, Any, Union, Tuple
 
+from objects.commands import Required
 from objects.stubs import Text
 
 def getCallSignature(instance: Callable[[Any], Any]) -> Dict[str, Text]:

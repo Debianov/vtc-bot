@@ -16,6 +16,35 @@ class UserAction:
 		self.finish_time: str
 		self.result: str
 
+class UserMessage(UserAction):
+
+	def __init__(self, d_id: int, author: discord.Member, start_time: int,
+	guild: 'Guild', content: 'Content', channel: discord.TextChannel) -> None:
+		super().__init__(d_id, author, start_time)
+		self.guild = guild
+		self.content = content
+		self.channel = channel
+
+	async def handle(self) -> None:
+		pass
+
+	async def reply(self) -> None:
+		self.content.extractAccessPrefix(self.guild)
+		self.content.extractCommand(commands_collection)
+		self.content.extractParameters()
+		method = self.content.getCommand()
+		parameters = self.content.getParameters()
+		# await method(self.channel, **parameters)
+
+	async def reply_by_custome_text(self, text: str) -> None:
+		await self.channel.send(text)
+
+	def isCommand(self) -> bool:
+		self.content.extractGlobalPrefix(self.guild)
+		if self.content.getGlobalPrefix():
+			return True
+		return False
+
 class Guild:
 
 	def __init__(self, global_prefix: str, access_prefix: str) -> None:
@@ -30,7 +59,7 @@ class Guild:
 
 class Content:
 
-	def __init__(self, text: str, user_mentions: List[discord.abc.User], channel_mentions: List[Union[discord.abc.GuildChannel]]) -> None: # TODO в последнем был Discord.Thread
+	def __init__(self, text: str, user_mentions: List[discord.abc.User], channel_mentions: List[Union[discord.abc.GuildChannel]]) -> None: # TODO discord.Thread не могу вставить в Union: нету атрибута такого, хотя по докам всё сходится.
 		self.text = text
 		self.user_mentions = user_mentions
 		self.channel_mentions = channel_mentions
@@ -49,7 +78,7 @@ class Content:
 	def getGlobalPrefix(self) -> str:
 		return self.global_prefix
 
-	def getparameters(self) -> Dict[str, Union[List[str], str]]:
+	def getParameters(self) -> Dict[str, Union[List[str], str]]:
 		return self.parameters
 
 	def getCommand(self) -> Callable[[Any], None]:
@@ -69,12 +98,12 @@ class Content:
 			self.copy_text = self.copy_text.removeprefix(guild.getAccessPrefix() + " ")
 			self.access_prefix = guild.getAccessPrefix()
 
-	def extractCommand(self,
-	name_extraction_object: Dict[str, Union[Callable[[Any], None],
-	Dict[str, Callable[[Any], None]]]]) -> None: # TODO можно вместо str
-	# TODO отдельный тип, где я юзаю оператор | для разделения различных версий
-	# TODO имён команд.
-	# TODO несколько команд в одной строке.
+	def extractCommand(self, name_extraction_object: Dict[str,
+	Union[Callable[[Any], None], Dict[str, Callable[[Any], None]]]]) -> None:
+		# TODO сделать особый тип str, где есть разделение |, которое используется в
+		# распознавании алиасов одной и той же команды.
+		# TODO и тут в name_extraction_object аннотация слишком большая. Не создать
+		# ли нам generic?
 		for extract_name in name_extraction_object:
 			command_names = extract_name.split("|")
 			for command_name in command_names:
@@ -87,25 +116,34 @@ class Content:
 						self.func = value
 					break
 
-	def extractParameters(self) -> None: # TODO обработка обязательных аргументов +
-		# TODO кавычки как разделение + обработка пар параметров + разделение тела метода на другие методы.
-		self.parameters = received_parameters = getCallSignature(self.func)
+	def extractParameters(self) -> None: # TODO кавычки как разделение +
+		# TODO обработка пар параметров. 
+		#? форму object -parameter object object допускать?
+		self.parameters = all_parameters_current_command =\
+		getCallSignature(self.func)
 		found_parameters: Dict[str, Text] = {}
-		user_parameters = self.copy_text.split()
-		user_parameters_cursor = 0
-		while user_parameters_cursor < len(user_parameters):
-			parameter_or_arg = user_parameters[user_parameters_cursor] # TODO user_parameter как отдельный класс-струтктура данных, в котором при индексировании будут + курсоры сами.
-			user_parameters_cursor += 1
-			if parameter_or_arg.startswith("-"):
-				found_parameters.update(self.extractExplicitParameter(parameter_or_arg, user_parameters, user_parameters_cursor))
+		split_user_text = self.copy_text.split()
+		split_user_text_cursor = 0
+		while split_user_text_cursor < len(split_user_text):
+			parameter_or_parameter_arg = split_user_text[split_user_text_cursor] # TODO
+			# TODO user_parameter как отдельный класс-струтктура данных, в котором при
+			# TODO индексировании будут + курсоры сами.
+			split_user_text_cursor += 1
+			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может быть распознан как параметр.
+				parameter = parameter_or_parameter_arg
+				found_parameters.update(self.extractExplicitParameter(parameter,
+				split_user_text, split_user_text_cursor))
 			else:
-				found_parameters.update(self.extractImplicitParameter(parameter_or_arg))
-		self.checkForNotFoundParameters()
+				parameter_arg = parameter_or_parameter_arg
+				found_parameters.update(self.extractImplicitParameter(parameter_arg))
+		# print(self.parameters)
+		self.checkForMissingRequiredParameters()
 
-	def extractExplicitParameter(self, parameter: str, user_parameters: List[str], user_parameters_cursor: int) -> Dict[str, Text]:
-		arg = user_parameters[user_parameters_cursor]
+	def extractExplicitParameter(self, parameter: str, split_user_text: List[str],
+	split_user_text_cursor: int) -> Dict[str, Text]:
+		arg = split_user_text[split_user_text_cursor]
 		found_parameters: Dict[str, Text] = {}
-		user_parameters_cursor += 1
+		split_user_text_cursor += 1
 		parameter_without_prefix = parameter.removeprefix("-")
 		if parameter_without_prefix in self.parameters:
 			parameter_types = self.parameters[parameter_without_prefix]
@@ -122,13 +160,16 @@ class Content:
 		self.parameters.pop(parameter)
 		return found_parameters
 
-	def checkForNotFoundParameters(self) -> None: # TODO чё за нейминг?
-		not_found_parameters = self.parameters
-		for (parameter, parameter_types) in not_found_parameters.items():
-			if Required in parameter_types:
-				raise DeterminingParameterError(list(not_found_parameters.keys())[0])
+	def checkForMissingRequiredParameters(self) -> None:
+		maybe_missing_required_parameters = self.parameters
+		for (parameter, parameter_types) in\
+		maybe_missing_required_parameters.items():
+			if Required in parameter_types: # TODO parameter_type может быть не tupl-ом.
+				raise DeterminingParameterError(list(maybe_missing_required_parameters.
+				keys())[0])
 
-	def convertedArg(self, parameter: str, parameter_types: Union[Text, Tuple[Required, Text]], target_arg: str) -> Text:
+	def convertedArg(self, parameter: str, parameter_types: Union[Text,
+	Tuple[Required, Text]], target_arg: str) -> Text:
 		check_types: List[Text] = []
 		self.generateCheckTypes(parameter_types, check_types)
 		for check_type in check_types:
@@ -140,12 +181,10 @@ class Content:
 				raise ActParameterError(parameter)
 			else:
 				return converted_arg
-		return DummyText
 
 	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required, Text]], check_types: List[Text]) -> None:
 		if isinstance(parameter_types, tuple) and parameter_types is not Required: # Required не трогаем. Он проверяется отдельно (checkForNotFoundParameters).
 			for parameter_type in parameter_types:
-				print(parameter_type, Text)
 				if self.isUnionType(parameter_type):
 					check_types.extend(self.extractUnionType(parameter_type))
 				elif issubclass(parameter_type, Text):
@@ -153,7 +192,8 @@ class Content:
 		else:
 			check_types.append(parameter_types)
 
-	def isUnionType(self, parameter_type: Union[UnionType, Text, Required]) -> bool:
+	def isUnionType(self, parameter_type: Union[UnionType, Text, Required])\
+	-> bool:
 		if get_origin(parameter_type) is Union:
 			return True
 		return False
@@ -164,41 +204,6 @@ class Content:
 		for parameter_type in union_args:
 			result.append(parameter_type)
 		return result
-
-	def checkConvertedArg(self, converted_arg: Text, parameter: str, found_parameters: Dict[str, Text]) -> bool:
-		if not converted_arg is DummyText:
-			found_parameters[parameter] = converted_arg
-			return True
-		return False
-
-class UserMessage(UserAction):
-
-	def __init__(self, d_id: int, author: discord.Member, start_time: int,
-	guild: Guild, content: Content, channel: discord.TextChannel) -> None:
-		super().__init__(d_id, author, start_time)
-		self.guild = guild
-		self.content = content
-		self.channel = channel
-
-	def isCommand(self) -> bool:
-		self.content.extractGlobalPrefix(self.guild)
-		if self.content.getGlobalPrefix():
-			return True
-		return False
-
-	async def handle(self) -> None:
-		pass
-
-	async def reply(self) -> None:
-		self.content.extractAccessPrefix(self.guild)
-		self.content.extractCommand(commands_collection)
-		self.content.extractParameters()
-		method = self.content.getCommand()
-		parameters = self.content.getparameters()
-		# await method(self.channel, **parameters)
-
-	async def reply_by_custome_text(self, text: str) -> None:
-		await self.channel.send(text)
 
 class DeterminingParameterError(Exception):
 	
