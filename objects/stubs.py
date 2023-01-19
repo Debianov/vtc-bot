@@ -30,7 +30,13 @@ class ActText(Text):
 				break
 
 class DummyText(Text):
-	pass
+	
+	def __init__(self, text: str) -> None:
+		self.text = text
+		self.processText()
+
+	def processText(self) -> None:
+		raise Exception # TODO ачибку сделать.
 
 class StrOrIntText(Text):
 
