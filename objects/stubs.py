@@ -1,5 +1,7 @@
 from typing import Final
 
+from .exceptions import WrongActSignal, WrongTextTypeSignal, UndefinedError
+
 class Text:
 
 	def __init__(self, text: str) -> None:

@@ -4,7 +4,8 @@ import discord
 
 from .commands import commands_collection, dummyCommand, Required, ActText
 from utils import getCallSignature
-from .stubs import Text, ChannelMentionText, DummyText, WrongTextTypeSignal, WrongActSignal
+from .stubs import Text, ChannelMentionText, DummyText
+from .exceptions import DeterminingParameterError, ActParameterError, WrongTextTypeSignal, WrongActSignal
 
 class UserAction:
 
