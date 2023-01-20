@@ -175,7 +175,8 @@ class Content:
 		self.generateCheckTypes(parameter_types, check_types)
 		for check_type in check_types:
 			try:
-				converted_arg = check_type(target_arg)
+				converted_arg_instance = check_type(target_arg)
+				converted_arg = converted_arg_instance.getText()
 			except WrongTextTypeSignal:
 				pass
 			except WrongActSignal:

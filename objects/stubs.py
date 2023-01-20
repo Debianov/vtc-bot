@@ -6,16 +6,15 @@ class Text:
 
 	def __init__(self, text: str) -> None:
 		self.text = text
-		self.processText()
-		self.checkText()
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return self.getText()
 
 	def getText(self) -> str:
+		self.checkText()
 		return self.text
 
-	def processText(self) -> None:
+	def checkText(self) -> None:
 		pass
 
 class ActText(Text):
@@ -24,7 +23,7 @@ class ActText(Text):
 	DELETE_ACT: Final = "-"
 	CHANGE_ACT: Final = ">"
 
-	def checkText(self):
+	def checkText(self) -> None:
 		for act_element in [self.ADD_ACT, self.DELETE_ACT, self.CHANGE_ACT]:
 			if act_element not in self.text:
 				raise WrongActSignal
@@ -35,15 +34,20 @@ class DummyText(Text):
 	
 	def __init__(self, text: str) -> None:
 		self.text = text
-		self.processText()
 
-	def processText(self) -> None:
-		raise Exception # TODO ачибку сделать.
+	def getText(self) -> str:
+		return self.text
 
 class StrOrIntText(Text):
 
 	def checkText(self) -> None:
-		if not self.text.isprintable(): # TODO проверка на несовпадения с упоминаниями и другими типами.
+		if not self.text.isprintable():
+			raise WrongTextTypeSignal
+		try:
+			MentionText(self.text).checkText()
+		except WrongTextTypeSignal:
+			pass
+		else:
 			raise WrongTextTypeSignal
 
 class IntText(Text):
@@ -58,8 +62,9 @@ class MentionText(Text):
 	RIGHT_BRACKET: Final = ">"
 
 	def checkText(self) -> None:
-		if not self.text.startswith(self.INDICATOR):
+		if not (self.text.startswith(self.LEFT_BRACKET) and self.text.endswith(self.RIGHT_BRACKET)):
 			raise WrongTextTypeSignal
+		self.processText()
 		if not self.text[1:].isdigit():
 			raise WrongTextTypeSignal
 
@@ -71,12 +76,16 @@ class ChannelMentionText(MentionText):
 
 	INDICATOR: Final = "#"
 
+	def checkText(self) -> None:
+		super().checkText()
+		if not self.text.startswith(self.INDICATOR):
+			raise WrongTextTypeSignal
+
 class UserMentionText(MentionText):
 
 	INDICATOR: Final = "@"
 
-class WrongTextTypeSignal(Exception):
-	pass
-
-class WrongActSignal(Exception):
-	pass
+	def checkText(self) -> None:
+		super().checkText()
+		if not self.text.startswith(self.INDICATOR):
+			raise WrongTextTypeSignal
