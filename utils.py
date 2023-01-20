@@ -4,8 +4,8 @@ from typing import Dict, Callable, Any, Union, Tuple
 from objects.commands import Required
 from objects.stubs import Text
 
-def getCallSignature(instance: Callable[[Any], Any]) -> Dict[str, Text]:
-	result: Dict[str, str] = {}
+def getCallSignature(instance: Callable[[Any], Any]) -> Dict[str, Any]:
+	result: Dict[str, Union[str, Tuple[Required, Text]]] = {}
 	check_obj = instance
 	key_exceptions = ["channel", "self", "return"]
 	arg_spec = getfullargspec(check_obj)
