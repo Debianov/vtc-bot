@@ -25,6 +25,8 @@ class ActText(Text):
 	DELETE_ACT: Final = "-"
 	CHANGE_ACT: Final = ">"
 
+	user_name: str = "ID действия"
+
 	def checkText(self) -> None:
 		for act_element in [self.ADD_ACT, self.DELETE_ACT, self.CHANGE_ACT]:
 			if act_element not in self.text:
@@ -42,6 +44,8 @@ class DummyText(Text):
 
 class StrOrIntText(Text):
 
+	user_name: str = "Строка, число"
+
 	def checkText(self) -> None:
 		if not self.text.isprintable():
 			raise WrongTextTypeSignal
@@ -53,6 +57,8 @@ class StrOrIntText(Text):
 			raise WrongTextTypeSignal
 
 class IntText(Text):
+
+	user_name: str = "Число"
 
 	def checkText(self) -> None:
 		if not self.text.isdigit():
@@ -78,6 +84,8 @@ class ChannelMentionText(MentionText):
 
 	INDICATOR: Final = "#"
 
+	user_name: str = "Упоминание канала"
+
 	def checkText(self) -> None:
 		super().checkText()
 		if not self.text.startswith(self.INDICATOR):
@@ -86,6 +94,8 @@ class ChannelMentionText(MentionText):
 class UserMentionText(MentionText):
 
 	INDICATOR: Final = "@"
+
+	user_name: str = "Упоминание пользователя"
 
 	def checkText(self) -> None:
 		super().checkText()
