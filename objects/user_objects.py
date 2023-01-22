@@ -1,11 +1,12 @@
-from typing import Union, List, Dict, Callable, Tuple, Callable, Any, get_args, get_origin, _SpecialForm, Final
+from typing import Union, List, Dict, Tuple, Callable, Any, get_args,\
+get_origin
 from types import UnionType
 import discord
 
 from .commands import commands_collection, dummyCommand, Required, ActText
 from utils import getCallSignature
-from .stubs import Text, ChannelMentionText, DummyText
-from .exceptions import DeterminingParameterError, ActParameterError, WrongTextTypeSignal, WrongActSignal
+from .text import Text, ChannelMentionText, DummyText
+from .exceptions import DeterminingParameterError, ActParameterError, WrongTextTypeSignal, WrongActSignal, UnmatchingParameterTypeError
 
 class UserAction:
 

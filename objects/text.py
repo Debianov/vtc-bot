@@ -4,6 +4,8 @@ from .exceptions import WrongActSignal, WrongTextTypeSignal, UndefinedError
 
 class Text:
 
+	user_name: str = "Системный тип"
+
 	def __init__(self, text: str) -> None:
 		self.text = text
 
