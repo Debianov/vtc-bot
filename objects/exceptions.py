@@ -61,8 +61,8 @@ class UnmatchingParameterTypeError(ParameterError):
 		self.text = "Тип \"{}\" не соответствует значению \"{}\" в параметре \"{}\". Пожалуйста, исправьте значение.".format(self.parameter_type, self.arg, self.parameter_name)
 
 	def processErrorParameterType(self) -> None:
-		if self.parameter_type.user_name not in ascii_letters:
-			self.parameter_type = self.parameter_type.user_name.lower()	
+		if self.parameter_type.userfriendly_name not in ascii_letters:
+			self.parameter_type = self.parameter_type.userfriendly_name.lower()	
 
 class Signal(Exception):
 	pass

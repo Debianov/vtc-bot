@@ -20,7 +20,7 @@ async def on_message(message_instance: discord.Message) -> None:
 			await message.reply() # TODO мне кажется, стоит разбить reply на handle и
 			# TODO reply. Дальше по мере начала реализации бизнес-логики посмотрим.
 		except Error as instance:
-			await message.reply_by_custome_text(instance.getErrorText())
+			await message.reply_by_custome_text(instance.getText())
 	else:
 		await message.handle()  # TODO антиспам, антифлуд, логирование и проч., и проч.
 
