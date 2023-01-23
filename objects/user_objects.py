@@ -138,7 +138,7 @@ class Content:
 			else:
 				parameter_arg = parameter_or_parameter_arg
 				found_parameters.update(self.extractImplicitParameter(parameter_arg))
-		# print(self.parameters)
+		self.checkSplitUserText()
 		self.checkForMissingRequiredParameters()
 
 	def extractExplicitParameter(self, parameter: str, split_user_text: List[str],
@@ -150,16 +150,23 @@ class Content:
 		if parameter_without_prefix in self.parameters:
 			parameter_types = self.parameters[parameter_without_prefix]
 			converted_arg = self.convertedArg(parameter, parameter_types, arg)
-			self.checkConvertedArg(converted_arg, parameter, found_parameters)
+			if converted_arg:
+				found_parameters[parameter_without_prefix] = converted_arg
+				self.parameters.pop(parameter_without_prefix)
+			else:
+				self.unfound_args.append(arg)
 		return found_parameters
 
 	def extractImplicitParameter(self, arg: str) -> Dict[str, Text]:
 		found_parameters: Dict[str, Text] = {}
 		for (parameter, parameter_types) in self.parameters.items():
 			converted_arg = self.convertedArg(parameter, parameter_types, arg)
-			if self.checkConvertedArg(converted_arg, parameter, found_parameters):
+			if converted_arg:
+				found_parameters[parameter] = converted_arg
+				self.parameters.pop(parameter)
 				break
-		self.parameters.pop(parameter)
+		else:
+			self.unfound_args.append(arg)
 		return found_parameters
 
 	def checkForMissingRequiredParameters(self) -> None:
@@ -179,7 +186,7 @@ class Content:
 				converted_arg_instance = check_type(target_arg)
 				converted_arg = converted_arg_instance.getText()
 			except WrongTextTypeSignal:
-				pass
+				self.wrong_text_type_signals.setdefault(target_arg, []).append((parameter, check_type))
 			except WrongActSignal:
 				raise ActParameterError(parameter)
 			else:
@@ -232,6 +239,9 @@ class ActParameterError(Exception):
 	def getErrorText(self) -> str:
 		return self.error_text
 
-	def processParameterName(self) -> None:
-		if self.error_parameter.startswith("d_"):
-			self.error_parameter = self.error_parameter.removeprefix("d_")
+	def checkSplitUserText(self) -> None:
+		if not self.unfound_args:
+			return
+		for text in self.unfound_args:
+			if text in self.wrong_text_type_signals:
+				raise UnmatchingParameterTypeError(text, self.wrong_text_type_signals.get(text)[0]) # TODO множество типов.
