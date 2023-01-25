@@ -119,33 +119,29 @@ class Content:
 					break
 
 	def extractParameters(self) -> None: # TODO кавычки как разделение +
-		# TODO обработка пар параметров. 
+		# TODO обработка пар параметров.
 		#? форму object -parameter object object допускать?
 		self.parameters = all_parameters_current_command =\
 		getCallSignature(self.func)
 		found_parameters: Dict[str, Text] = {}
+		self.unfound_args: List[str] = []
+		self.wrong_text_type_signals: Dict[str, List[Tuple[str, Text]]] = {}
 		split_user_text = self.copy_text.split()
-		split_user_text_cursor = 0
-		while split_user_text_cursor < len(split_user_text):
-			parameter_or_parameter_arg = split_user_text[split_user_text_cursor] # TODO
-			# TODO user_parameter как отдельный класс-струтктура данных, в котором при
-			# TODO индексировании будут + курсоры сами.
-			split_user_text_cursor += 1
+		while split_user_text:
+			parameter_or_parameter_arg = split_user_text.pop(0)
 			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может быть распознан как параметр.
 				parameter = parameter_or_parameter_arg
 				found_parameters.update(self.extractExplicitParameter(parameter,
-				split_user_text, split_user_text_cursor))
+				split_user_text))
 			else:
 				parameter_arg = parameter_or_parameter_arg
 				found_parameters.update(self.extractImplicitParameter(parameter_arg))
 		self.checkSplitUserText()
 		self.checkForMissingRequiredParameters()
 
-	def extractExplicitParameter(self, parameter: str, split_user_text: List[str],
-	split_user_text_cursor: int) -> Dict[str, Text]:
-		arg = split_user_text[split_user_text_cursor]
+	def extractExplicitParameter(self, parameter: str, split_user_text: List[str]) -> Dict[str, Text]:
+		arg = split_user_text.pop(0)
 		found_parameters: Dict[str, Text] = {}
-		split_user_text_cursor += 1
 		parameter_without_prefix = parameter.removeprefix("-")
 		if parameter_without_prefix in self.parameters:
 			parameter_types = self.parameters[parameter_without_prefix]
@@ -214,30 +210,6 @@ class Content:
 		for parameter_type in union_args:
 			result.append(parameter_type)
 		return result
-
-class DeterminingParameterError(Exception):
-	
-	def __init__(self, error_parameter: str):
-		self.error_parameter = error_parameter
-		self.processParameterName()
-		self.error_text = "Убедитесь, что вы указали все обязательные аргументы, либо указали параметры явно. Не найденные параметры: {}".format(self.error_parameter) # TODO embedded
-
-	def getErrorText(self) -> str:
-		return self.error_text
-
-	def processParameterName(self) -> None:
-		if self.error_parameter.startswith("d_"):
-			self.error_parameter = self.error_parameter.removeprefix("d_")
-
-class ActParameterError(Exception):
-
-	def __init__(self, error_parameter: str):
-		self.error_parameter = error_parameter
-		self.processParameterName()
-		self.error_text = "Убедитесь, что вы указали знак действия в параметре {}".format(self.error_parameter) # TODO embedded
-
-	def getErrorText(self) -> str:
-		return self.error_text
 
 	def checkSplitUserText(self) -> None:
 		if not self.unfound_args:
