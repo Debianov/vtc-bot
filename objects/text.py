@@ -4,7 +4,7 @@ from .exceptions import WrongActSignal, WrongTextTypeSignal, UndefinedError
 
 class Text:
 
-	user_name: str = "Системный тип"
+	userfriendly_name: str = "Системный тип"
 
 	def __init__(self, text: str) -> None:
 		self.text = text
@@ -25,7 +25,7 @@ class ActText(Text):
 	DELETE_ACT: Final = "-"
 	CHANGE_ACT: Final = ">"
 
-	user_name: str = "ID действия"
+	userfriendly_name: str = "ID действия"
 
 	def checkText(self) -> None:
 		for act_element in [self.ADD_ACT, self.DELETE_ACT, self.CHANGE_ACT]:
@@ -44,7 +44,7 @@ class DummyText(Text):
 
 class StrOrIntText(Text):
 
-	user_name: str = "Строка, число"
+	userfriendly_name: str = "Строка, число"
 
 	def checkText(self) -> None:
 		if not self.text.isprintable():
@@ -58,7 +58,7 @@ class StrOrIntText(Text):
 
 class IntText(Text):
 
-	user_name: str = "Число"
+	userfriendly_name: str = "Число"
 
 	def checkText(self) -> None:
 		if not self.text.isdigit():
@@ -84,7 +84,7 @@ class ChannelMentionText(MentionText):
 
 	INDICATOR: Final = "#"
 
-	user_name: str = "Упоминание канала"
+	userfriendly_name: str = "Упоминание канала"
 
 	def checkText(self) -> None:
 		super().checkText()
@@ -95,7 +95,7 @@ class UserMentionText(MentionText):
 
 	INDICATOR: Final = "@"
 
-	user_name: str = "Упоминание пользователя"
+	userfriendly_name: str = "Упоминание пользователя"
 
 	def checkText(self) -> None:
 		super().checkText()
