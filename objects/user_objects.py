@@ -6,7 +6,8 @@ import discord
 from .commands import commands_collection, dummyCommand, Required, ActText
 from utils import getCallSignature
 from .text import Text, ChannelMentionText, DummyText
-from .exceptions import DeterminingParameterError, ActParameterError, WrongTextTypeSignal, WrongActSignal, UnmatchingParameterTypeError
+from .exceptions import DeterminingParameterError, ActParameterError,\
+WrongTextTypeSignal, WrongActSignal, UnmatchingParameterTypeError
 
 class UserAction:
 
@@ -169,9 +170,13 @@ class Content:
 		maybe_missing_required_parameters = self.parameters
 		for (parameter, parameter_types) in\
 		maybe_missing_required_parameters.items():
-			if Required in parameter_types: # TODO parameter_type может быть не tupl-ом.
-				raise DeterminingParameterError(list(maybe_missing_required_parameters.
-				keys())[0])
+			try: #? лучше, чем через isinstance?
+				parameter_required_or_not = Required in parameter_types
+			except TypeError:
+				parameter_required_or_not = Required is parameter_types
+			finally:
+				if parameter_required_or_not:
+					raise DeterminingParameterError(parameter)
 
 	def convertedArg(self, parameter: str, parameter_types: Union[Text,
 	Tuple[Required, Text]], target_arg: str) -> Text:
