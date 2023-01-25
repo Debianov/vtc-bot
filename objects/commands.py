@@ -16,7 +16,7 @@ class UserLog:
 
 	@staticmethod
 	async def create(channel: discord.TextChannel, name: StrOrIntText, target: (Required, Union[ChannelMentionText, UserMentionText]), act: (Required, StrOrIntText), d_in: (Required, Union[ChannelMentionText, UserMentionText]),
-	output: StrOrIntText, priority: IntText, other: StrOrIntText) -> None:
+	output: StrOrIntText, priority: IntText, other: StrOrIntText):
 		# TODO в стандарт d_name как нейминг в случае, если name уже есть в Python built-in.
 		print(name, target, other)
 		# targetInstance = TargetLog(name, target, act, d_in, output, priority, other)

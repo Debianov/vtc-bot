@@ -12,7 +12,8 @@ client = discord.Client(intents=intents)
 @client.event
 async def on_message(message_instance: discord.Message) -> None:
 	guild = Guild("sudo", "")
-	content = Content(message_instance.content, message_instance.mentions, message_instance.channel_mentions)
+	content = Content(message_instance.content, message_instance.mentions,
+	message_instance.channel_mentions)
 	message = UserMessage(message_instance.id, message_instance.author,
 	111, guild, content, message_instance.channel) # TODO timer object.
 	if message.isCommand():
@@ -22,7 +23,8 @@ async def on_message(message_instance: discord.Message) -> None:
 		except Error as instance:
 			await message.reply_by_custome_text(instance.getText())
 	else:
-		await message.handle()  # TODO антиспам, антифлуд, логирование и проч., и проч.
+		await message.handle()  # TODO антиспам, антифлуд, логирование и проч., и
+		# проч.
 
 with open("secret.sec") as text:
 	client.run(text.readline())

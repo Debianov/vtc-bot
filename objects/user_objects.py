@@ -3,9 +3,9 @@ get_origin
 from types import UnionType
 import discord
 
-from .commands import commands_collection, dummyCommand, Required, ActText
+from .commands import commands_collection, dummyCommand, Required
 from utils import getCallSignature
-from .text import Text, ChannelMentionText, DummyText
+from .text import Text
 from .exceptions import DeterminingParameterError, ActParameterError,\
 WrongTextTypeSignal, WrongActSignal, UnmatchingParameterTypeError
 
@@ -37,7 +37,7 @@ class UserMessage(UserAction):
 		self.content.extractParameters()
 		method = self.content.getCommand()
 		parameters = self.content.getParameters()
-		# await method(self.channel, **parameters)
+		await method(self.channel, **parameters)
 
 	async def reply_by_custome_text(self, text: str) -> None:
 		await self.channel.send(text)
@@ -62,7 +62,10 @@ class Guild:
 
 class Content:
 
-	def __init__(self, text: str, user_mentions: List[discord.abc.User], channel_mentions: List[Union[discord.abc.GuildChannel]]) -> None: # TODO discord.Thread не могу вставить в Union: нету атрибута такого, хотя по докам всё сходится.
+	def __init__(self, text: str, user_mentions: List[discord.abc.User],
+	channel_mentions: List[Union[discord.abc.GuildChannel]]) -> None: # TODO
+	# discord.Thread не могу вставить в Union: нету атрибута такого, хотя по
+	# докам всё сходится.
 		self.text = text
 		self.user_mentions = user_mentions
 		self.channel_mentions = channel_mentions
@@ -130,7 +133,8 @@ class Content:
 		split_user_text = self.copy_text.split()
 		while split_user_text:
 			parameter_or_parameter_arg = split_user_text.pop(0)
-			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может быть распознан как параметр.
+			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может
+				# быть распознан как параметр.
 				parameter = parameter_or_parameter_arg
 				found_parameters.update(self.extractExplicitParameter(parameter,
 				split_user_text))
@@ -140,7 +144,8 @@ class Content:
 		self.checkSplitUserText()
 		self.checkForMissingRequiredParameters()
 
-	def extractExplicitParameter(self, parameter: str, split_user_text: List[str]) -> Dict[str, Text]:
+	def extractExplicitParameter(self, parameter: str, split_user_text:
+	List[str]) -> Dict[str, Text]:
 		arg = split_user_text.pop(0)
 		found_parameters: Dict[str, Text] = {}
 		parameter_without_prefix = parameter.removeprefix("-")
@@ -187,14 +192,17 @@ class Content:
 				converted_arg_instance = check_type(target_arg)
 				converted_arg = converted_arg_instance.getText()
 			except WrongTextTypeSignal:
-				self.wrong_text_type_signals.setdefault(target_arg, []).append((parameter, check_type))
+				self.wrong_text_type_signals.setdefault(target_arg, []).append((parameter,
+				check_type))
 			except WrongActSignal:
 				raise ActParameterError(parameter)
 			else:
 				return converted_arg
 
-	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required, Text]], check_types: List[Text]) -> None:
-		if isinstance(parameter_types, tuple) and parameter_types is not Required: # Required не трогаем. Он проверяется отдельно (checkForNotFoundParameters).
+	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required,
+	Text]], check_types: List[Text]) -> None:
+		if isinstance(parameter_types, tuple) and parameter_types is not Required:
+			# Required не трогаем. Он проверяется отдельно (checkForNotFoundParameters).
 			for parameter_type in parameter_types:
 				if self.isUnionType(parameter_type):
 					check_types.extend(self.extractUnionType(parameter_type))
@@ -221,4 +229,5 @@ class Content:
 			return
 		for text in self.unfound_args:
 			if text in self.wrong_text_type_signals:
-				raise UnmatchingParameterTypeError(text, self.wrong_text_type_signals.get(text)[0]) # TODO множество типов.
+				raise UnmatchingParameterTypeError(text,
+				self.wrong_text_type_signals.get(text)[0]) # TODO множество типов.

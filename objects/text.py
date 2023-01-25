@@ -1,6 +1,6 @@
 from typing import Final
 
-from .exceptions import WrongActSignal, WrongTextTypeSignal, UndefinedError
+from .exceptions import WrongActSignal, WrongTextTypeSignal
 
 class Text:
 
@@ -70,7 +70,8 @@ class MentionText(Text):
 	RIGHT_BRACKET: Final = ">"
 
 	def checkText(self) -> None:
-		if not (self.text.startswith(self.LEFT_BRACKET) and self.text.endswith(self.RIGHT_BRACKET)):
+		if not (self.text.startswith(self.LEFT_BRACKET) and
+		self.text.endswith(self.RIGHT_BRACKET)):
 			raise WrongTextTypeSignal
 		self.processText()
 		if not self.text[1:].isdigit():
