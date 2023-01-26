@@ -37,7 +37,8 @@ class UserMessage(UserAction):
 		self.content.extractParameters()
 		method = self.content.getCommand()
 		parameters = self.content.getParameters()
-		await method(self.channel, **parameters)
+		await method(self.channel, **parameters) # TODO а, ну эммм....
+		# Нужно дополнять parameters там, где необязательные аргументы есть.
 
 	async def reply_by_custome_text(self, text: str) -> None:
 		await self.channel.send(text)
@@ -69,7 +70,7 @@ class Content:
 		self.text = text
 		self.user_mentions = user_mentions
 		self.channel_mentions = channel_mentions
-		self.func: Callable[[Any], None] = dummyCommand
+		self.func: Callable[..., None] = dummyCommand
 		self.global_prefix: str = ""
 		self.access_prefix: str = ""
 		self.parameters: Dict[str, Text] = {}
@@ -84,7 +85,7 @@ class Content:
 	def getGlobalPrefix(self) -> str:
 		return self.global_prefix
 
-	def getParameters(self) -> Dict[str, Union[List[str], str]]:
+	def getParameters(self) -> Dict[str, Text]:
 		return self.parameters
 
 	def getCommand(self) -> Callable[[Any], None]:
@@ -104,8 +105,8 @@ class Content:
 			self.copy_text = self.copy_text.removeprefix(guild.getAccessPrefix() + " ")
 			self.access_prefix = guild.getAccessPrefix()
 
-	def extractCommand(self, name_extraction_object: Dict[str,
-	Union[Callable[[Any], None], Dict[str, Callable[[Any], None]]]]) -> None:
+	def extractCommand(self, name_extraction_object:
+		Dict[str, Callable[..., None]]) -> None:
 		# TODO сделать особый тип str, где есть разделение |, которое используется в
 		# распознавании алиасов одной и той же команды.
 		# TODO и тут в name_extraction_object аннотация слишком большая. Не создать
@@ -184,7 +185,7 @@ class Content:
 					raise DeterminingParameterError(parameter)
 
 	def convertedArg(self, parameter: str, parameter_types: Union[Text,
-	Tuple[Required, Text]], target_arg: str) -> Text:
+	Tuple[Required, Text]], target_arg: str) -> Union[None, Text]:
 		check_types: List[Text] = []
 		self.generateCheckTypes(parameter_types, check_types)
 		for check_type in check_types:
@@ -198,6 +199,7 @@ class Content:
 				raise ActParameterError(parameter)
 			else:
 				return converted_arg
+		return None
 
 	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required,
 	Text]], check_types: List[Text]) -> None:

@@ -1,6 +1,7 @@
-from typing import Union
+from typing import Union, Dict, Callable, Awaitable, Any
 import discord
-from .text import ChannelMentionText, UserMentionText, StrOrIntText, IntText, ActText
+from .text import (ChannelMentionText, UserMentionText, StrOrIntText, IntText,
+ActText)
 
 class Required:
 	pass
@@ -15,11 +16,16 @@ class UserLog:
 	# 	# self.parametrs: dict = {}
 
 	@staticmethod
-	async def create(channel: discord.TextChannel, name: StrOrIntText, target: (Required, Union[ChannelMentionText, UserMentionText]), act: (Required, StrOrIntText), d_in: (Required, Union[ChannelMentionText, UserMentionText]),
-	output: StrOrIntText, priority: IntText, other: StrOrIntText):
-		# TODO в стандарт d_name как нейминг в случае, если name уже есть в Python built-in.
+	async def create(channel: discord.TextChannel, name: StrOrIntText, target:
+	(Required, Union[ChannelMentionText, UserMentionText]), act:
+	(Required, StrOrIntText), d_in: (Required, Union[ChannelMentionText,
+	UserMentionText]),
+	output: StrOrIntText, priority: IntText, other: StrOrIntText) -> None:
+		# TODO в стандарт d_name как нейминг в случае, если name уже есть в Python
+		# built-in.
 		print(name, target, other)
-		# targetInstance = TargetLog(name, target, act, d_in, output, priority, other)
+		# targetInstance = TargetLog(name, target, act, d_in, output, priority,
+		# other)
 		# return targetInstance
 
 	# async def __call__(self, channel: discord.TextChannel,
@@ -30,7 +36,8 @@ class UserLog:
 	# 	# self.getCommand(point)
 	# 	self.content.handle(self.points_collection)
 	# 	await self.content.command(self.channel, **self.content.parametrs)
-	# 	# parserInstance = MenuParametrParser(point, point_args, self.points_collection) # TODO тут проблемка с тайпингом.
+	# 	# parserInstance = MenuParametrParser(point, point_args, 
+	# self.points_collection) # TODO тут проблемка с тайпингом.
 	# 	# self.command = parserInstance.getCommand()
 	# 	# self.parametrs = parserInstance.getParametrs()
 	# 	# await self.command(self, **self.parametrs)
@@ -40,7 +47,9 @@ async def dummyCommand(channel: discord.TextChannel) -> None:
 
 # class TargetLog: # TODO запись таргета в базу данных; механизм кэширования.
 
-# 	def __init__(self, name: str, target: typing.Union[discord.Member, discord.CategoryChannel], act: str, d_in: typing.Union[discord.Member, discord.CategoryChannel], output: str, priority: int, other: AssemblyArg):
+# 	def __init__(self, name: str, target: typing.Union[discord.Member,
+# discord.CategoryChannel], act: str, d_in: typing.Union[discord.Member,
+# discord.CategoryChannel], output: str, priority: int, other: AssemblyArg):
 # 		self.name = name
 # 		self.target = target
 # 		self.act = act
@@ -143,10 +152,13 @@ async def dummyCommand(channel: discord.TextChannel) -> None:
 # 				return # TODO все пользователи гильдии на дальнейшую обработку.
 # 			case "all":
 # 				return # TODO все каналы и пользователи гильдии
-# 		if isinstance(value, discord.Member) or isinstance(value, discord.TextChannel): # TODO посмотреть, как объединить все типы каналов. Подобная
+# 		if isinstance(value, discord.Member) or isinstance(value,
+# discord.TextChannel): # TODO посмотреть, как объединить все типы каналов.
+# Подобная
 # 		# TODO проблема и в аннотациях.
 # 			if value in []: # TODO проверка на вхождение в гильдию.
-# 				return # TODO передача конкретного канала/пользователя (мн.ч) на дальнейшую обработку.
+# 				return # TODO передача конкретного канала/пользователя (мн.ч) на
+# дальнейшую обработку.
 # 		else:
 # 			print("Еррур")
 # 		return False
@@ -158,10 +170,13 @@ async def dummyCommand(channel: discord.TextChannel) -> None:
 # 		match value:
 # 			case "df":
 # 				return # TODO извлекаем канал по умолчанию
-# 		if isinstance(value, discord.Member) or isinstance(value, discord.TextChannel): # TODO посмотреть, как объединить все типы каналов. Подобная
+# 		if isinstance(value, discord.Member) or isinstance(value,
+# discord.TextChannel): # TODO посмотреть, как объединить все типы каналов.
+# Подобная
 # 		# TODO проблема и в аннотациях.
 # 			if value in []: # TODO проверка на вхождение в гильдию.
-# 				return # TODO передача конкретного канала/пользователя (мн.ч) на дальнейшую обработку.
+# 				return # TODO передача конкретного канала/пользователя (мн.ч) на
+# дальнейшую обработку.
 # 		else:
 # 			print("Еррур")
 
@@ -180,4 +195,7 @@ async def dummyCommand(channel: discord.TextChannel) -> None:
 # 	def validateOtherParam(self, value):
 # 		return # TODO отсылочка на модуль разграничения прав.
 
-commands_collection = {"logs|log": {"create|cr|1": UserLog.create}} # TODO автоматическое формирование словаря.
+commands_collection: Dict[str, Union[Callable[..., None], Dict[str,
+Callable[..., None]]]] =\
+{"logs|log": {"create|cr|1": UserLog.create}} # TODO автоматическое
+# формирование словаря.
