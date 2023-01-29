@@ -85,7 +85,7 @@ class Content:
 		return self.global_prefix
 
 	def getParameters(self) -> Dict[str, Text]:
-		return self.parameters
+		return self.found_parameters
 
 	def getCommand(self) -> Callable[[Any], None]:
 		return self.func
@@ -124,10 +124,9 @@ class Content:
 
 	def extractParameters(self) -> None: # TODO кавычки как разделение +
 		# TODO обработка пар параметров.
-		#? форму object -parameter object object допускать?
 		self.parameters = all_parameters_current_command =\
 		getCallSignature(self.func)
-		found_parameters: Dict[str, Text] = {}
+		self.found_parameters: Dict[str, Text] = {}
 		self.unfound_args: List[str] = []
 		self.wrong_text_type_signals: Dict[str, List[Tuple[str, Text]]] = {}
 		split_user_text = self.copy_text.split()
@@ -154,23 +153,23 @@ class Content:
 			parameter_types = self.parameters[parameter_without_prefix]
 			converted_arg = self.convertedArg(parameter, parameter_types, arg)
 			if converted_arg:
-				found_parameters[parameter_without_prefix] = converted_arg
+				self.found_parameters[parameter_without_prefix] = converted_arg
 				self.parameters.pop(parameter_without_prefix)
 			else:
 				self.unfound_args.append(arg)
-		return found_parameters
+		return self.found_parameters
 
 	def extractImplicitParameter(self, arg: str) -> Dict[str, Text]:
 		found_parameters: Dict[str, Text] = {}
 		for (parameter, parameter_types) in self.parameters.items():
 			converted_arg = self.convertedArg(parameter, parameter_types, arg)
 			if converted_arg:
-				found_parameters[parameter] = converted_arg
+				self.found_parameters[parameter] = converted_arg
 				self.parameters.pop(parameter)
 				break
 		else:
 			self.unfound_args.append(arg)
-		return found_parameters
+		return self.found_parameters
 
 	def checkForMissingRequiredParameters(self) -> None:
 		maybe_missing_required_parameters = self.parameters
@@ -237,5 +236,5 @@ class Content:
 	def extendParametersByOptionalParameters(self) -> None:
 		current_command_signature = getCallSignature(self.func)
 		for key in current_command_signature:
-			if key not in self.parameters:
-				self.parameters.update({key: ""})
+			if key not in self.found_parameters:
+				self.found_parameters.update({key: ""})
