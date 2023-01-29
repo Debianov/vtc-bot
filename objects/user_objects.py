@@ -122,31 +122,30 @@ class Content:
 						self.func = value
 					break
 
-	def extractParameters(self) -> None: # TODO кавычки как разделение +
-		# TODO обработка пар параметров.
+	def extractParameters(self) -> None: # TODO обработка пар параметров.
 		self.parameters = all_parameters_current_command =\
 		getCallSignature(self.func)
 		self.found_parameters: Dict[str, Text] = {}
 		self.unfound_args: List[str] = []
 		self.wrong_text_type_signals: Dict[str, List[Tuple[str, Text]]] = {}
-		split_user_text = self.copy_text.split()
-		while split_user_text:
-			parameter_or_parameter_arg = split_user_text.pop(0)
+		self.split_user_text = self.copy_text.split()
+		while self.split_user_text:
+			parameter_or_parameter_arg = self.split_user_text.pop(0)
 			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может
 				# быть распознан как параметр.
 				parameter = parameter_or_parameter_arg
-				found_parameters.update(self.extractExplicitParameter(parameter,
-				split_user_text))
+				self.found_parameters.update(self.extractExplicitParameter(parameter))
 			else:
 				parameter_arg = parameter_or_parameter_arg
-				found_parameters.update(self.extractImplicitParameter(parameter_arg))
+				parameter_arg = self.extractArgsIfThereAreSeveral(parameter_arg)
+				self.found_parameters.update(self.extractImplicitParameter(parameter_arg))
 		self.checkSplitUserText()
 		self.checkForMissingRequiredParameters()
 		self.extendParametersByOptionalParameters()
 
-	def extractExplicitParameter(self, parameter: str, split_user_text:
-	List[str]) -> Dict[str, Text]:
-		arg = split_user_text.pop(0)
+	def extractExplicitParameter(self, parameter: str) -> Dict[str, Text]:
+		arg = self.split_user_text.pop(0)
+		arg = self.extractArgsIfThereAreSeveral(arg)
 		found_parameters: Dict[str, Text] = {}
 		parameter_without_prefix = parameter.removeprefix("-")
 		if parameter_without_prefix in self.parameters:
@@ -154,7 +153,8 @@ class Content:
 			converted_arg = self.convertedArg(parameter, parameter_types, arg)
 			if converted_arg:
 				self.found_parameters[parameter_without_prefix] = converted_arg
-				self.parameters.pop(parameter_without_prefix)
+				self.parameters.pop(parameter_without_prefix) # TODO self.parameters и 
+				# его собратьев чекнуть по части применения.
 			else:
 				self.unfound_args.append(arg)
 		return self.found_parameters
@@ -170,6 +170,18 @@ class Content:
 		else:
 			self.unfound_args.append(arg)
 		return self.found_parameters
+
+	def extractArgsIfThereAreSeveral(self, args_or_arg: str) -> str:
+		if args_or_arg.startswith("\""):
+			args = args_or_arg
+			while not args.endswith("\""):
+				args += " " + self.split_user_text.pop(0)
+			args = args.removesuffix("\"")
+			args = args.removeprefix("\"")
+			return args
+		else:
+			arg = args_or_arg
+			return arg
 
 	def checkForMissingRequiredParameters(self) -> None:
 		maybe_missing_required_parameters = self.parameters
@@ -187,17 +199,19 @@ class Content:
 	Tuple[Required, Text]], target_arg: str) -> Union[None, Text]:
 		check_types: List[Text] = []
 		self.generateCheckTypes(parameter_types, check_types)
-		for check_type in check_types:
-			try:
-				converted_arg_instance = check_type(target_arg)
-				converted_arg = converted_arg_instance.getText()
-			except WrongTextTypeSignal:
-				self.wrong_text_type_signals.setdefault(target_arg, []).append((parameter,
-				check_type))
-			except WrongActSignal:
-				raise ActParameterError(parameter)
-			else:
-				return converted_arg
+		target_arg_or_args: List[str] = target_arg.split()
+		for target_arg in target_arg_or_args:
+			for check_type in check_types:
+				try:
+					converted_arg_instance = check_type(target_arg)
+					converted_arg = converted_arg_instance.getText()
+				except WrongTextTypeSignal:
+					self.wrong_text_type_signals.setdefault(target_arg, []).append(
+					(parameter, check_type))
+				except WrongActSignal:
+					raise ActParameterError(parameter)
+				else:
+					return converted_arg
 		return None
 
 	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required,
