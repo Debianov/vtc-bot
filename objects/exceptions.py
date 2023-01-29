@@ -13,10 +13,10 @@ class UndefinedError(Error):
 	
 	def __init__(self) -> None:
 		self.error_text = ("При выполнении операции произошла"
-		"неопределённая/серверная ошибка.\nПожалуйста,"
-		"повторите попытку позже. + \n\nЕсли ошибка повторяется,"
-		"обратитесь в [тех. поддержку](//сайт тех. поддержки VCS//),"
-		"предоставив системную информацию ниже.")
+		" неопределённая/серверная ошибка.\nПожалуйста,"
+		" повторите попытку позже. + \n\nЕсли ошибка повторяется,"
+		" обратитесь в [тех. поддержку](//сайт тех. поддержки VCS//),"
+		" предоставив системную информацию ниже.")
 
 class ParameterError(Error):
 
@@ -40,7 +40,7 @@ class DeterminingParameterError(ParameterError):
 		# Error — всё возбуждается, хотя здесь нету никакх excep-шенов, которые всё
 		# перехватывают. Чё за приколы?
 		self.error_text = ("Убедитесь, что вы указали все обязательные аргументы"
-		",либо указали параметры явно. Не найденные параметры: {}").\
+		", либо указали параметры явно. Не найденные параметры: {}").\
 		format(self.parameter_name) # TODO embedded
 
 class ActParameterError(ParameterError):
@@ -69,7 +69,7 @@ class UnmatchingParameterTypeError(ParameterError):
 	def createErrorText(self) -> None:
 		self.processErrorParameterType()
 		self.text = ("Тип \"{}\" не соответствует значению \"{}\" в параметре"
-		"\"{}\".Пожалуйста, исправьте значение.").format(self.parameter_type,
+		" \"{}\". Пожалуйста, исправьте значение.").format(self.parameter_type,
 		self.arg, self.parameter_name)
 
 	def processErrorParameterType(self) -> None:
