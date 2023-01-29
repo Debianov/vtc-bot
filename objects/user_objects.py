@@ -37,8 +37,7 @@ class UserMessage(UserAction):
 		self.content.extractParameters()
 		method = self.content.getCommand()
 		parameters = self.content.getParameters()
-		await method(self.channel, **parameters) # TODO а, ну эммм....
-		# Нужно дополнять parameters там, где необязательные аргументы есть.
+		await method(self.channel, **parameters)
 
 	async def reply_by_custome_text(self, text: str) -> None:
 		await self.channel.send(text)
@@ -144,6 +143,7 @@ class Content:
 				found_parameters.update(self.extractImplicitParameter(parameter_arg))
 		self.checkSplitUserText()
 		self.checkForMissingRequiredParameters()
+		self.extendParametersByOptionalParameters()
 
 	def extractExplicitParameter(self, parameter: str, split_user_text:
 	List[str]) -> Dict[str, Text]:
@@ -233,3 +233,9 @@ class Content:
 			if text in self.wrong_text_type_signals:
 				raise UnmatchingParameterTypeError(text,
 				self.wrong_text_type_signals.get(text)[0]) # TODO множество типов.
+
+	def extendParametersByOptionalParameters(self) -> None:
+		current_command_signature = getCallSignature(self.func)
+		for key in current_command_signature:
+			if key not in self.parameters:
+				self.parameters.update({key: ""})
