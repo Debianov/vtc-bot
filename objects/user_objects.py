@@ -134,16 +134,16 @@ class Content:
 			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может
 				# быть распознан как параметр.
 				parameter = parameter_or_parameter_arg
-				self.found_parameters.update(self.extractExplicitParameter(parameter))
+				self.extractExplicitParameter(parameter)
 			else:
 				parameter_arg = parameter_or_parameter_arg
 				parameter_arg = self.extractArgsIfThereAreSeveral(parameter_arg)
-				self.found_parameters.update(self.extractImplicitParameter(parameter_arg))
+				self.extractImplicitParameter(parameter_arg)
 		self.checkSplitUserText()
 		self.checkForMissingRequiredParameters()
 		self.extendParametersByOptionalParameters()
 
-	def extractExplicitParameter(self, parameter: str) -> Dict[str, Text]:
+	def extractExplicitParameter(self, parameter: str) -> None:
 		arg = self.split_user_text.popWithSpaceRemoving(0)
 		arg = self.extractArgsIfThereAreSeveral(arg)
 		found_parameters: Dict[str, Text] = {}
@@ -153,13 +153,11 @@ class Content:
 			converted_arg = self.convertedArg(parameter, parameter_types, arg)
 			if converted_arg:
 				self.found_parameters[parameter_without_prefix] = converted_arg
-				self.parameters.pop(parameter_without_prefix) # TODO self.parameters и
-				# его собратьев чекнуть по части применения.
+				self.parameters.pop(parameter_without_prefix)
 			else:
 				self.unfound_args.append(arg)
-		return self.found_parameters
 
-	def extractImplicitParameter(self, arg: str) -> Dict[str, Text]: # TODO честно
+	def extractImplicitParameter(self, arg: str) -> None: # TODO честно
 		# говоря, в этих двух методах назревает мысль создать отдельный класс для
 		# arg.
 		found_parameters: Dict[str, Text] = {}
@@ -171,7 +169,6 @@ class Content:
 				break
 		else:
 			self.unfound_args.append(arg)
-		return self.found_parameters
 
 	def extractArgsIfThereAreSeveral(self, args_or_arg: str) -> str:
 		args: List[str] = []
