@@ -24,3 +24,9 @@ Dict[Any, Any]:
 		if value == check_value:
 			new_collection[key] = value
 	return new_collection
+
+class ArgAndParametersList(list):
+
+	def popWithSpaceRemoving(self, index: int) -> Any:
+		poped_object = super().pop(index)
+		return poped_object.strip(" ")
