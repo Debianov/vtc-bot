@@ -4,7 +4,7 @@ from types import UnionType
 import discord
 
 from .commands import commands_collection, dummyCommand, Required
-from utils import getCallSignature
+from utils import getCallSignature, ArgAndParametersList
 from .text import Text
 from .exceptions import DeterminingParameterError, ActParameterError,\
 WrongTextTypeSignal, WrongActSignal, UnmatchingParameterTypeError
@@ -128,9 +128,9 @@ class Content:
 		self.found_parameters: Dict[str, Text] = {}
 		self.unfound_args: List[str] = []
 		self.wrong_text_type_signals: Dict[str, List[Tuple[str, Text]]] = {}
-		self.split_user_text = self.copy_text.split()
+		self.split_user_text = ArgAndParametersList(self.copy_text.split())
 		while self.split_user_text:
-			parameter_or_parameter_arg = self.split_user_text.pop(0)
+			parameter_or_parameter_arg = self.split_user_text.popWithSpaceRemoving(0)
 			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может
 				# быть распознан как параметр.
 				parameter = parameter_or_parameter_arg
@@ -144,7 +144,7 @@ class Content:
 		self.extendParametersByOptionalParameters()
 
 	def extractExplicitParameter(self, parameter: str) -> Dict[str, Text]:
-		arg = self.split_user_text.pop(0)
+		arg = self.split_user_text.popWithSpaceRemoving(0)
 		arg = self.extractArgsIfThereAreSeveral(arg)
 		found_parameters: Dict[str, Text] = {}
 		parameter_without_prefix = parameter.removeprefix("-")
@@ -153,13 +153,15 @@ class Content:
 			converted_arg = self.convertedArg(parameter, parameter_types, arg)
 			if converted_arg:
 				self.found_parameters[parameter_without_prefix] = converted_arg
-				self.parameters.pop(parameter_without_prefix) # TODO self.parameters и 
+				self.parameters.pop(parameter_without_prefix) # TODO self.parameters и
 				# его собратьев чекнуть по части применения.
 			else:
 				self.unfound_args.append(arg)
 		return self.found_parameters
 
-	def extractImplicitParameter(self, arg: str) -> Dict[str, Text]:
+	def extractImplicitParameter(self, arg: str) -> Dict[str, Text]: # TODO честно
+		# говоря, в этих двух методах назревает мысль создать отдельный класс для
+		# arg.
 		found_parameters: Dict[str, Text] = {}
 		for (parameter, parameter_types) in self.parameters.items():
 			converted_arg = self.convertedArg(parameter, parameter_types, arg)
@@ -172,16 +174,19 @@ class Content:
 		return self.found_parameters
 
 	def extractArgsIfThereAreSeveral(self, args_or_arg: str) -> str:
+		args: List[str] = []
 		if args_or_arg.startswith("\""):
-			args = args_or_arg
-			while not args.endswith("\""):
-				args += " " + self.split_user_text.pop(0)
-			args = args.removesuffix("\"")
-			args = args.removeprefix("\"")
-			return args
+			args.append(args_or_arg)
+			while True:
+				part_arg = self.split_user_text.popWithSpaceRemoving(0)
+				args.append(part_arg)
+				if part_arg.endswith("\""):
+					break
 		else:
-			arg = args_or_arg
-			return arg
+			return args_or_arg
+		string_args: str = " ".join(args)
+		string_args = string_args.strip("\"")
+		return string_args
 
 	def checkForMissingRequiredParameters(self) -> None:
 		maybe_missing_required_parameters = self.parameters
@@ -196,23 +201,22 @@ class Content:
 					raise DeterminingParameterError(parameter)
 
 	def convertedArg(self, parameter: str, parameter_types: Union[Text,
-	Tuple[Required, Text]], target_arg: str) -> Union[None, Text]:
+	Tuple[Required, Text]], target_arg: str) -> str:
 		check_types: List[Text] = []
+		converted_arg: List[str] = []
 		self.generateCheckTypes(parameter_types, check_types)
 		target_arg_or_args: List[str] = target_arg.split()
-		for target_arg in target_arg_or_args:
-			for check_type in check_types:
+		for check_type in check_types:
+			for target_arg in target_arg_or_args:
 				try:
 					converted_arg_instance = check_type(target_arg)
-					converted_arg = converted_arg_instance.getText()
+					converted_arg.append(converted_arg_instance.getText())
 				except WrongTextTypeSignal:
 					self.wrong_text_type_signals.setdefault(target_arg, []).append(
 					(parameter, check_type))
 				except WrongActSignal:
 					raise ActParameterError(parameter)
-				else:
-					return converted_arg
-		return None
+		return " ".join(converted_arg)
 
 	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required,
 	Text]], check_types: List[Text]) -> None:
