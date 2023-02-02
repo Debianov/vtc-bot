@@ -23,7 +23,7 @@ class UserLog:
 	output: StrOrIntText, priority: IntText, other: StrOrIntText) -> None:
 		# TODO в стандарт d_name как нейминг в случае, если name уже есть в Python
 		# built-in.
-		print(name, target, other)
+		print(name, target, act, d_in, output, priority, other)
 		# targetInstance = TargetLog(name, target, act, d_in, output, priority,
 		# other)
 		# return targetInstance

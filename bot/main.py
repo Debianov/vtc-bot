@@ -4,6 +4,8 @@ from objects.exceptions import Error
 
 intents = discord.Intents.all()
 
+print(__name__)
+
 # TODO проблемка с логами.
 # handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
 
@@ -26,5 +28,6 @@ async def on_message(message_instance: discord.Message) -> None:
 		await message.handle()  # TODO антиспам, антифлуд, логирование и проч., и
 		# проч.
 
-with open("secret.sec") as text:
-	client.run(text.readline())
+if __name__ == "__main__":
+	with open("secret.sec") as text:
+		client.run(text.readline())
