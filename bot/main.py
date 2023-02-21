@@ -12,8 +12,7 @@ client = discord.Client(intents=intents)
 @client.event
 async def on_message(message_instance: discord.Message) -> None:
 	guild = Guild("sudo", "")
-	content = Content(message_instance.content, message_instance.mentions,
-	message_instance.channel_mentions)
+	content = Content(message_instance.content)
 	message = UserMessage(message_instance.id, message_instance.author,
 	111, guild, content, message_instance.channel) # TODO timer object.
 	if message.isCommand():

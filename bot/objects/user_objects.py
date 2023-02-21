@@ -62,13 +62,10 @@ class Guild:
 
 class Content:
 
-	def __init__(self, text: str, user_mentions: List[discord.abc.User],
-	channel_mentions: List[Union[discord.abc.GuildChannel]]) -> None: # TODO
+	def __init__(self, text: str) -> None: # TODO
 	# discord.Thread не могу вставить в Union: нету атрибута такого, хотя по
 	# докам всё сходится.
 		self.text = text
-		self.user_mentions = user_mentions
-		self.channel_mentions = channel_mentions
 		self.func: Callable[..., None] = dummyCommand
 		self.global_prefix: str = ""
 		self.access_prefix: str = ""
