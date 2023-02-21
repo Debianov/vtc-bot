@@ -29,7 +29,7 @@ class UserMessage(UserAction):
 		self.channel = channel
 
 	async def handle(self) -> None:
-		pass
+		await self.reply_by_custome_text("")
 
 	async def reply(self) -> None:
 		self.content.extractAccessPrefix(self.guild)
