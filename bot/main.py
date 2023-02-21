@@ -1,13 +1,11 @@
 import discord # TODO отсутствуют stubs-ы.
 from objects.user_objects import Guild, UserMessage, Content
 from objects.exceptions import Error
+import logging
 
 intents = discord.Intents.all()
 
-print(__name__)
-
-# TODO проблемка с логами.
-# handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
+discord.utils.setup_logging(level=logging.DEBUG)
 
 client = discord.Client(intents=intents)
 
