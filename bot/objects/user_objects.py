@@ -81,6 +81,9 @@ class Content:
 	def getGlobalPrefix(self) -> str:
 		return self.global_prefix
 
+	def getAccessPrefix(self) -> str:
+		return self.access_prefix
+
 	def getParameters(self) -> Dict[str, Text]:
 		return self.found_parameters
 
