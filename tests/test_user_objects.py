@@ -126,11 +126,8 @@ getGoodGuildInstance) -> None:
 def test_good_content_parses(user_message, expect_parameters_dict, getGoodGuildInstance) -> None:
 	guild = getGoodGuildInstance
 	instance = Content(user_message)
-	instance.extractGlobalPrefix(guild) # TODO при закоменчивании этих
-	# двух строк всё обваливается.
+	instance.extractGlobalPrefix(guild)
 	instance.extractAccessPrefix(guild)
-	# assert instance.getGlobalPrefix() == global_prefix
-	# assert instance.getAccessPrefix() == access_prefix
 	instance.extractCommand(commands_collection)
 	assert instance.getCommand() is UserLog.create
 	instance.extractParameters()
@@ -171,8 +168,7 @@ def test_good_content_parses(user_message, expect_parameters_dict, getGoodGuildI
 def test_bad_content_parses(user_message, expect_cls, getGoodGuildInstance) -> None:
 	guild = getGoodGuildInstance
 	instance = Content(user_message)
-	instance.extractGlobalPrefix(guild) # TODO при закоменчивании этих
-	# двух строк всё обваливается.
+	instance.extractGlobalPrefix(guild)
 	instance.extractAccessPrefix(guild)
 	instance.extractCommand(commands_collection)
 	assert instance.getCommand() is UserLog.create
