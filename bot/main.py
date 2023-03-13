@@ -25,6 +25,6 @@ async def on_message(message_instance: discord.Message) -> None:
 		await message.handle()  # TODO антиспам, антифлуд, логирование и проч., и
 		# проч.
 
-if __name__ == "__main__":
+def run():
 	with open("secret.sec") as text:
 		client.run(text.readline())
