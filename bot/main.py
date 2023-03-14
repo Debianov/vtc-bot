@@ -1,6 +1,6 @@
 import discord # TODO отсутствуют stubs-ы.
-from objects.user_objects import Guild, UserMessage, Content
-from objects.exceptions import Error
+from bot.objects.user_objects import Guild, UserMessage, Content
+from bot.objects.exceptions import Error
 import logging
 
 intents = discord.Intents.all()

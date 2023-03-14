@@ -1,8 +1,8 @@
 from inspect import getfullargspec
 from typing import Dict, Callable, Any, Union, Tuple
 
-from objects.commands import Required
-from objects.text import Text
+from bot.objects.commands import Required
+from bot.objects.text import Text
 
 def getCallSignature(instance: Callable[[Any], Any]) -> Dict[str, Any]:
 	result: Dict[str, Union[str, Tuple[Required, Text]]] = {}

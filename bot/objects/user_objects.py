@@ -4,7 +4,7 @@ from types import UnionType
 import discord
 
 from .commands import commands_collection, dummyCommand, Required
-from utils import getCallSignature, ArgAndParametersList
+from bot.utils import getCallSignature, ArgAndParametersList
 from .text import Text
 from .exceptions import DeterminingParameterError, ActParameterError,\
 WrongTextTypeSignal, WrongActSignal, UnmatchingParameterTypeError
