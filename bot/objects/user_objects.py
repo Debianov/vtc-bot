@@ -90,19 +90,27 @@ class Content:
 	def getCommand(self) -> Callable[[Any], None]:
 		return self.func
 
-	def extractGlobalPrefix(self, guild: Guild) -> None:
+	def extractPrefixes(self) -> None:
 		if not self.copy_text:
 			self.createTextCopy()
-		if self.copy_text.startswith(guild.getGlobalPrefix()):
-			self.copy_text = self.copy_text.removeprefix(guild.getGlobalPrefix() + " ")
-			self.global_prefix = guild.getGlobalPrefix()
+		self.extractGlobalPrefix()
+		self.extractAccessPrefix()
+		self.removeSpaceAfterPrefixes()
 
-	def extractAccessPrefix(self, guild: Guild) -> None:
-		if not self.copy_text:
-			self.createTextCopy()
-		if self.copy_text.startswith(guild.getAccessPrefix()):
-			self.copy_text = self.copy_text.removeprefix(guild.getAccessPrefix() + " ")
-			self.access_prefix = guild.getAccessPrefix()
+	def extractGlobalPrefix(self) -> None:
+		if not self.global_prefix:
+			if self.copy_text.startswith(self.current_global_prefix):
+				self.copy_text = self.copy_text.removeprefix(self.current_global_prefix)
+				self.global_prefix = self.current_global_prefix
+
+	def extractAccessPrefix(self) -> None:
+		if not self.access_prefix:
+			if self.copy_text.startswith(self.current_access_prefix):
+				self.copy_text = self.copy_text.removeprefix(self.current_access_prefix + " ")
+				self.access_prefix = self.current_access_prefix
+
+	def removeSpaceAfterPrefixes(self) -> None:
+		self.copy_text = self.copy_text.removeprefix(" ")
 
 	def extractCommand(self, name_extraction_object:
 		Dict[str, Callable[..., None]]) -> None:

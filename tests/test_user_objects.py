@@ -19,7 +19,7 @@ def test_user_action_abstract_class(d_id, author, start_time) -> None:
 @pytest.mark.asyncio
 async def test_user_message_without_command(getGoodGuildInstance) -> None:
 	instance = UserMessage(13423, pytest.MockMember(), time.time(),
-	getGoodGuildInstance, Content("rock"), pytest.MockChannel())
+	getGoodGuildInstance, Content("rock", "", ""), pytest.MockChannel())
 	await instance.reply()
 	# TODO const
 	assert pytest.response_to_test_messages.get_first_str() == "Не очень успешно!"
@@ -39,7 +39,7 @@ async def test_user_message_without_command(getGoodGuildInstance) -> None:
 @pytest.mark.asyncio
 async def test_user_message_reply(getGoodGuildInstance) -> None:
 	instance = UserMessage(13423, pytest.MockMember(), time.time(),
-	getGoodGuildInstance, Content(""), pytest.MockChannel())
+	getGoodGuildInstance, Content("", "", ""), pytest.MockChannel())
 	reply_message = "stat"
 	await instance.reply_by_custome_text(reply_message)
 	assert pytest.response_to_test_messages.get_first_str() == reply_message
@@ -76,12 +76,10 @@ def test_guild_class(global_prefix, access_prefix) -> None:
 )
 def test_prefixes_parse(user_message, global_prefix, access_prefix,
 getGoodGuildInstance) -> None:
-	guild = getGoodGuildInstance
-	instance = Content(user_message.format(pytest.global_prefix, pytest.access_prefix))
-	instance.extractGlobalPrefix(guild)
-	instance.extractAccessPrefix(guild)
-	assert instance.getGlobalPrefix() == pytest.global_prefix
-	assert instance.getAccessPrefix() == pytest.access_prefix
+	instance = Content(user_message.format(global_prefix, access_prefix), global_prefix, access_prefix)
+	instance.extractPrefixes()
+	assert instance.getGlobalPrefix() == global_prefix
+	assert instance.getAccessPrefix() == access_prefix
 	instance.extractCommand(commands_collection)
 	assert instance.getCommand() is UserLog.create
 
@@ -125,9 +123,8 @@ getGoodGuildInstance) -> None:
 )
 def test_good_content_parses(user_message, expect_parameters_dict, getGoodGuildInstance) -> None:
 	guild = getGoodGuildInstance
-	instance = Content(user_message)
-	instance.extractGlobalPrefix(guild)
-	instance.extractAccessPrefix(guild)
+	instance = Content(user_message, guild.getGlobalPrefix(), guild.getAccessPrefix())
+	instance.extractPrefixes()
 	instance.extractCommand(commands_collection)
 	assert instance.getCommand() is UserLog.create
 	instance.extractParameters()
@@ -167,9 +164,8 @@ def test_good_content_parses(user_message, expect_parameters_dict, getGoodGuildI
 )
 def test_bad_content_parses(user_message, expect_cls, getGoodGuildInstance) -> None:
 	guild = getGoodGuildInstance
-	instance = Content(user_message)
-	instance.extractGlobalPrefix(guild)
-	instance.extractAccessPrefix(guild)
+	instance = Content(user_message, guild.getGlobalPrefix(), guild.getAccessPrefix())
+	instance.extractPrefixes()
 	instance.extractCommand(commands_collection)
 	assert instance.getCommand() is UserLog.create
 	with pytest.raises(expect_cls):
