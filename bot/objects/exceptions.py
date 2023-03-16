@@ -47,34 +47,31 @@ class ActParameterError(ParameterError):
 
 	def __init__(self, parameter_name: str) -> None:
 		super().__init__(parameter_name)
-		self.text = "Убедитесь, что вы указали знак действия в параметре {}".\
+		self.error_text = "Убедитесь, что вы указали знак действия в параметре {}".\
 		format(self.parameter_name) # TODO embedded
 
 class UnmatchingParameterTypeError(ParameterError):
 
-	def __init__(self, arg: str, arg_signature: Tuple[str, 'Text']):
+	def __init__(self, arg: str, arg_signature: Tuple[str, 'Text']): # TODO было бы не плохо уточнить, что речь
+		# идёт о parameter и parameter_type, сделав это через аннотации.
 		self.arg_signature = arg_signature
 		self.arg = arg
-		self.text = ""
+		self.error_text = ""
 
 	def getText(self) -> str:
+		if not self.error_text:
+			self.createErrorText()
+		return self.error_text
+
+	def createErrorText(self) -> None:
 		self.extractArgSignature()
-		self.createErrorText()
-		return self.text
+		self.error_text = ("Тип \"{}\" не соответствует значению \"{}\" в параметре"
+		" \"{}\". Пожалуйста, исправьте значение.").format(self.parameter_type,
+		self.arg, self.parameter_name)
 
 	def extractArgSignature(self) -> None:
 		self.parameter_name = self.arg_signature[0]
 		self.parameter_type = self.arg_signature[1]
-
-	def createErrorText(self) -> None:
-		self.processErrorParameterType()
-		self.text = ("Тип \"{}\" не соответствует значению \"{}\" в параметре"
-		" \"{}\". Пожалуйста, исправьте значение.").format(self.parameter_type,
-		self.arg, self.parameter_name)
-
-	def processErrorParameterType(self) -> None:
-		if self.parameter_type.userfriendly_name not in ascii_letters:
-			self.parameter_type = self.parameter_type.userfriendly_name.lower()
 
 class Signal(Exception):
 	pass
