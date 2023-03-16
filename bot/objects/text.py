@@ -8,16 +8,22 @@ class Text:
 
 	def __init__(self, text: str) -> None:
 		self.text = text
+		self.processed_text: str = ""
 
 	def __repr__(self) -> str:
 		return self.getText()
 
 	def getText(self) -> str:
-		self.checkText()
 		return self.text
+
+	def getProcessedText(self) -> str:
+		return self.processed_text
 
 	def checkText(self) -> None:
 		pass
+
+	def processText(self) -> None:
+		self.processed_text = self.text
 
 class ActText(Text):
 
@@ -29,18 +35,14 @@ class ActText(Text):
 
 	def checkText(self) -> None:
 		for act_element in [self.ADD_ACT, self.DELETE_ACT, self.CHANGE_ACT]:
-			if act_element not in self.text:
-				raise WrongActSignal
-			else:
-				break
+			if act_element == self.text[0]:
+				return
+		raise WrongActSignal
 
 class DummyText(Text):
 	
 	def __init__(self, text: str) -> None:
 		self.text = text
-
-	def getText(self) -> str:
-		return self.text
 
 class StrOrIntText(Text):
 
@@ -73,13 +75,13 @@ class MentionText(Text):
 		if not (self.text.startswith(self.LEFT_BRACKET) and
 		self.text.endswith(self.RIGHT_BRACKET)):
 			raise WrongTextTypeSignal
-		self.processText()
-		if not self.text[1:].isdigit():
+		if not self.text[2:-1].isdigit(): # TODO можно ли сюда прикрутить IntText?
 			raise WrongTextTypeSignal
 
 	def processText(self) -> None:
-		self.text = self.text.removeprefix(self.LEFT_BRACKET)
-		self.text = self.text.removesuffix(self.RIGHT_BRACKET)
+		super().processText()
+		self.processed_text = self.processed_text.removeprefix(self.LEFT_BRACKET)
+		self.processed_text = self.processed_text.removesuffix(self.RIGHT_BRACKET)
 
 class ChannelMentionText(MentionText):
 
@@ -89,7 +91,7 @@ class ChannelMentionText(MentionText):
 
 	def checkText(self) -> None:
 		super().checkText()
-		if not self.text.startswith(self.INDICATOR):
+		if not self.text[1:].startswith(self.INDICATOR):
 			raise WrongTextTypeSignal
 
 class UserMentionText(MentionText):
@@ -100,5 +102,5 @@ class UserMentionText(MentionText):
 
 	def checkText(self) -> None:
 		super().checkText()
-		if not self.text.startswith(self.INDICATOR):
+		if not self.text[1:].startswith(self.INDICATOR):
 			raise WrongTextTypeSignal

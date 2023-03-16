@@ -209,7 +209,7 @@ class Content:
 					converted_arg_instance = check_type(arg) # TODO нейминги.
 					converted_arg_instance.checkText()
 					converted_arg_instance.processText()
-					converted_args.append(converted_arg_instance.getText())
+					converted_args.append(converted_arg_instance.getProcessedText())
 				except WrongTextTypeSignal:
 					self.args_with_wrong_text_type.setdefault(arg, []).append(
 					(parameter, check_type))

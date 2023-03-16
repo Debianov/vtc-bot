@@ -122,7 +122,7 @@ def test_good_mention_text_definition(user_text) -> None:
 	instance = MentionText(user_text)
 	instance.checkText()
 	instance.processText()
-	assert instance.getText() == user_text.removeprefix("<").removesuffix(">")
+	assert instance.getProcessedText() == user_text.removeprefix("<").removesuffix(">")
 
 @pytest.mark.parametrize(
 	"user_text", 
@@ -141,7 +141,7 @@ def test_good_channel_mention_text_definition(user_text) -> None:
 	instance = ChannelMentionText(user_text)
 	instance.checkText()
 	instance.processText()
-	assert instance.getText() == user_text.removeprefix("<").removesuffix(">")
+	assert instance.getProcessedText() == user_text.removeprefix("<").removesuffix(">")
 
 @pytest.mark.parametrize(
 	"user_text", 
@@ -160,7 +160,7 @@ def test_good_user_mention_text_definition(user_text) -> None:
 	instance = UserMentionText(user_text)
 	instance.checkText()
 	instance.processText()
-	assert instance.getText() == user_text.removeprefix("<").removesuffix(">")
+	assert instance.getProcessedText() == user_text.removeprefix("<").removesuffix(">")
 
 @pytest.mark.parametrize(
 	"user_text", 
