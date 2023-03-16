@@ -27,12 +27,12 @@ class UserMessage(UserAction):
 		self.guild = guild
 		self.content = content
 		self.channel = channel
+		self.content.extractPrefixes()
 
 	async def handle(self) -> None:
 		pass
 
 	async def reply(self) -> None:
-		self.content.extractAccessPrefix(self.guild)
 		self.content.extractCommand(commands_collection)
 		self.content.extractParameters()
 		method = self.content.getCommand()
@@ -115,7 +115,8 @@ class Content:
 		self.copy_text = self.copy_text.removeprefix(" ")
 
 	def extractCommand(self, name_extraction_object:
-		Dict[str, Callable[..., None]]) -> None:
+		Dict[str, Union[Callable[..., None], Dict[str,
+		Callable[..., None]]]]) -> None:
 		# TODO сделать особый тип str, где есть разделение |, которое используется в
 		# распознавании алиасов одной и той же команды.
 		# TODO и тут в name_extraction_object аннотация слишком большая. Не создать
@@ -137,7 +138,7 @@ class Content:
 		getCallSignature(self.func)
 		self.found_parameters: Dict[str, Text] = {}
 		self.unfound_args: List[str] = []
-		self.wrong_text_type_signals: Dict[str, List[Tuple[str, Text]]] = {}
+		self.args_with_wrong_text_type: Dict[str, List[Tuple[str, Text]]] = {}
 		self.split_user_text = ArgAndParametersList(self.copy_text.split())
 		while self.split_user_text:
 			parameter_or_parameter_arg = self.split_user_text.popWithSpaceRemoving(0)
@@ -149,7 +150,7 @@ class Content:
 				parameter_arg = parameter_or_parameter_arg
 				parameter_arg = self.extractArgsGroup(parameter_arg)
 				self.extractImplicitParameter(parameter_arg)
-		self.checkSplitUserText()
+		self.checkUnfoundArgs()
 		self.checkForMissingRequiredParameters()
 		self.extendParametersByOptionalParameters()
 
@@ -160,9 +161,9 @@ class Content:
 		parameter_without_prefix = parameter.removeprefix("-")
 		if parameter_without_prefix in self.parameters:
 			parameter_types = self.parameters[parameter_without_prefix]
-			converted_arg = self.convertedArg(parameter, parameter_types, arg)
-			if converted_arg:
-				self.found_parameters[parameter_without_prefix] = converted_arg
+			converted_args = self.convertedArg(parameter, parameter_types, arg)
+			if converted_args:
+				self.found_parameters[parameter_without_prefix] = converted_args
 				self.parameters.pop(parameter_without_prefix)
 			else:
 				self.unfound_args.append(arg)
@@ -172,9 +173,9 @@ class Content:
 		# arg.
 		found_parameters: Dict[str, Text] = {}
 		for (parameter, parameter_types) in self.parameters.items():
-			converted_arg = self.convertedArg(parameter, parameter_types, arg)
-			if converted_arg:
-				self.found_parameters[parameter] = converted_arg
+			converted_args = self.convertedArg(parameter, parameter_types, arg)
+			if converted_args:
+				self.found_parameters[parameter] = converted_args
 				self.parameters.pop(parameter)
 				break
 		else:
@@ -186,7 +187,7 @@ class Content:
 			args = args_or_arg.removeprefix("\"")
 			while True:
 				args += " " + self.split_user_text.popWithSpaceRemoving(0)
-				if args.endswith("\""): # TODO bag zone.
+				if args.endswith("\""): # TODO bag zone + сделать ошибку для группы аргументов
 					break
 			args = args.removesuffix("\"")
 		return args or args_or_arg
@@ -196,35 +197,25 @@ class Content:
 			return True
 		return False
 
-	def checkForMissingRequiredParameters(self) -> None:
-		maybe_missing_required_parameters = self.parameters
-		for (parameter, parameter_types) in\
-		maybe_missing_required_parameters.items():
-			try: #? лучше, чем через isinstance?
-				parameter_required_or_not = Required in parameter_types
-			except TypeError:
-				parameter_required_or_not = Required is parameter_types
-			finally:
-				if parameter_required_or_not:
-					raise DeterminingParameterError(parameter)
-
 	def convertedArg(self, parameter: str, parameter_types: Union[Text,
-	Tuple[Required, Text]], target_arg: str) -> str:
+	Tuple[Required, Text]], arg: str) -> str:
 		check_types: List[Text] = []
-		converted_arg: List[str] = []
+		converted_args: List[str] = []
 		self.generateCheckTypes(parameter_types, check_types)
-		target_arg_or_args: List[str] = target_arg.split()
+		arg_or_args: List[str] = arg.split() # TODO а зачем тогда мы их в строку переводим, если они здесь разбиваются в список?
 		for check_type in check_types:
-			for target_arg in target_arg_or_args:
+			for arg in arg_or_args:
 				try:
-					converted_arg_instance = check_type(target_arg)
-					converted_arg.append(converted_arg_instance.getText())
+					converted_arg_instance = check_type(arg) # TODO нейминги.
+					converted_arg_instance.checkText()
+					converted_arg_instance.processText()
+					converted_args.append(converted_arg_instance.getText())
 				except WrongTextTypeSignal:
-					self.wrong_text_type_signals.setdefault(target_arg, []).append(
+					self.args_with_wrong_text_type.setdefault(arg, []).append(
 					(parameter, check_type))
 				except WrongActSignal:
 					raise ActParameterError(parameter)
-		return " ".join(converted_arg)
+		return " ".join(converted_args)
 
 	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required,
 	Text]], check_types: List[Text]) -> None:
@@ -251,16 +242,28 @@ class Content:
 			result.append(parameter_type)
 		return result
 
-	def checkSplitUserText(self) -> None:
+	def checkUnfoundArgs(self) -> None:
 		if not self.unfound_args:
 			return
-		for text in self.unfound_args:
-			if text in self.wrong_text_type_signals:
-				raise UnmatchingParameterTypeError(text,
-				self.wrong_text_type_signals.get(text)[0]) # TODO множество типов.
+		for unfound_arg in self.unfound_args:
+			if unfound_arg in self.args_with_wrong_text_type:
+				raise UnmatchingParameterTypeError(unfound_arg,
+				self.args_with_wrong_text_type.get(unfound_arg)[0]) # TODO вывод типов, которые, возможно, имелись ввиду, организовать.
+
+	def checkForMissingRequiredParameters(self) -> None:
+		maybe_missing_required_parameters = self.parameters
+		for (parameter, parameter_types) in\
+		maybe_missing_required_parameters.items():
+			try: #? лучше, чем через isinstance?
+				parameter_required_or_not = Required in parameter_types
+			except TypeError:
+				parameter_required_or_not = Required is parameter_types
+			finally:
+				if parameter_required_or_not:
+					raise DeterminingParameterError(parameter)
 
 	def extendParametersByOptionalParameters(self) -> None:
 		current_command_signature = getCallSignature(self.func)
-		for key in current_command_signature:
-			if key not in self.found_parameters:
-				self.found_parameters.update({key: ""})
+		for parameter in current_command_signature:
+			if parameter not in self.found_parameters:
+				self.found_parameters.update({parameter: ""})
