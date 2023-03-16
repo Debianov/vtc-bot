@@ -75,8 +75,8 @@ class MentionText(Text):
 		if not (self.text.startswith(self.LEFT_BRACKET) and
 		self.text.endswith(self.RIGHT_BRACKET)):
 			raise WrongTextTypeSignal
-		if not self.text[2:-1].isdigit(): # TODO можно ли сюда прикрутить IntText?
-			raise WrongTextTypeSignal
+		text_instance = IntText(self.text[2:-1])
+		text_instance.checkText()
 
 	def processText(self) -> None:
 		super().processText()
