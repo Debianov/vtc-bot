@@ -66,6 +66,8 @@ class Content:
 	# discord.Thread не могу вставить в Union: нету атрибута такого, хотя по
 	# докам всё сходится.
 		self.text = text
+		self.current_global_prefix = current_global_prefix
+		self.current_access_prefix = current_access_prefix
 		self.func: Callable[..., None] = dummyCommand
 		self.global_prefix: str = ""
 		self.access_prefix: str = ""
