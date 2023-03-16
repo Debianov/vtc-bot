@@ -147,7 +147,7 @@ class Content:
 				self.extractExplicitParameter(parameter)
 			else:
 				parameter_arg = parameter_or_parameter_arg
-				parameter_arg = self.extractArgsIfThereAreSeveral(parameter_arg)
+				parameter_arg = self.extractArgsGroup(parameter_arg)
 				self.extractImplicitParameter(parameter_arg)
 		self.checkSplitUserText()
 		self.checkForMissingRequiredParameters()
@@ -155,7 +155,7 @@ class Content:
 
 	def extractExplicitParameter(self, parameter: str) -> None:
 		arg = self.split_user_text.popWithSpaceRemoving(0)
-		arg = self.extractArgsIfThereAreSeveral(arg)
+		arg = self.extractArgsGroup(arg)
 		found_parameters: Dict[str, Text] = {}
 		parameter_without_prefix = parameter.removeprefix("-")
 		if parameter_without_prefix in self.parameters:
@@ -180,20 +180,21 @@ class Content:
 		else:
 			self.unfound_args.append(arg)
 
-	def extractArgsIfThereAreSeveral(self, args_or_arg: str) -> str:
-		args: List[str] = []
-		if args_or_arg.startswith("\""):
-			args.append(args_or_arg)
+	def extractArgsGroup(self, args_or_arg: str) -> str:
+		args: str = ""
+		if self.isArgsGroup(args_or_arg):
+			args = args_or_arg.removeprefix("\"")
 			while True:
-				part_arg = self.split_user_text.popWithSpaceRemoving(0)
-				args.append(part_arg)
-				if part_arg.endswith("\""):
+				args += " " + self.split_user_text.popWithSpaceRemoving(0)
+				if args.endswith("\""): # TODO bag zone.
 					break
-		else:
-			return args_or_arg
-		string_args: str = " ".join(args)
-		string_args = string_args.strip("\"")
-		return string_args
+			args = args.removesuffix("\"")
+		return args or args_or_arg
+
+	def isArgsGroup(self, args_or_arg: str) -> bool:
+		if args_or_arg.startswith("\""): # TODO метод проверки нужно будет поменять (ну или подумать над ним хотя б).
+			return True
+		return False
 
 	def checkForMissingRequiredParameters(self) -> None:
 		maybe_missing_required_parameters = self.parameters
