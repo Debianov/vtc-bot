@@ -21,11 +21,15 @@ class UndefinedError(Error):
 class ParameterError(Error):
 
 	def __init__(self, parameter_name: str) -> None:
+		super().__init__("")
 		self.parameter_name = parameter_name
 		self.processParameterName()
 
 	def getText(self) -> str:
 		return self.error_text
+
+	def getParameterName(self) -> str:
+		return self.parameter_name
 
 	def processParameterName(self) -> None:
 		if self.parameter_name.startswith("d_"):
@@ -54,6 +58,7 @@ class UnmatchingParameterTypeError(ParameterError):
 
 	def __init__(self, arg: str, arg_signature: Tuple[str, 'Text']): # TODO было бы не плохо уточнить, что речь
 		# идёт о parameter и parameter_type, сделав это через аннотации.
+		super().__init__(arg_signature[0])
 		self.arg_signature = arg_signature
 		self.arg = arg
 		self.error_text = ""
@@ -70,7 +75,6 @@ class UnmatchingParameterTypeError(ParameterError):
 		self.arg, self.parameter_name)
 
 	def extractArgSignature(self) -> None:
-		self.parameter_name = self.arg_signature[0]
 		self.parameter_type = self.arg_signature[1]
 
 class Signal(Exception):
