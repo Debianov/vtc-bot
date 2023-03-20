@@ -1,3 +1,4 @@
+# 	# TODO надо что-то с ошибками types делать. Пока не критично.
 from typing import Union, List, Dict, Tuple, Callable, Any, get_args,\
 get_origin
 from types import UnionType
@@ -29,8 +30,10 @@ class UserMessage(UserAction):
 		self.channel = channel
 		self.content.extractPrefixes()
 
-	async def handle(self) -> None:
-		pass
+	def isCommand(self) -> bool:
+		if self.content.getGlobalPrefix():
+			return True
+		return False
 
 	async def reply(self) -> None:
 		self.content.extractCommand(commands_collection)
@@ -42,11 +45,8 @@ class UserMessage(UserAction):
 	async def reply_by_custome_text(self, text: str) -> None:
 		await self.channel.send(text)
 
-	def isCommand(self) -> bool:
-		self.content.extractGlobalPrefix(self.guild)
-		if self.content.getGlobalPrefix():
-			return True
-		return False
+	async def handle(self) -> None:
+		pass
 
 class Guild:
 
@@ -71,14 +71,14 @@ class Content:
 		self.func: Callable[..., None] = dummyCommand
 		self.global_prefix: str = ""
 		self.access_prefix: str = ""
-		self.parameters: Dict[str, Text] = {}
-		self.copy_text: str = ""
+		self.expect_parameters: Dict[str, Text] = {}
+		self.original_parameters_text: str = ""
 
 	def __str__(self) -> str:
-		return self.text
+		return self.original_text
 
 	def createTextCopy(self) -> None:
-		self.copy_text = self.text
+		self.original_parameters_text = self.original_text
 
 	def getGlobalPrefix(self) -> str:
 		return self.global_prefix
@@ -93,7 +93,7 @@ class Content:
 		return self.func
 
 	def extractPrefixes(self) -> None:
-		if not self.copy_text:
+		if not self.original_parameters_text:
 			self.createTextCopy()
 		self.extractGlobalPrefix()
 		self.extractAccessPrefix()
@@ -101,18 +101,18 @@ class Content:
 
 	def extractGlobalPrefix(self) -> None:
 		if not self.global_prefix:
-			if self.copy_text.startswith(self.current_global_prefix):
-				self.copy_text = self.copy_text.removeprefix(self.current_global_prefix)
+			if self.original_parameters_text.startswith(self.current_global_prefix):
+				self.original_parameters_text = self.original_parameters_text.removeprefix(self.current_global_prefix)
 				self.global_prefix = self.current_global_prefix
 
 	def extractAccessPrefix(self) -> None:
 		if not self.access_prefix:
-			if self.copy_text.startswith(self.current_access_prefix):
-				self.copy_text = self.copy_text.removeprefix(self.current_access_prefix + " ")
+			if self.original_parameters_text.startswith(self.current_access_prefix):
+				self.original_parameters_text = self.original_parameters_text.removeprefix(self.current_access_prefix + " ")
 				self.access_prefix = self.current_access_prefix
 
 	def removeSpaceAfterPrefixes(self) -> None:
-		self.copy_text = self.copy_text.removeprefix(" ")
+		self.original_parameters_text = self.original_parameters_text.removeprefix(" ")
 
 	def extractCommand(self, name_extraction_object:
 		Dict[str, Union[Callable[..., None], Dict[str,
@@ -124,8 +124,8 @@ class Content:
 		for extract_name in name_extraction_object:
 			command_names = extract_name.split("|")
 			for command_name in command_names:
-				if self.copy_text.startswith(command_name):
-					self.copy_text = self.copy_text.removeprefix(command_name + " ")
+				if self.original_parameters_text.startswith(command_name):
+					self.original_parameters_text = self.original_parameters_text.removeprefix(command_name + " ")
 					value = name_extraction_object[extract_name]
 					if isinstance(value, dict):
 						self.extractCommand(value)
@@ -134,12 +134,12 @@ class Content:
 					break
 
 	def extractParameters(self) -> None: # TODO обработка пар параметров.
-		self.parameters = all_parameters_current_command =\
+		self.expect_parameters = all_parameters_current_command =\
 		getCallSignature(self.func)
 		self.found_parameters: Dict[str, Text] = {}
 		self.unfound_args: List[str] = []
 		self.args_with_wrong_text_type: Dict[str, List[Tuple[str, Text]]] = {}
-		self.split_user_text = ArgAndParametersList(self.copy_text.split())
+		self.split_user_text = ArgAndParametersList(self.original_parameters_text.split())
 		while self.split_user_text:
 			parameter_or_parameter_arg = self.split_user_text.popWithSpaceRemoving(0)
 			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может
@@ -157,26 +157,24 @@ class Content:
 	def extractExplicitParameter(self, parameter: str) -> None:
 		arg = self.split_user_text.popWithSpaceRemoving(0)
 		arg = self.extractArgsGroup(arg)
-		found_parameters: Dict[str, Text] = {}
 		parameter_without_prefix = parameter.removeprefix("-")
-		if parameter_without_prefix in self.parameters:
-			parameter_types = self.parameters[parameter_without_prefix]
+		if parameter_without_prefix in self.expect_parameters:
+			parameter_types = self.expect_parameters[parameter_without_prefix]
 			converted_args = self.convertedArg(parameter, parameter_types, arg)
 			if converted_args:
 				self.found_parameters[parameter_without_prefix] = converted_args
-				self.parameters.pop(parameter_without_prefix)
+				self.expect_parameters.pop(parameter_without_prefix)
 			else:
 				self.unfound_args.append(arg)
 
 	def extractImplicitParameter(self, arg: str) -> None: # TODO честно
 		# говоря, в этих двух методах назревает мысль создать отдельный класс для
 		# arg.
-		found_parameters: Dict[str, Text] = {}
-		for (parameter, parameter_types) in self.parameters.items():
+		for (parameter, parameter_types) in self.expect_parameters.items():
 			converted_args = self.convertedArg(parameter, parameter_types, arg)
 			if converted_args:
 				self.found_parameters[parameter] = converted_args
-				self.parameters.pop(parameter)
+				self.expect_parameters.pop(parameter)
 				break
 		else:
 			self.unfound_args.append(arg)
@@ -219,8 +217,7 @@ class Content:
 
 	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required,
 	Text]], check_types: List[Text]) -> None:
-		if isinstance(parameter_types, tuple) and parameter_types is not Required:
-			# Required не трогаем. Он проверяется отдельно (checkForNotFoundParameters).
+		if isinstance(parameter_types, tuple):
 			for parameter_type in parameter_types:
 				if self.isUnionType(parameter_type):
 					check_types.extend(self.extractUnionType(parameter_type))
@@ -246,12 +243,12 @@ class Content:
 		if not self.unfound_args:
 			return
 		for unfound_arg in self.unfound_args:
-			if unfound_arg in self.args_with_wrong_text_type:
+			if unfound_arg in self.args_with_wrong_text_type: # TODO в args_with_wrong... у нас выводятся все сигналы, в т.ч и ложные.
 				raise UnmatchingParameterTypeError(unfound_arg,
 				self.args_with_wrong_text_type.get(unfound_arg)[0]) # TODO вывод типов, которые, возможно, имелись ввиду, организовать.
 
 	def checkForMissingRequiredParameters(self) -> None:
-		maybe_missing_required_parameters = self.parameters
+		maybe_missing_required_parameters = self.expect_parameters
 		for (parameter, parameter_types) in\
 		maybe_missing_required_parameters.items():
 			try: #? лучше, чем через isinstance?
