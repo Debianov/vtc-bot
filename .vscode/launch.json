@@ -5,12 +5,13 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Python: Current File",
+			"name": "Debug bot",
 			"type": "python",
 			"request": "launch",
-			"program": "${file}",
+			// "program": "${file}",
 			"console": "integratedTerminal",
-			"justMyCode": false
+			"justMyCode": true,
+			"module": "bot.main"
 		}
 	]
 }
