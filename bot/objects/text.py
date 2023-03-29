@@ -1,10 +1,13 @@
-from typing import Final
+from typing import Final, List
 
 from .exceptions import WrongActSignal, WrongTextTypeSignal
+from ..utils import isDigitWithSpace, getBracketNotationStatus
 
 class Text:
 
 	userfriendly_name: str = "Системный тип"
+
+	constants: List[str] = []
 
 	def __init__(self, text: str) -> None:
 		self.text = text
@@ -63,7 +66,9 @@ class IntText(Text):
 	userfriendly_name: str = "Число"
 
 	def checkText(self) -> None:
-		if not self.text.isdigit():
+		string_with_digit = isDigitWithSpace(self.text, self.constants)
+		self.constants.clear()
+		if not string_with_digit:
 			raise WrongTextTypeSignal
 
 class MentionText(Text):
@@ -71,36 +76,40 @@ class MentionText(Text):
 	LEFT_BRACKET: Final = "<"
 	RIGHT_BRACKET: Final = ">"
 
+	CHANNEL_MENTION_INDICATOR: Final = "#"
+	USER_MENTION_INDICATOR: Final = "@"
+
 	def checkText(self) -> None:
-		if not (self.text.startswith(self.LEFT_BRACKET) and
-		self.text.endswith(self.RIGHT_BRACKET)):
-			raise WrongTextTypeSignal
-		text_instance = IntText(self.text[2:-1])
+		if not self.text.startswith(self.LEFT_BRACKET):
+			raise WrongTextTypeSignal()
+		if not getBracketNotationStatus(self.text, self.LEFT_BRACKET, self.RIGHT_BRACKET):
+			raise WrongTextTypeSignal()
+		self.constants.extend([self.LEFT_BRACKET, self.RIGHT_BRACKET, self.CHANNEL_MENTION_INDICATOR, self.USER_MENTION_INDICATOR])
+		# TODO добить список, чтобы его не переёбывало.
+		text_instance = IntText(self.text)
 		text_instance.checkText()
 
 	def processText(self) -> None:
 		super().processText()
-		self.processed_text = self.processed_text.removeprefix(self.LEFT_BRACKET)
-		self.processed_text = self.processed_text.removesuffix(self.RIGHT_BRACKET)
+		self.processed_text = self.processed_text.replace(self.LEFT_BRACKET, "")
+		self.processed_text = self.processed_text.replace(self.RIGHT_BRACKET, "")
 
 class ChannelMentionText(MentionText):
-
-	INDICATOR: Final = "#"
 
 	userfriendly_name: str = "Упоминание канала"
 
 	def checkText(self) -> None:
+		self.constants.append(self.CHANNEL_MENTION_INDICATOR)
 		super().checkText()
-		if not self.text[1:].startswith(self.INDICATOR):
+		if not self.text[1:].startswith(self.CHANNEL_MENTION_INDICATOR):
 			raise WrongTextTypeSignal
 
 class UserMentionText(MentionText):
 
-	INDICATOR: Final = "@"
-
 	userfriendly_name: str = "Упоминание пользователя"
 
 	def checkText(self) -> None:
+		self.constants.append(self.USER_MENTION_INDICATOR)
 		super().checkText()
-		if not self.text[1:].startswith(self.INDICATOR):
+		if not self.text[1:].startswith(self.USER_MENTION_INDICATOR):
 			raise WrongTextTypeSignal

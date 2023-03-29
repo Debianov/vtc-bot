@@ -56,12 +56,12 @@ class ActParameterError(ParameterError):
 
 class UnmatchingParameterTypeError(ParameterError):
 
-	def __init__(self, arg: str, arg_signature: Tuple[str, 'Text']): # TODO было бы не плохо уточнить, что речь
+	def __init__(self, arg: str, parameter_name: str, expect_parameter_types: Tuple['Text']): # TODO было бы не плохо уточнить, что речь
 		# идёт о parameter и parameter_type, сделав это через аннотации.
-		super().__init__(arg_signature[0])
-		self.arg_signature = arg_signature
+		super().__init__(parameter_name)
 		self.arg = arg
 		self.error_text = ""
+		self.expect_parameter_types: Tuple['Text'] = expect_parameter_types
 
 	def getText(self) -> str:
 		if not self.error_text:
@@ -69,13 +69,9 @@ class UnmatchingParameterTypeError(ParameterError):
 		return self.error_text
 
 	def createErrorText(self) -> None:
-		self.extractArgSignature()
-		self.error_text = ("Тип \"{}\" не соответствует значению \"{}\" в параметре"
-		" \"{}\". Пожалуйста, исправьте значение.").format(self.parameter_type,
-		self.arg, self.parameter_name)
-
-	def extractArgSignature(self) -> None:
-		self.parameter_type = self.arg_signature[1]
+		# TODO нормальный вывод типов.
+		self.error_text = ("Значение \"{}\" не соответствует типам: {} в параметре \"{}\". Пажалуста,"
+		"измените значение параметра, либо укажите параметр явно.").format(self.arg, self.expect_parameter_types, self.parameter_name)
 
 class Signal(Exception):
 	pass

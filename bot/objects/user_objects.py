@@ -1,5 +1,5 @@
 # 	# TODO надо что-то с ошибками types делать. Пока не критично.
-from typing import Union, List, Dict, Tuple, Callable, Any, get_args,\
+from typing import Union, List, Dict, Tuple, Callable, Any, Optional, get_args,\
 get_origin
 from types import UnionType
 import discord
@@ -62,10 +62,10 @@ class Guild:
 
 class Content:
 
-	def __init__(self, text: str) -> None: # TODO
+	def __init__(self, text: str, current_global_prefix: str, current_access_prefix: str) -> None: # TODO
 	# discord.Thread не могу вставить в Union: нету атрибута такого, хотя по
 	# докам всё сходится.
-		self.text = text
+		self.original_text = text
 		self.current_global_prefix = current_global_prefix
 		self.current_access_prefix = current_access_prefix
 		self.func: Callable[..., None] = dummyCommand
@@ -87,12 +87,12 @@ class Content:
 		return self.access_prefix
 
 	def getParameters(self) -> Dict[str, Text]:
-		return self.found_parameters
+		return self.processed_parameters
 
 	def getCommand(self) -> Callable[[Any], None]:
 		return self.func
 
-	def extractPrefixes(self) -> None:
+	def extractPrefixes(self) -> None: # TODO проверить на пробелы.
 		if not self.original_parameters_text:
 			self.createTextCopy()
 		self.extractGlobalPrefix()
@@ -121,6 +121,7 @@ class Content:
 		# распознавании алиасов одной и той же команды.
 		# TODO и тут в name_extraction_object аннотация слишком большая. Не создать
 		# ли нам generic?
+		# TODO bug: при игнорировании подкоманды пользователем происходит ошибка.
 		for extract_name in name_extraction_object:
 			command_names = extract_name.split("|")
 			for command_name in command_names:
@@ -136,116 +137,24 @@ class Content:
 	def extractParameters(self) -> None: # TODO обработка пар параметров.
 		self.expect_parameters = all_parameters_current_command =\
 		getCallSignature(self.func)
-		self.found_parameters: Dict[str, Text] = {}
-		self.unfound_args: List[str] = []
-		self.args_with_wrong_text_type: Dict[str, List[Tuple[str, Text]]] = {}
-		self.split_user_text = ArgAndParametersList(self.original_parameters_text.split())
+		self.processed_parameters: Dict[str, Text] = {}
+		self.split_user_text = ArgAndParametersList(self.original_parameters_text.split()) # TODO свой split с ликвидацией лишних пробелов в одной точке
+		# кода вместо нескольких.
+		self.split_user_text.prepare()
 		while self.split_user_text:
-			parameter_or_parameter_arg = self.split_user_text.popWithSpaceRemoving(0)
+			parameter_or_parameter_arg = self.split_user_text.pop(0)
 			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может
 				# быть распознан как параметр.
-				parameter = parameter_or_parameter_arg
-				self.extractExplicitParameter(parameter)
+				parameter = Parameter(parameter_or_parameter_arg, self.split_user_text, self.expect_parameters)
+				parameter.process()
+				related_arg = self.split_user_text.pop(0)
+				args = Args(related_arg, self.split_user_text, self.expect_parameters, self.processed_parameters, parameter)
+				args.process()
 			else:
-				parameter_arg = parameter_or_parameter_arg
-				parameter_arg = self.extractArgsGroup(parameter_arg)
-				self.extractImplicitParameter(parameter_arg)
-		self.checkUnfoundArgs()
+				args = Args(parameter_or_parameter_arg, self.split_user_text, self.expect_parameters, self.processed_parameters)
+				args.process()
 		self.checkForMissingRequiredParameters()
 		self.extendParametersByOptionalParameters()
-
-	def extractExplicitParameter(self, parameter: str) -> None:
-		arg = self.split_user_text.popWithSpaceRemoving(0)
-		arg = self.extractArgsGroup(arg)
-		parameter_without_prefix = parameter.removeprefix("-")
-		if parameter_without_prefix in self.expect_parameters:
-			parameter_types = self.expect_parameters[parameter_without_prefix]
-			converted_args = self.convertedArg(parameter, parameter_types, arg)
-			if converted_args:
-				self.found_parameters[parameter_without_prefix] = converted_args
-				self.expect_parameters.pop(parameter_without_prefix)
-			else:
-				self.unfound_args.append(arg)
-
-	def extractImplicitParameter(self, arg: str) -> None: # TODO честно
-		# говоря, в этих двух методах назревает мысль создать отдельный класс для
-		# arg.
-		for (parameter, parameter_types) in self.expect_parameters.items():
-			converted_args = self.convertedArg(parameter, parameter_types, arg)
-			if converted_args:
-				self.found_parameters[parameter] = converted_args
-				self.expect_parameters.pop(parameter)
-				break
-		else:
-			self.unfound_args.append(arg)
-
-	def extractArgsGroup(self, args_or_arg: str) -> str:
-		args: str = ""
-		if self.isArgsGroup(args_or_arg):
-			args = args_or_arg.removeprefix("\"")
-			while True:
-				args += " " + self.split_user_text.popWithSpaceRemoving(0)
-				if args.endswith("\""): # TODO bag zone + сделать ошибку для группы аргументов
-					break
-			args = args.removesuffix("\"")
-		return args or args_or_arg
-
-	def isArgsGroup(self, args_or_arg: str) -> bool:
-		if args_or_arg.startswith("\""): # TODO метод проверки нужно будет поменять (ну или подумать над ним хотя б).
-			return True
-		return False
-
-	def convertedArg(self, parameter: str, parameter_types: Union[Text,
-	Tuple[Required, Text]], arg: str) -> str:
-		check_types: List[Text] = []
-		converted_args: List[str] = []
-		self.generateCheckTypes(parameter_types, check_types)
-		arg_or_args: List[str] = arg.split() # TODO а зачем тогда мы их в строку переводим, если они здесь разбиваются в список?
-		for check_type in check_types:
-			for arg in arg_or_args:
-				try:
-					converted_arg_instance = check_type(arg) # TODO нейминги.
-					converted_arg_instance.checkText()
-					converted_arg_instance.processText()
-					converted_args.append(converted_arg_instance.getProcessedText())
-				except WrongTextTypeSignal:
-					self.args_with_wrong_text_type.setdefault(arg, []).append(
-					(parameter, check_type))
-				except WrongActSignal:
-					raise ActParameterError(parameter)
-		return " ".join(converted_args)
-
-	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required,
-	Text]], check_types: List[Text]) -> None:
-		if isinstance(parameter_types, tuple):
-			for parameter_type in parameter_types:
-				if self.isUnionType(parameter_type):
-					check_types.extend(self.extractUnionType(parameter_type))
-				elif issubclass(parameter_type, Text):
-					check_types.append(parameter_type)
-		else:
-			check_types.append(parameter_types)
-
-	def isUnionType(self, parameter_type: Union[UnionType, Text, Required])\
-	-> bool:
-		if get_origin(parameter_type) is Union:
-			return True
-		return False
-
-	def extractUnionType(self, parameter_type: Union) -> List[Text]:
-		union_args = get_args(parameter_type)
-		result: List[Text] = []
-		for parameter_type in union_args:
-			result.append(parameter_type)
-		return result
-
-	def checkUnfoundArgs(self) -> None:
-		if not self.unfound_args:
-			return
-		for unfound_arg in self.unfound_args:
-			if unfound_arg in self.args_with_wrong_text_type: # TODO в args_with_wrong... у нас выводятся все сигналы, в т.ч и ложные.
-				raise UnmatchingParameterTypeError(unfound_arg,
-				self.args_with_wrong_text_type.get(unfound_arg)[0]) # TODO вывод типов, которые, возможно, имелись ввиду, организовать.
 
 	def checkForMissingRequiredParameters(self) -> None:
 		maybe_missing_required_parameters = self.expect_parameters
@@ -262,5 +171,130 @@ class Content:
 	def extendParametersByOptionalParameters(self) -> None:
 		current_command_signature = getCallSignature(self.func)
 		for parameter in current_command_signature:
-			if parameter not in self.found_parameters:
-				self.found_parameters.update({parameter: ""})
+			if parameter not in self.processed_parameters:
+				self.processed_parameters.update({parameter: ""})
+
+class Args:
+	
+	def __init__(self, args: str, split_user_text: ArgAndParametersList, expect_parameters: Dict[str, Any], processed_parameters: Dict[str, Text], parameter_instance: Optional['Parameter'] = None) -> None:
+		self.args: List[str] = [args] # TODO с точки зрения ООП этот args нужно засовывать в Text.
+		# TODO даже можно со сплита начать.
+		self.split_user_text = split_user_text
+		self.expect_parameters = expect_parameters
+		self.parameter_instance: Optional[Parameter] = parameter_instance
+		self.processed_parameters = processed_parameters
+
+	def process(self) -> None:
+		self.extractArgsGroup()
+		if self.parameter_instance:
+			self.parameter_instance.process()
+			self.processWithExplicitParameter()
+		else:
+			self.processWithImplicitParameter()
+
+	def processWithExplicitParameter(self) -> None:
+		parameter_without_prefix = self.parameter_instance.getNameParameterWithoutPrefix()
+		converted_args = self.convertedArg()
+		if converted_args:
+			self.processed_parameters[parameter_without_prefix] = converted_args # TODO вместо parameter_without_prefix как вариант юзать parameter_instance
+			self.expect_parameters.pop(parameter_without_prefix) # TODO converted_args на вывод, а добавление в found и expect_parameters сделат в extractParameters.
+		else:
+			raise UnmatchingParameterTypeError(*self.getSignature()) # TODO вывод типов, которые, возможно, имелись ввиду, организовать.
+
+	def processWithImplicitParameter(self) -> None:
+		for (parameter, parameter_types) in self.expect_parameters.items():
+			self.parameter_instance = Parameter(parameter, self.split_user_text, self.expect_parameters)
+			self.parameter_instance.process()
+			converted_args = self.convertedArg()
+			if converted_args: # TODO нейминги.
+				self.processed_parameters[parameter] = converted_args
+				self.expect_parameters.pop(parameter)
+				break
+		else:
+			raise UnmatchingParameterTypeError(*self.getSignature()) # TODO вывод типов, которые, возможно, имелись ввиду, организовать.
+
+	def extractArgsGroup(self) -> None:
+		if self.isArgsGroup():
+			if len(self.args[0]) > 1: #! временное решение, пока не ликвидировал все проблемы при split-инге.
+				self.args[0] = self.args[0].removeprefix("\"")
+			else:
+				self.args.pop()
+			while True:
+				self.args.append(self.split_user_text.popWithSpaceRemoving(0))
+				if self.args[-1].endswith("\""): # TODO bag zone + сделать ошибку для группы аргументов
+					break
+			if len(self.args[-1]) > 1:
+				self.args[-1] = self.args[-1].removesuffix("\"")
+			else:
+				self.args.pop()
+
+	def isArgsGroup(self) -> bool:
+		if self.args[0].startswith("\""): # TODO метод проверки нужно будет поменять (ну или подумать над ним хотя б).
+			return True
+		return False
+
+	def convertedArg(self) -> str:
+		check_types: List[Text] = []
+		processed_arg_text: str = ""
+		self.generateCheckTypes(self.parameter_instance.getExpectTypes(), check_types)
+		for check_type in check_types:
+			try:
+				check_parameter_type_instance = check_type(" ".join(self.args))
+				check_parameter_type_instance.checkText()
+				check_parameter_type_instance.processText()
+				processed_arg_text = check_parameter_type_instance.getProcessedText()
+				break
+			except WrongTextTypeSignal:
+				pass
+			except WrongActSignal:
+				raise ActParameterError(self.parameter_instance.getNameParameterWithoutPrefix())
+		return processed_arg_text
+
+	def generateCheckTypes(self, parameter_types: Union[Text, Tuple[Required,
+	Text]], check_types: List[Text]) -> None:
+		if isinstance(parameter_types, tuple):
+			for parameter_type in parameter_types:
+				if self.isUnionType(parameter_type):
+					check_types.extend(self.extractUnionType(parameter_type))
+				elif issubclass(parameter_type, Text):
+					check_types.append(parameter_type)
+		else:
+			check_types.append(parameter_types)
+
+	def isUnionType(self, parameter_type: Union[UnionType, Text, Required])\
+	-> bool: # TODO это вообще в Азейрбаджан отправить желательно вместе с методом ниже.
+		if get_origin(parameter_type) is Union:
+			return True
+		return False
+
+	def extractUnionType(self, parameter_type: Union) -> List[Text]:
+		union_args = get_args(parameter_type)
+		result: List[Text] = []
+		for parameter_type in union_args:
+			result.append(parameter_type)
+		return result
+
+	def getSignature(self) -> Tuple[str, str, Text]:
+		return (self.args, self.parameter_instance.getNameParameterWithoutPrefix(), self.parameter_instance.getExpectTypes())
+
+class Parameter:
+
+	def __init__(self, parameter: str, split_user_text: ArgAndParametersList, expect_parameters: Dict[str, Any]) -> None:
+		self.parameter = parameter
+		self.split_user_text = split_user_text
+		self.expect_parameters = expect_parameters
+		self.parameter_types: Union[Text, Tuple[Required, Text]] = None
+
+	def __repr__(self) -> str:
+		return self.parameter
+
+	def process(self) -> None:
+		self.parameter_without_prefix = self.parameter.removeprefix("-")
+		if self.parameter_without_prefix in self.expect_parameters:
+			self.parameter_types = self.expect_parameters[self.parameter_without_prefix]
+
+	def getNameParameterWithoutPrefix(self) -> str:
+		return self.parameter_without_prefix
+
+	def getExpectTypes(self) -> Union[Text, Tuple[Required, Text]]:
+		return self.parameter_types

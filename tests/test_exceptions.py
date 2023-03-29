@@ -16,7 +16,6 @@ def test_parameter_error(parameter_name) -> None:
 	assert instance.getParameterName() == parameter_name.removeprefix("d_")
 
 def test_unmatching_parameter_type_error() -> None:
-	instance = UnmatchingParameterTypeError("test", ("test2", Text))
-	assert instance.getText() == ("Тип \"{}\" не соответствует значению \"{}\" в параметре"
-		" \"{}\". Пожалуйста, исправьте значение.").format(Text, "test", "test2")
-
+	instance = UnmatchingParameterTypeError("test", "test2", Text)
+	assert instance.getText() == ("Значение \"{}\" не соответствует типам: {} в параметре \"{}\". Пожалуйста,"
+		"измените значение параметра, либо укажите параметр явно.").format("test", Text, "test2")
