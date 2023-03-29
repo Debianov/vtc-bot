@@ -20,10 +20,9 @@ def test_user_action_abstract_class(d_id, author, start_time) -> None:
 async def test_user_message_without_command(getGoodGuildInstance) -> None:
 	instance = UserMessage(13423, pytest.MockMember(), time.time(),
 	getGoodGuildInstance, Content("rock", "", ""), pytest.MockChannel())
-	await instance.reply()
 	# TODO const
-	assert pytest.response_to_test_messages.get_first_str() == "Не очень успешно!"
 	assert instance.isCommand() is False
+	await instance.handle()
 
 # TODO сделать, когда будут нормальные выводы команд log create.
 # @pytest.mark.asyncio
@@ -83,6 +82,7 @@ getGoodGuildInstance) -> None:
 	instance.extractCommand(commands_collection)
 	assert instance.getCommand() is UserLog.create
 
+# TODO сделать с пробелами тесты.
 @pytest.mark.parametrize(
 	"user_message, expect_parameters_dict", [
 		# дефолтный вариант.
