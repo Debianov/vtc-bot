@@ -25,6 +25,9 @@ async def on_message(message_instance: discord.Message) -> None:
 		await message.handle()  # TODO антиспам, антифлуд, логирование и проч., и
 		# проч.
 
-def run():
+def runForPoetry() -> None:
 	with open("secret.sec") as text:
 		client.run(text.readline())
+
+if __name__ == "__main__":
+	runForPoetry()
