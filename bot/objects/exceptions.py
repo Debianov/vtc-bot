@@ -70,7 +70,7 @@ class UnmatchingParameterTypeError(ParameterError):
 
 	def createErrorText(self) -> None:
 		# TODO нормальный вывод типов.
-		self.error_text = ("Значение \"{}\" не соответствует типам: {} в параметре \"{}\". Пажалуста,"
+		self.error_text = ("Значение \"{}\" не соответствует типам: {} в параметре \"{}\". Пожалуйста,"
 		"измените значение параметра, либо укажите параметр явно.").format(self.arg, self.expect_parameter_types, self.parameter_name)
 
 class Signal(Exception):
