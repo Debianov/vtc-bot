@@ -26,20 +26,6 @@ Dict[Any, Any]:
 			new_collection[key] = value
 	return new_collection
 
-class ArgAndParametersList(list):
-
-	def prepare(self) -> None:
-		generator = super().__iter__()
-		for (current_ind, element) in enumerate(generator): #! временное решение, пока не ликвидировал все 
-			# проблемы при split-инге.
-			if element == " ":
-				super().remove(" ")
-
-	def popWithSpaceRemoving(self, index: int) -> Any: #! временное решение, пока не ликвидировал все
-		# проблемы при split-инге.
-		poped_object = super().pop(index)
-		return poped_object.strip(" ")
-
 def isDigitWithSpace(string: str, excepts: List[str]) -> bool:
 	for symbol in string:
 		if symbol in excepts + [" "]:
@@ -61,3 +47,32 @@ def getBracketNotationStatus(string: str, open_bracket: str, close_bracket: str)
 	if stack:
 		return False
 	return True
+
+# разделение, удаление лишних пробелов.
+def splitWithSpaceRemoving(text: str) -> List[str]:
+	result_text: str = ""
+	current_text_cursor: int = 0
+	opened_quote: bool = False 
+	while current_text_cursor < len(text):
+		if text[current_text_cursor:current_text_cursor + 2] == "  ":
+			result_text += text[current_text_cursor]
+			while text[current_text_cursor] == " ":
+				current_text_cursor += 1
+		elif text[current_text_cursor] == "\"":
+			result_text += text[current_text_cursor]
+			current_text_cursor += 1
+			while not text[current_text_cursor] == "\"":
+				if text[current_text_cursor] == " " and (text[current_text_cursor - 1] == "\"" or text[current_text_cursor + 1] == "\""):
+					pass
+				else:
+					result_text += text[current_text_cursor]
+				current_text_cursor += 1
+			else:
+				result_text += text[current_text_cursor]
+				current_text_cursor += 1
+		else:
+			result_text += text[current_text_cursor]
+			current_text_cursor += 1
+	print(result_text)
+	result_split_text = result_text.split(" ")
+	return result_split_text

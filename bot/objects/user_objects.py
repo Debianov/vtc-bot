@@ -5,7 +5,7 @@ from types import UnionType
 import discord
 
 from .commands import commands_collection, dummyCommand, Required
-from bot.utils import getCallSignature, ArgAndParametersList
+from bot.utils import getCallSignature, splitWithSpaceRemoving
 from .text import Text
 from .exceptions import DeterminingParameterError, ActParameterError,\
 WrongTextTypeSignal, WrongActSignal, UnmatchingParameterTypeError
@@ -138,9 +138,8 @@ class Content:
 		self.expect_parameters = all_parameters_current_command =\
 		getCallSignature(self.func)
 		self.processed_parameters: Dict[str, Text] = {}
-		self.split_user_text = ArgAndParametersList(self.original_parameters_text.split()) # TODO свой split с ликвидацией лишних пробелов в одной точке
-		# кода вместо нескольких.
-		self.split_user_text.prepare()
+		self.split_user_text = list(splitWithSpaceRemoving(self.original_parameters_text))
+		print(self.split_user_text)
 		while self.split_user_text:
 			parameter_or_parameter_arg = self.split_user_text.pop(0)
 			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может
@@ -176,7 +175,7 @@ class Content:
 
 class Args:
 	
-	def __init__(self, args: str, split_user_text: ArgAndParametersList, expect_parameters: Dict[str, Any], processed_parameters: Dict[str, Text], parameter_instance: Optional['Parameter'] = None) -> None:
+	def __init__(self, args: str, split_user_text: List[str], expect_parameters: Dict[str, Any], processed_parameters: Dict[str, Text], parameter_instance: Optional['Parameter'] = None) -> None:
 		self.args: List[str] = [args] # TODO с точки зрения ООП этот args нужно засовывать в Text.
 		# TODO даже можно со сплита начать.
 		self.split_user_text = split_user_text
@@ -215,18 +214,12 @@ class Args:
 
 	def extractArgsGroup(self) -> None:
 		if self.isArgsGroup():
-			if len(self.args[0]) > 1: #! временное решение, пока не ликвидировал все проблемы при split-инге.
-				self.args[0] = self.args[0].removeprefix("\"")
-			else:
-				self.args.pop()
+			self.args[0] = self.args[0].removeprefix("\"")
 			while True:
-				self.args.append(self.split_user_text.popWithSpaceRemoving(0))
+				self.args.append(self.split_user_text.pop(0))
 				if self.args[-1].endswith("\""): # TODO bag zone + сделать ошибку для группы аргументов
 					break
-			if len(self.args[-1]) > 1:
-				self.args[-1] = self.args[-1].removesuffix("\"")
-			else:
-				self.args.pop()
+			self.args[-1] = self.args[-1].removesuffix("\"")
 
 	def isArgsGroup(self) -> bool:
 		if self.args[0].startswith("\""): # TODO метод проверки нужно будет поменять (ну или подумать над ним хотя б).
@@ -279,7 +272,7 @@ class Args:
 
 class Parameter:
 
-	def __init__(self, parameter: str, split_user_text: ArgAndParametersList, expect_parameters: Dict[str, Any]) -> None:
+	def __init__(self, parameter: str, split_user_text: List[str], expect_parameters: Dict[str, Any]) -> None:
 		self.parameter = parameter
 		self.split_user_text = split_user_text
 		self.expect_parameters = expect_parameters
