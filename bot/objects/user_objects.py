@@ -139,7 +139,6 @@ class Content:
 		getCallSignature(self.func)
 		self.processed_parameters: Dict[str, Text] = {}
 		self.split_user_text = list(splitWithSpaceRemoving(self.original_parameters_text))
-		print(self.split_user_text)
 		while self.split_user_text:
 			parameter_or_parameter_arg = self.split_user_text.pop(0)
 			if parameter_or_parameter_arg.startswith("-"): # TODO баг: -object может
@@ -217,7 +216,7 @@ class Args:
 			self.args[0] = self.args[0].removeprefix("\"")
 			while True:
 				self.args.append(self.split_user_text.pop(0))
-				if self.args[-1].endswith("\""): # TODO bag zone + сделать ошибку для группы аргументов
+				if self.args[-1].endswith("\"") or self.args[0].endswith("\""): # TODO bag zone + сделать ошибку для группы аргументов
 					break
 			self.args[-1] = self.args[-1].removesuffix("\"")
 

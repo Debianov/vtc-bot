@@ -73,6 +73,5 @@ def splitWithSpaceRemoving(text: str) -> List[str]:
 		else:
 			result_text += text[current_text_cursor]
 			current_text_cursor += 1
-	print(result_text)
 	result_split_text = result_text.split(" ")
 	return result_split_text
