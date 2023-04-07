@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple, List, Any, Final
 
 from .flags import *
+from .text_objects import SearchExpression
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -19,10 +20,11 @@ async def log(ctx: commands.Context) -> None:
 @log.command(aliases=["1", "cr"])
 async def create(
 	ctx: commands.Context,
-	target: commands.Greedy[Union[discord.TextChannel, discord.Member]],
+	target: Union[discord.TextChannel, discord.Member, discord.CategoryChannel, str], # TODO вместо str SearchExpression.
 	act: Union[str, int],
 	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member]],
 	*,
 	flags: UserLogFlags
 ) -> None:
-	pass
+	if isinstance(target, str):
+		instance = SearchExpression(target).analyze()
