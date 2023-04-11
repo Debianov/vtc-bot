@@ -1,24 +1,27 @@
+import discord
 from discord.ext import commands
-from typing import List, Optional
+from typing import List, Optional, Any, Union
 
-from .data import DataGroupAnalyzator, DataGroup
+from .data import DataGroupAnalyzator, DiscordObjectsGroup
+from .exceptions import SearchExpressionNotFound
 
 class SearchExpression(commands.Converter):
 
-	async def convert(self, ctx: commands.Context, argument: str) -> Optional['DataGroup']:
+	async def convert(self, ctx: commands.Context, argument: str) -> Union[List[discord.abc.Messageable], None]:
+		if argument.find(":") == -1:
+			raise commands.SearchExpressionNotFound(argument)
 		self.string: List[str] = argument.split(":")
+		self.result: List[discord.Messageable] = []
+		self.ctx = ctx
+
 		self.extractDataGroup()
 		self.analyzeWildcard()
-		return self.data_group
+		return self.result
 
 	def extractDataGroup(self) -> None:
-		self.data_group: DataGroup = DataGroupAnalyzator(self.string[0]).analyze()
+		self.data_groups: List[DiscordObjectsGroup] = DataGroupAnalyzator(self.ctx, self.string[0]).analyze()
 
 	def analyzeWildcard(self) -> None:
-		pass
-		# if self.string[1] == "*":
-		# 	self.data_group.extractFromDB() # TODO определиться, как будет
-		# 	# передаваться изменения поведения при чтении из БД. Пока предлагается
-		# 	# указывать как аргумент в функции, но как она будет обрабатываться там?
-		# 	# Лучше передавать уже как какой-то готовый параметр, преобразованный
-		# 	# из Wildcard, которые сможет понять объект БД.
+		for data_group in self.data_groups:
+			if self.string[1] == "*":
+				self.result += data_group.extractData()

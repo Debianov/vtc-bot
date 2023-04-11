@@ -1,58 +1,86 @@
-from typing import List, Optional, Any, Final, Callable, Tuple
+import discord
+from discord.ext import commands
+from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type
+
+__all__ = (
+	"DataGroupAnalyzator",
+	"DataGroup",
+	"UserGroup",
+	"ChannelGroup",
+	"ActGroup",
+	"TargetGroup"
+)
 
 class DataGroupAnalyzator:
 	
-	def __init__(self, string) -> None:
+	def __init__(self, ctx: commands.Context, string: str) -> None:
 		self.split_string: List[str] = string.split("+")
-		self.definited_groups: Optional[DataGroup] = None
+		self.definited_groups: List[DataGroup] = []
+		self.ctx = ctx
 
-	def analyze(self) -> 'DataGroup':
-		to_check: List[DataGroup] = DataGroup.__subclasses__()
+	def analyze(self) -> List['DiscordObjectsGroup']:
+		to_check: List[DiscordObjectsGroup] = DiscordObjectsGroup.__subclasses__()
 		copy_string: List[str] = self.split_string
-		check_string_limit: int = 0
 		for group_name in copy_string:
 			for group_type in to_check:
-				group_instance = group_type()
+				group_instance = group_type(self.ctx)
 				if group_name == group_instance:
-					if not self.definited_groups:
-						self.definited_groups = group_instance
-					else:
-						self.definited_groups += group_instance
+					self.definited_groups.append(group_instance)
 					break
 		return self.definited_groups
 
 class DataGroup:
-	
-	IDENTIFICATOR: str = ""
 
-	def __init__(self) -> None:
-		# что-то связанное с БД...
+	def extractData(self, d_id: Optional[str] = None) -> discord.abc.Messageable:
 		pass
+
+	def writeData(self) -> None:
+		pass
+
+class DiscordObjectsGroup(DataGroup):
+	
+	USER_IDENTIFICATOR: str = ""
+
+	def __init__(self, ctx: commands.Context) -> None:
+		self.ctx = ctx
 
 	def __eq__(self, right_operand: Any) -> bool:
-		return self.IDENTIFICATOR == right_operand
+		return self.USER_IDENTIFICATOR == right_operand
 
-	def __add__(self, right_operand: Any) -> Optional['DataGroup']:
-		if isinstance(right_operand, DataGroup):
-			constructing_instance: DataGroup = DataGroup()
-			constructing_instance.IDENTIFICATOR = self.IDENTIFICATOR + "," + right_operand.IDENTIFICATOR
-			constructing_instance.extractFromDB = lambda: (self.extractFromDB(), right_operand.extractFromDB())
-			return constructing_instance
-		raise TypeError(right_operand)
+class UserGroup(DiscordObjectsGroup):
 
-	def extractFromDB(self) -> None:
+	USER_IDENTIFICATOR: str = "usr"
+
+	def extractData(self, d_id: Optional[str] = None) -> discord.Member:
+		if not d_id:
+			return self.ctx.guild.members
+
+class ChannelGroup(DiscordObjectsGroup):
+
+	USER_IDENTIFICATOR: str = "ch"
+
+	def extractData(self, d_id: Optional[str] = None) -> discord.abc.GuildChannel:
+		if not d_id:
+			return self.ctx.guild.members
+
+class DBObjectsGroup(DataGroup):
+	pass
+
+class ActGroup(DBObjectsGroup):
+
+	DB_IDENTIFICATOR: str = "act"
+
+	def extractData(self) -> str:
 		pass
 
-class UserGroup(DataGroup):
+class TargetGroup(DBObjectsGroup):
 
-	IDENTIFICATOR: Final = "usr"
+	DB_IDENTIFICATOR: str = "target"
 
-	def extractFromDB(self) -> None:
+	def __init__(self) -> None:
+		# TODO создание объекта в БД.
 		pass
 
-class ChannelGroup(DataGroup):
-
-	IDENTIFICATOR: Final = "ch"
-
-	def extractFromDB(self) -> None:
-		pass
+	def writeData(self, parameter, value) -> None:
+		# TODO запись в БД в строки объекта.
+		print(parameter, value)
