@@ -51,7 +51,7 @@ class UserGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "usr"
 
-	def extractData(self, d_id: Optional[str] = None) -> discord.Member:
+	def extractData(self, d_id: Optional[str] = None) -> List[discord.Member]:
 		if not d_id:
 			return self.ctx.guild.members
 
@@ -59,9 +59,9 @@ class ChannelGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "ch"
 
-	def extractData(self, d_id: Optional[str] = None) -> discord.abc.GuildChannel:
+	def extractData(self, d_id: Optional[str] = None) -> List[discord.abc.GuildChannel]:
 		if not d_id:
-			return self.ctx.guild.members
+			return self.ctx.guild.channels
 
 class DBObjectsGroup(DataGroup):
 	pass
@@ -70,8 +70,11 @@ class ActGroup(DBObjectsGroup):
 
 	DB_IDENTIFICATOR: str = "act"
 
-	def extractData(self) -> str:
-		pass
+	def extractData(self, coord: Optional[str] = None) -> List[str]:
+		if not coord:
+			pass
+			# TODO извлекаем всю БД нахрен.
+		return [""]
 
 class TargetGroup(DBObjectsGroup):
 
@@ -83,4 +86,4 @@ class TargetGroup(DBObjectsGroup):
 
 	def writeData(self, parameter, value) -> None:
 		# TODO запись в БД в строки объекта.
-		print(parameter, value)
+		print("Типа записываю...", parameter, value)

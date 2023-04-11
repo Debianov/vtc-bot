@@ -1,3 +1,5 @@
+from discord.ext import commands
+
 class ErrorMessage:
 	
 	def __init__(self) -> None:

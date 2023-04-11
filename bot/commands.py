@@ -3,7 +3,7 @@ from discord.ext import commands
 from typing import Optional, Union, Tuple, List, Any, Final
 
 from .flags import *
-from .converters import SearchExpression
+from .converters import SearchExpression, ShortSearchExpression
 from .data import *
 
 intents = discord.Intents.all()
@@ -17,7 +17,7 @@ bot = commands.Bot(
 @bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
 	if isinstance(error, commands.BadUnionArgument):
-		# TODO склонение
+		# TODO склонение + убрать пинг при упоминании, если возможно.
 		await ctx.send("Убедитесь, что вы указали существующие объекты \"{}\" в параметре {}, и у меня есть к ним доступ.".format(
 			error.errors[0].argument, error.param.name))
 	else:
@@ -28,26 +28,21 @@ async def log(ctx: commands.Context) -> None:
 	await ctx.send("Убедитесь, что вы указали пункт меню.")
 
 @log.command(aliases=["1", "cr"])
+#? походу у типов с упоминанием нет поддержки группировки через кавычки.
+# int и str работает только, а вот TextChannel и ост. подобные — нет.
+#! пока ситуация такая, что target и d_in приходится делать жадным, а 
+# act приходится работать через группировку (если сделать act жадным
+# он начинает кушать в том числе упоминания из d_in, но это уже другая история).
+# TODO походу надо делать свои конвертеры + завести на существующих
+# группировку тоже.
 async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
-	act: Union[str, int],
-	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression]],
+	act: Union[ShortSearchExpression[ActGroup], int, str],
+	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression]] = commands.flag(name="in"),
 	*,
 	flags: UserLogFlags
 ) -> None:
 	target_instance = TargetGroup()
-	target_instance.writeData("target", target)
-
-	# target.writeData("act", act)
-
-	# if not d_in:
-	# 	raise commands.BadArgument(exist_object_error_text.format("TODO", "in"))
-	# D_in(d_in).writeToDB()
-
-	# error_message = ErrorMessage()
-	# await ctx.send(error_message.gatherError())
-	# try:
-	# 	DiscordObjectValidator(target, ctx).validate()
-	# except DiscordObjectDoesNotExist as error:
-	# 	await ctx.send(error.getTextError().format(ctx.args[1], "target"))
+	target_instance.writeData("target", target) #? проверку данных лучше может осуществлять в writeData?
+	target_instance.writeData("act", act) # act нужно проверить, чтоб он состоял только из цифр/букв, например.
