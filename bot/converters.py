@@ -42,9 +42,17 @@ class ShortSearchExpression(SearchExpression):
 		return self.result
 
 	def checkExpression(self, argument) -> None:
-		if not argument == "*": # все допустимые форматы маски. На данный момент пока хватит звёздочки.
+		if not argument == "*": # все допустимые форматы маски. На данный момент пока хватит звёздочки TODO.
 			raise SearchExpressionNotFound(argument)
 
 	def analyzeWildcard(self) -> None:
 		if self.string == "*":
 			self.result += self.data_group.extractData()
+
+class SpecialExpression(commands.Converter):
+	
+	async def convert(self, ctx: commands.Context, argument: List[str]) -> str:
+		argument = "".join(argument)
+		if not argument in ["df", "default"]: # все допустимые форматы. Будет дополняться TODO.
+			raise SearchExpressionNotFound(argument)
+		return argument

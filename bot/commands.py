@@ -3,7 +3,7 @@ from discord.ext import commands
 from typing import Optional, Union, Tuple, List, Any, Final
 
 from .flags import *
-from .converters import SearchExpression, ShortSearchExpression
+from .converters import SearchExpression, ShortSearchExpression, SpecialExpression
 from .data import *
 
 intents = discord.Intents.all()
@@ -39,10 +39,18 @@ async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
 	act: Union[ShortSearchExpression[ActGroup], int, str],
-	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression]] = commands.flag(name="in"),
+	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression, SpecialExpression]] = commands.command(name="in"),
 	*,
 	flags: UserLogFlags
 ) -> None:
 	target_instance = TargetGroup()
 	target_instance.writeData("target", target) #? проверку данных лучше может осуществлять в writeData?
 	target_instance.writeData("act", act) # act нужно проверить, чтоб он состоял только из цифр/букв, например.
+	
+	if "".join(d_in) in ["df", "default"]: #? откуда в d_in берётся список, когда я в конвертере ничего не писал?
+		# TODO извлечение дефолтного канала из настроек и присвоение d_in.
+		target_instance.writeData("in", d_in)
+
+	for key in flags.get_flags().keys():
+		if flags.__dict__[key]:
+			target_instance.writeData(key, flags.__dict__[key])
