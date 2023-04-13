@@ -1,4 +1,19 @@
-secret.sec
+# Byte-compile / optimized / DLL files
 __pycache__
-.mypy_cache
+
+# Logs
+bot.log
+
+# Unit test / coverage reports
 .pytest_cache
+
+# poetry
+poetry.lock
+
+# Environments
+dsAPI_secret.sec
+db_secret.sec
+venv/
+
+# mypy
+.mypy_cache
