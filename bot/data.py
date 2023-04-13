@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type
+from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict
+import psycopg
 
 __all__ = (
 	"DataGroupAnalyzator",
@@ -8,8 +9,19 @@ __all__ = (
 	"UserGroup",
 	"ChannelGroup",
 	"ActGroup",
-	"TargetGroup"
+	"TargetGroup",
+	"initDBConnect"
 )
+
+aconn: Optional[psycopg.AsyncConnection[Any]] = None
+
+async def initDBConnect() -> None:
+	global aconn
+	with open("db_secret.sec") as text:
+		aconn = await psycopg.AsyncConnection.connect("dbname={} user={}".format(text.readline(), 
+		text.readline()))
+	aconn.adapters.register_dumper(discord.Member, DiscordObjectsDumper) # TODO потом поменять discord.Member, либо понасоздавать отдельных.
+	aconn.adapters.register_loader("text", DiscordObjectsLoader)
 
 class DataGroupAnalyzator:
 	
@@ -81,9 +93,55 @@ class TargetGroup(DBObjectsGroup):
 	DB_IDENTIFICATOR: str = "target"
 
 	def __init__(self) -> None:
-		# TODO создание объекта в БД.
-		pass
+		self.target: Union[discord.TextChannel, discord.Member, discord.CategoryChannel, None] = None
+		self.act: Union[int, str, None] = None
+		self.d_in: Union[discord.TextChannel, discord.Member, None] = None
+		self.name: Union[str, int, None] = None
+		self.output: Union[str, int, None] = None
+		self.priority: Union[int, None] = None
+		self.other: Union[str, int, None] = None
 
-	def writeData(self, parameter, value) -> None:
-		# TODO запись в БД в строки объекта.
-		print("Типа записываю...", parameter, value)
+	def register(self, parameter: str, value: Optional[str]) -> None:
+		if parameter in self.__dict__.keys():
+			self.__dict__[parameter] = value
+		else:
+			raise AttributeError(parameter)
+
+	async def writeData(self) -> None:
+		async with aconn.cursor() as acur:
+			# await acur.execute("""
+			# 		INSERT INTO target VALUES ({}, {}, {}, {}, {}, {}, {});
+			# 		""".format(["asdasd"], self.act, self.d_in, self.name, self.output, self.priority, self.other))
+			# print(self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other)
+			await acur.execute("""
+					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s);""", [self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other]) # TODO отдельный класс под SQL-запросы, схема.
+			await aconn.commit()
+
+class DiscordObjectsDumper(psycopg.adapt.Dumper):
+	
+	def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> str:
+		if not isinstance(elem, discord.abc.Messageable) and not isinstance(elem, discord.abc.Connectable):
+			return super().dump(elem)
+		result: str = "DISCORD OBJECT" + " "
+		for key in elem.__slots__:
+			result += "{}:{}".format(key, getattr(elem, key)) + " "
+		result = result.removesuffix(" ")
+		return result.encode()
+
+class DiscordObjectsLoader(psycopg.adapt.Loader):
+
+	def load(self, data: str) -> Union[discord.abc.Messageable, discord.abc.Connectable]:
+		if not data.startswith("DISCORD OBJECT"):
+			return super().load(data)
+		
+		data.removeprefix("DISCORD OBJECT ")
+		split_data: List[str] = data.split(" ")
+		dict_data: Dict[str, str] = {}
+
+		for (key, value) in zip(split_data[::2], split_data[1::2]):
+			dict_data[key] = value
+		instance = discord.Member(data=dict_data.pop("data"), guild=dict_data.pop("guild"), state=dict_data.pop("state"))
+		for (key, value) in dict_data.items():
+			setattr(instance, key, value)
+		
+		return instance

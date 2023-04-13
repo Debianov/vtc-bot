@@ -15,6 +15,10 @@ bot = commands.Bot(
 )
 
 @bot.event
+async def on_ready():
+	await initDBConnect()
+
+@bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
 	if isinstance(error, commands.BadUnionArgument):
 		# TODO склонение + убрать пинг при упоминании, если возможно.
@@ -44,13 +48,15 @@ async def create(
 	flags: UserLogFlags
 ) -> None:
 	target_instance = TargetGroup()
-	target_instance.writeData("target", target) #? проверку данных лучше может осуществлять в writeData?
-	target_instance.writeData("act", act) # act нужно проверить, чтоб он состоял только из цифр/букв, например.
+	target_instance.register("target", target) #? проверку данных лучше может осуществлять в writeData?
+	target_instance.register("act", act) # act нужно проверить, чтоб он состоял только из цифр/букв, например.
 	
-	if "".join(d_in) in ["df", "default"]: #? откуда в d_in берётся список, когда я в конвертере ничего не писал?
-		# TODO извлечение дефолтного канала из настроек и присвоение d_in.
-		target_instance.writeData("in", d_in)
+	#? откуда в d_in берётся список, когда я в конвертере ничего не писал?
+	# 	# TODO извлечение дефолтного канала из настроек и присвоение d_in.
+	target_instance.register("d_in", d_in)
 
 	for key in flags.get_flags().keys():
 		if flags.__dict__[key]:
-			target_instance.writeData(key, flags.__dict__[key])
+			target_instance.register(key, flags.__dict__[key])
+	
+	await target_instance.writeData()
