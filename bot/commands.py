@@ -16,7 +16,7 @@ bot = commands.Bot(
 
 @bot.event
 async def on_ready():
-	await initDBConnect()
+	await initDB()
 
 @bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:

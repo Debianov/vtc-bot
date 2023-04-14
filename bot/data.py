@@ -10,12 +10,12 @@ __all__ = (
 	"ChannelGroup",
 	"ActGroup",
 	"TargetGroup",
-	"initDBConnect"
+	"initDB"
 )
 
 aconn: Optional[psycopg.AsyncConnection[Any]] = None
 
-async def initDBConnect() -> None:
+async def initDB() -> None:
 	global aconn
 	with open("db_secret.sec") as text:
 		aconn = await psycopg.AsyncConnection.connect("dbname={} user={}".format(text.readline(), 
@@ -114,7 +114,7 @@ class TargetGroup(DBObjectsGroup):
 			# 		""".format(["asdasd"], self.act, self.d_in, self.name, self.output, self.priority, self.other))
 			# print(self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other)
 			await acur.execute("""
-					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s);""", [self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other]) # TODO отдельный класс под SQL-запросы, схема.
+					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s);""", [self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other]) # TODO схема.
 			await aconn.commit()
 
 class DiscordObjectsDumper(psycopg.adapt.Dumper):
