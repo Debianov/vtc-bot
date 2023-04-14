@@ -9,7 +9,7 @@ if [[ $# -ne 2 ]]; then
 fi
 
 echo "Dumping database..."
-pg_dump -v ON_ERROR_STOP=1 -U $2 -d $1 -sxO > schematmp.sql || ( rm schematmp.sql && exit 3 )
+pg_dump -v -U $2 -d $1 -sxO > schematmp.sql || ( rm schematmp.sql && exit 3 )
 echo "Replacing original schema..."
 mv schematmp.sql schema.sql
 echo "Dumping completed."
