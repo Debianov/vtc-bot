@@ -5,18 +5,7 @@ from typing import Optional, Union, Tuple, List, Any, Final
 from .flags import *
 from .converters import SearchExpression, ShortSearchExpression, SpecialExpression
 from .data import *
-
-intents = discord.Intents.all()
-intents.message_content = True
-
-bot = commands.Bot(
-	command_prefix="sudo ",
-	intents=intents
-)
-
-@bot.event
-async def on_ready():
-	await initDB()
+from .config import bot
 
 @bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
