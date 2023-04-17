@@ -1,12 +1,12 @@
 import pytest
+import discord.ext.test as dpytest
 
-import bot.main as bot
+import bot.commands as user_commands
 
 @pytest.mark.asyncio
-async def test_on_message_without_command() -> None:
-	message_instance = pytest.MockMessage(pytest.MockChannel(), "Привет, бот!")
-	await bot.on_message(message_instance)
-	assert pytest.response_to_test_messages.get_first_str() == ""
+async def test_log(botInit) -> None:
+	await dpytest.message("sudo log 1 336420570449051649 asd 748764926897553450 -name ghds")
+	assert dpytest.verify().message().content("Prikol")
 
 # # TODO вычисляем популярные команды и вставляет в тест сюда. Все команды в
 # # одном файле здесь проверять смысла нет, поскольку для методов, которые
