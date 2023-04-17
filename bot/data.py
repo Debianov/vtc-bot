@@ -20,7 +20,7 @@ async def initDB() -> None:
 	with open("db_secret.sec") as text:
 		aconn = await psycopg.AsyncConnection.connect("dbname={} user={}".format(text.readline(), 
 		text.readline()))
-	aconn.adapters.register_dumper(discord.Member, DiscordObjectsDumper) # TODO потом поменять discord.Member, либо понасоздавать отдельных.
+	aconn.adapters.register_dumper(discord.abc.Messageable, DiscordObjectsDumper)
 	aconn.adapters.register_loader("text", DiscordObjectsLoader)
 
 class DataGroupAnalyzator:
@@ -114,7 +114,7 @@ class TargetGroup(DBObjectsGroup):
 			# 		""".format(["asdasd"], self.act, self.d_in, self.name, self.output, self.priority, self.other))
 			# print(self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other)
 			await acur.execute("""
-					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s);""", [self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other]) # TODO схема.
+					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s);""", [self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other])
 			await aconn.commit()
 
 class DiscordObjectsDumper(psycopg.adapt.Dumper):
