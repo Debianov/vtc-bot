@@ -32,7 +32,7 @@ async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
 	act: Union[ShortSearchExpression[ActGroup], int, str],
-	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression, SpecialExpression]] = commands.command(name="in"),
+	d_in: commands.Greedy[Union[str, discord.TextChannel, discord.Member, SearchExpression]] = commands.command(name="in"),
 	*,
 	flags: UserLogFlags
 ) -> None:
