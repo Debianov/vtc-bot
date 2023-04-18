@@ -43,7 +43,7 @@ class ShortSearchExpression(SearchExpression):
 
 	def checkExpression(self, argument) -> None:
 		if not argument == "*": # все допустимые форматы маски. На данный момент пока хватит звёздочки TODO.
-			raise SearchExpressionNotFound(argument)
+			raise SearchExpressionNotFound(argument) # TODO сделать отдельный класс ошибок.
 
 	def analyzeWildcard(self) -> None:
 		if self.string == "*":

@@ -94,7 +94,7 @@ class TargetGroup(DBObjectsGroup):
 
 	def __init__(self) -> None:
 		self.target: Union[discord.TextChannel, discord.Member, discord.CategoryChannel, None] = None
-		self.act: Union[int, str, None] = None
+		self.act: Union[int, str, None] = None # TODO act в ActGroup.
 		self.d_in: Union[discord.TextChannel, discord.Member, None] = None
 		self.name: Union[str, int, None] = None
 		self.output: Union[str, int, None] = None
@@ -109,10 +109,6 @@ class TargetGroup(DBObjectsGroup):
 
 	async def writeData(self) -> None:
 		async with aconn.cursor() as acur:
-			# await acur.execute("""
-			# 		INSERT INTO target VALUES ({}, {}, {}, {}, {}, {}, {});
-			# 		""".format(["asdasd"], self.act, self.d_in, self.name, self.output, self.priority, self.other))
-			# print(self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other)
 			await acur.execute("""
 					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s);""", [self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other])
 			await aconn.commit()
