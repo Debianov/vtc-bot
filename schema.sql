@@ -25,9 +25,9 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.target (
-    target text,
+    target bigint[],
     act text,
-    d_in text,
+    d_in bigint[],
     name text,
     priority integer,
     output text,
