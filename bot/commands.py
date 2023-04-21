@@ -32,20 +32,27 @@ async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
 	act: Union[ShortSearchExpression[ActGroup], int, str],
-	d_in: commands.Greedy[Union[str, discord.TextChannel, discord.Member, SearchExpression]] = commands.command(name="in"),
+	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression, str]] = commands.command(name="in"),
 	*,
 	flags: UserLogFlags
-) -> None:
-	target_instance = TargetGroup()
-	target_instance.register("target", target) #? проверку данных лучше может осуществлять в writeData?
-	target_instance.register("act", act) # act нужно проверить, чтоб он состоял только из цифр/букв, например.
+) -> None: # TODO specialExpression не забыть сделать.
+	target_instance = TargetGroup(ctx)
+	target_instance.target = target
+	target_instance.act = act
 	
-	#? откуда в d_in берётся список, когда я в конвертере ничего не писал?
-	# 	# TODO извлечение дефолтного канала из настроек и присвоение d_in.
-	target_instance.register("d_in", d_in)
+	if target_instance.d_in in ["df", "default"]:
+	# # 	# TODO извлечение дефолтного in.
+		pass
+	target_instance.d_in = d_in
 
 	for key in flags.get_flags().keys():
 		if flags.__dict__[key]:
-			target_instance.register(key, flags.__dict__[key])
-	
+			setattr(target_instance, key, flags.__dict__[key])
+
+	all_targets_instance = await TargetGroup.extractData(ctx.guild) #! якорь: TargetGroup, pull request, context Loader, 
+	#! TODO Ссылка на стрим, совместная разработка перенести.
+	for target in all_targets_instance:
+		for attr in target:
+			print(attr)
+
 	await target_instance.writeData()
