@@ -48,3 +48,6 @@ class ShortSearchExpression(SearchExpression):
 	def analyzeWildcard(self) -> None:
 		if self.string == "*":
 			self.result += self.data_group.extractData()
+
+class SpecialExpression:
+	pass
