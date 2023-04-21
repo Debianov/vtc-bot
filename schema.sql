@@ -16,6 +16,7 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+DROP TABLE IF EXISTS public.target;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
