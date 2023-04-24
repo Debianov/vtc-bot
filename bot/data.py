@@ -16,14 +16,12 @@ __all__ = (
 
 aconn: Optional[psycopg.AsyncConnection[Any]] = None
 
-context: Union[Type["discord.Guild"], Type["discord.Bot"], None] = None # нужно передавать объект бота
-# для корректной работы loader.
-
 async def initDB() -> None:
 	global aconn
 	with open("db_secret.sec") as text:
 		aconn = await psycopg.AsyncConnection.connect("dbname={} user={}".format(text.readline(), 
 		text.readline()))
+	aconn.adapters.discord_context: Union[Type["discord.Guild"], Type["discord.Bot"], None] = None
 	aconn.adapters.register_dumper(discord.abc.Messageable, DiscordObjectsDumper)
 	aconn.adapters.register_loader("bigint[]", DiscordObjectsLoader)
 
@@ -150,9 +148,8 @@ class TargetGroup(DBObjectsGroup):
 		coord: Optional[str] = None, 
 		condition: Optional[str] = None
 	) -> List['TargetGroup']:
-		global context
 		async with aconn.cursor() as acur:
-			context = ctx # пока приходится так. Нужно найти способ, как передать в load контекст.
+			aconn.adapters.discord_context = ctx
 			if coord and condition:
 				await acur.execute("""
 						SELECT %s FROM target WHERE %s;""", [coord, condition])
@@ -179,11 +176,11 @@ class DiscordObjectsDumper(psycopg.adapt.Dumper):
 class DiscordObjectsLoader(psycopg.adapt.Loader):
 
 	def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable]: 
-		#? есть варианты, как передавать в load context через параметр?
+		#? есть варианты, как передавать в load discord_context через параметр, а не aconn?
 		string_data: str = data.decode()
 		for attr in ('get_member', 'get_user', 'get_channel'):
 			try:
-				instance = getattr(context, attr)(int(string_data))
+				instance = getattr(aconn.adapters.discord_context, attr)(int(string_data))
 			except (discord.DiscordException, AttributeError):
 				continue
 			else:
