@@ -49,5 +49,11 @@ class ShortSearchExpression(SearchExpression):
 		if self.string == "*":
 			self.result += self.data_group.extractData()
 
-class SpecialExpression:
-	pass
+class SpecialExpression(commands.Converter):
+	
+	async def convert(self, ctx: commands.Context, argument: List[str]) -> str:
+		argument = "".join(argument)
+		if not argument in ["df", "default"]: # все допустимые форматы. Будет дополняться TODO.
+			raise SearchExpressionNotFound(argument)
+		# TODO извлечение из БД дефолтного сервера.
+		return argument

@@ -32,16 +32,15 @@ async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
 	act: Union[ShortSearchExpression[ActGroup], int, str],
-	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression, str]] = commands.command(name="in"),
+	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression, SpecialExpression]] = commands.command(name="in"),
 	*,
 	flags: UserLogFlags
-) -> None: # TODO specialExpression не забыть сделать.
+) -> None:
 	target_instance = TargetGroup(ctx)
 	target_instance.target = target
 	target_instance.act = act
 	
 	if target_instance.d_in in ["df", "default"]:
-	# # 	# TODO извлечение дефолтного in.
 		pass
 	target_instance.d_in = d_in
 
@@ -49,10 +48,9 @@ async def create(
 		if flags.__dict__[key]:
 			setattr(target_instance, key, flags.__dict__[key])
 
-	all_targets_instance = await TargetGroup.extractData(ctx.guild) #! якорь: TargetGroup, pull request, context Loader, 
-	#! TODO Ссылка на стрим, совместная разработка перенести.
+	all_targets_instance = await TargetGroup.extractData(ctx.guild)
 	for target in all_targets_instance:
 		for attr in target:
-			print(attr)
+			pass
 
 	await target_instance.writeData()
