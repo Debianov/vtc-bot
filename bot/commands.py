@@ -31,7 +31,7 @@ async def log(ctx: commands.Context) -> None:
 async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
-	act: Union[ShortSearchExpression[ActGroup], int, str],
+	act: Union[ShortSearchExpression[ActGroup], str],
 	d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression, SpecialExpression]] = commands.command(name="in"),
 	*,
 	flags: UserLogFlags
@@ -48,8 +48,8 @@ async def create(
 		if flags.__dict__[key]:
 			setattr(target_instance, key, flags.__dict__[key])
 
-	coincidence_targets_instance = await TargetGroup.extractData(ctx.guild, target=target_instance.target, act=str(target_instance.act), 
-	d_in=target_instance.d_in, name=str(target_instance.name))
+	coincidence_targets_instance = await TargetGroup.extractData(ctx.guild, target=target_instance.target, act=target_instance.act, 
+	d_in=target_instance.d_in, name=target_instance.name)
 	if coincidence_targets_instance:
 		coincidence_target = coincidence_targets_instance[0]
 		await ctx.send(f"Цель с подобными параметрами уже существует: {coincidence_target.id} ({coincidence_target.name})"

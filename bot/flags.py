@@ -2,7 +2,7 @@ from discord.ext import commands
 from typing import Optional, Union
 
 class UserLogFlags(commands.FlagConverter, prefix='-', delimiter=' '):
-	name: Optional[Union[int, str]]
-	output: Optional[Union[int, str]]
+	name: Optional[Union[str]]
+	output: Optional[Union[str]]
 	priority: Optional[int] = -1
-	other: Optional[Union[int, str]]
+	other: Optional[Union[str]]

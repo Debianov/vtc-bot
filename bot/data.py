@@ -99,12 +99,12 @@ class TargetGroup(DBObjectsGroup):
 		ctx: Union[discord.Guild, discord.Client], # TODO посмотреть по разновидностям. 
 		id: int = None,
 		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None, 
-		act: Union[int, str, None] = None, # TODO преобразования из text в int, если isdigit.
+		act: Union[str, None] = None, # TODO преобразования из text в int, если isdigit.
 		d_in: Optional[List[Union[discord.TextChannel, discord.Member]]] = None,
-      name: Union[str, int, None] = None,
-      output: Union[str, int, None] = None,
+      name: Union[str, None] = None,
+      output: Union[str, None] = None,
       priority: Union[int, None] = None,
-      other: Union[str, int, None] = None
+      other: Union[str, None] = None
 	) -> None:
 		self.id = id or self.generateID()
 		self.ctx = ctx
@@ -127,12 +127,12 @@ class TargetGroup(DBObjectsGroup):
 		if nvalue:
 			match name:
 				case "act":
-					checking_nvalue = str(nvalue).replace(" ", "")
+					checking_nvalue = nvalue.replace(" ", "")
 					if not checking_nvalue.isalpha():
 						if not checking_nvalue.isdigit():
 							raise ValueError(name, nvalue)
 				case "name":
-					if not str(nvalue).isprintable():
+					if not nvalue.isprintable():
 						raise ValueError(name, nvalue)
 		super().__setattr__(name, nvalue)
 
@@ -189,7 +189,7 @@ class TargetGroup(DBObjectsGroup):
 		compared_attr: Set[Any] = target.getComparableAttrs()
 		coincidence_attrs: Set[Any] = current_attr & compared_attr
 		return ", ".join(list(coincidence_attrs))
-		
+
 class DiscordObjectsDumper(psycopg.adapt.Dumper):
 	
 	def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> bytes:
