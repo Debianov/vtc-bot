@@ -140,39 +140,61 @@ class TargetGroup(DBObjectsGroup):
 		async with aconn.cursor() as acur:
 			# TODO вписывать id гильдии.
 			await acur.execute("""
-					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s);""", [self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other])
+					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""", [self.id, self.ctx, self.target, 
+					self.act, self.d_in, self.name, self.output, self.priority, self.other])
 			await aconn.commit()
 
 	@classmethod
 	async def extractData(
 		cls: 'TargetGroup', 
 		ctx: Union[discord.Guild, discord.Client], 
-		coord: Optional[str] = None, 
-		condition: Optional[str] = None
+		placeholder: Optional[str] = "*", 
+		**object_parameters: Dict[str, Tuple[str, Any]]
 	) -> List['TargetGroup']:
+		aconn.adapters.discord_context = ctx
+		values_for_parameters: List[Any] = []
+		query = [psycopg.sql.SQL(f"SELECT {placeholder} FROM target WHERE context_id = %s")]
+		values_for_parameters.append(ctx.id)
+		if object_parameters:
+			parameters_query_part: List[psycopg.sql.SQL] = []
+			for (parameter, value) in object_parameters.items():
+				parameters_query_part.append(f"{parameter} = %s")
+				values_for_parameters.append(value)
+			query.append(psycopg.sql.SQL(f"AND ({(' OR ').join(parameters_query_part)})"))
+
 		async with aconn.cursor() as acur:
-			aconn.adapters.discord_context = ctx
-			if coord and condition:
-				await acur.execute("""
-						SELECT %s FROM target WHERE %s;""", [coord, condition])
-			elif coord and condition is None:
-				await acur.execute("""
-						SELECT %s FROM target;""", [coord])
-			elif coord is None and condition:
-				pass
-			else:
-				await acur.execute("""
-						SELECT * FROM target;""") # TODO нужно будет сделать фильтрацию по гильдиям.
+			await acur.execute(
+				psycopg.sql.SQL(" ").join(query) + psycopg.sql.SQL(";"),
+				values_for_parameters
+			)
 			result: List[TargetGroup] = []
 			for row in await acur.fetchall():
-				result.append(cls(ctx, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
-			return result
+				result.append(cls(row[1], row[0], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
+		return result
 
+	def getComparableAttrs(self) -> Set[Any]:
+		comparable_attrs = set({str(self.act).lower(), str(self.name).lower()})
+		objects_id = []
+		for target in (self.target + self.d_in):
+			objects_id.append(str(target.id))
+		comparable_attrs.update(objects_id)
+		return comparable_attrs
+
+	def getCoincidenceTo(self, target: 'TargetGroup') -> str:
+		# TODO метод сравнения прокачать.
+		# TODO CASE WHEN как замена всему этому методу.
+		# TODO SELECT Name, Price, Category, CASE WHEN Name LIKE '%Apple%' THEN 'Name Match' WHEN Price < 10 THEN 
+		# 'Price Match' ELSE 'No Match' END AS Match_Condition FROM Products WHERE Name LIKE '%Apple%' OR Price < 10;
+		current_attr: Set[Any] = self.getComparableAttrs()
+		compared_attr: Set[Any] = target.getComparableAttrs()
+		coincidence_attrs: Set[Any] = current_attr & compared_attr
+		return ", ".join(list(coincidence_attrs))
+		
 class DiscordObjectsDumper(psycopg.adapt.Dumper):
 	
 	def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> bytes:
-		if not isinstance(elem, discord.abc.Messageable) and not isinstance(elem, discord.abc.Connectable):
-			return super().dump(elem)
+		if isinstance(elem, commands.Context):
+			return str(elem.guild.id).encode()
 		return str(elem.id).encode()
 
 class DiscordObjectsLoader(psycopg.adapt.Loader):
