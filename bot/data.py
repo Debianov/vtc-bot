@@ -1,7 +1,7 @@
 #? что с кешированием?
 import discord
 from discord.ext import commands
-from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict
+from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict, Set
 import psycopg
 
 __all__ = (
@@ -95,16 +95,18 @@ class TargetGroup(DBObjectsGroup):
 	DB_IDENTIFICATOR: str = "target"
 
 	def __init__(
-		self, 
-		ctx: Union[discord.Guild, discord.Client], 
-		target: Union[discord.TextChannel, discord.Member, discord.CategoryChannel, None] = None, 
-		act: Union[int, str, None] = None,
-		d_in: Union[discord.TextChannel, discord.Member, None] = None,
+		self,
+		ctx: Union[discord.Guild, discord.Client], # TODO посмотреть по разновидностям. 
+		id: int = None,
+		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None, 
+		act: Union[int, str, None] = None, # TODO преобразования из text в int, если isdigit.
+		d_in: Optional[List[Union[discord.TextChannel, discord.Member]]] = None,
       name: Union[str, int, None] = None,
       output: Union[str, int, None] = None,
       priority: Union[int, None] = None,
       other: Union[str, int, None] = None
 	) -> None:
+		self.id = id or self.generateID()
 		self.ctx = ctx
 		self.target = target
 		self.act  = act # TODO act в ActGroup (подумать).
@@ -114,8 +116,8 @@ class TargetGroup(DBObjectsGroup):
 		self.priority = priority
 		self.other = other
 
-	def __iter__(self):
-		return iter([self.target, self.act, self.d_in, self.name, self.output, self.priority, self.other])
+	def generateID(self) -> int:
+		return 0 # TODO сделать нормальную генерацию ID.
 
 	def __setattr__(
 		self, 
