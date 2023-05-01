@@ -28,6 +28,7 @@ async def log(ctx: commands.Context) -> None:
 # он начинает кушать в том числе упоминания из d_in, но это уже другая история).
 # TODO походу надо делать свои конвертеры + завести на существующих
 # группировку тоже.
+# TODO ошибка при написании дальше параметров без указания флагов.
 async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
@@ -57,3 +58,4 @@ async def create(
 		# TODO подумать над уникальностью name.
 	else:
 		await target_instance.writeData()
+		await ctx.send("Цель добавлена успешно.")
