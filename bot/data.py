@@ -16,14 +16,16 @@ __all__ = (
 
 aconn: Optional[psycopg.AsyncConnection[Any]] = None
 
-async def initDB() -> None:
+async def initDB(
+	dbname: str, 
+	user: str
+	) -> Optional[psycopg.AsyncConnection[Any]]:
 	global aconn
-	with open("db_secret.sec") as text:
-		aconn = await psycopg.AsyncConnection.connect("dbname={} user={}".format(text.readline(), 
-		text.readline()))
+	aconn = await psycopg.AsyncConnection.connect(f"dbname={dbname} user={user}", autocommit=True)
 	aconn.adapters.discord_context: Union[Type["discord.Guild"], Type["discord.Bot"], None] = None
 	aconn.adapters.register_dumper(discord.abc.Messageable, DiscordObjectsDumper)
 	aconn.adapters.register_loader("bigint[]", DiscordObjectsLoader)
+	return aconn
 
 class DataGroupAnalyzator:
 	
@@ -142,7 +144,6 @@ class TargetGroup(DBObjectsGroup):
 			await acur.execute("""
 					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""", [self.id, self.ctx, self.target, 
 					self.act, self.d_in, self.name, self.output, self.priority, self.other])
-			await aconn.commit()
 
 	@classmethod
 	async def extractData(
