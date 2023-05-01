@@ -14,7 +14,7 @@ __all__ = (
 	"initDB"
 )
 
-aconn: Optional[psycopg.AsyncConnection[Any]] = None
+aconn: Optional[psycopg.AsyncConnection[Any]] = None # TODO убрать, Dependency Injection. https://youtube.com/watch?v=r8_Bpx2cZSE
 
 async def initDB(
 	dbname: str, 
@@ -110,9 +110,9 @@ class TargetGroup(DBObjectsGroup):
 	) -> None:
 		self.id = id or self.generateID()
 		self.ctx = ctx
-		self.target = target
+		self.target = target # TODO не может быть ID бота.
 		self.act  = act # TODO act в ActGroup (подумать).
-		self.d_in = d_in
+		self.d_in = d_in # TODO не может быть ID бота.
 		self.name = name
 		self.output = output
 		self.priority = priority
@@ -200,14 +200,15 @@ class DiscordObjectsDumper(psycopg.adapt.Dumper):
 
 class DiscordObjectsLoader(psycopg.adapt.Loader):
 
-	def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable]: 
+	def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]: 
 		#? есть варианты, как передавать в load discord_context через параметр, а не aconn?
 		string_data: str = data.decode()
 		for attr in ('get_member', 'get_user', 'get_channel'):
 			try:
-				instance = getattr(aconn.adapters.discord_context, attr)(int(string_data))
+				result: Optional[discord.abc.Messageable, discord.abc.Connectable] = getattr(
+					aconn.adapters.discord_context, attr)(int(string_data))
+				if result:
+					return result
 			except (discord.DiscordException, AttributeError):
 				continue
-			else:
-				break
-		return instance
+		return string_data

@@ -13,6 +13,7 @@ poetry.lock
 # Environments
 dsAPI_secret.sec
 db_secret.sec
+test_db_secret.sec
 venv/
 
 # mypy
