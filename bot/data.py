@@ -31,7 +31,7 @@ class DataGroupAnalyzator:
 	
 	def __init__(self, ctx: commands.Context, string: str) -> None:
 		self.split_string: List[str] = string.split("+")
-		self.definited_groups: List[DataGroup] = []
+		self.relevant_groups: List[DataGroup] = []
 		self.ctx = ctx
 
 	def analyze(self) -> List['DiscordObjectsGroup']:
@@ -41,9 +41,9 @@ class DataGroupAnalyzator:
 			for group_type in to_check:
 				group_instance = group_type(self.ctx)
 				if group_name == group_instance:
-					self.definited_groups.append(group_instance)
+					self.relevant_groups.append(group_instance)
 					break
-		return self.definited_groups
+		return self.relevant_groups
 
 class DataGroup:
 
@@ -101,7 +101,7 @@ class TargetGroup(DBObjectsGroup):
 		ctx: Union[discord.Guild, discord.Client], # TODO посмотреть по разновидностям. 
 		id: int = None,
 		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None, 
-		act: Union[str, None] = None, # TODO преобразования из text в int, если isdigit.
+		act: Union[str, None] = None,
 		d_in: Optional[List[Union[discord.TextChannel, discord.Member]]] = None,
       name: Union[str, None] = None,
       output: Union[str, None] = None,
@@ -111,7 +111,7 @@ class TargetGroup(DBObjectsGroup):
 		self.id = id or self.generateID()
 		self.ctx = ctx
 		self.target = target # TODO не может быть ID бота.
-		self.act  = act # TODO act в ActGroup (подумать).
+		self.act = act # TODO act в ActGroup (подумать).
 		self.d_in = d_in # TODO не может быть ID бота.
 		self.name = name
 		self.output = output

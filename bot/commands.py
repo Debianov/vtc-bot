@@ -44,7 +44,7 @@ async def create(
 	target_instance.act = act
 	
 	if target_instance.d_in in ["df", "default"]:
-		pass
+		pass # TODO Special для этого есть.
 	target_instance.d_in = d_in
 
 	for key in flags.get_flags().keys():
