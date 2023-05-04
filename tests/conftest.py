@@ -27,19 +27,12 @@ def event_loop() -> None:
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
 async def botInit() -> commands.Bot:
 	await bot._async_setup_hook()
-	dpytest.configure(bot)
-	state_user = dpytest.backend.get_state().user
-	bot.test_guild = dpytest.backend.make_guild(name="Test")
-	author_from_bot = dpytest.backend.make_member(state_user, bot.test_guild)
-	bot.test_channel = dpytest.backend.make_text_channel(guild=bot.test_guild, name="Test")
-	bot.test_member0 = dpytest.backend.make_member(dpytest.backend.make_user("Test0", 2,
-	id_num=386420570449051640), bot.test_guild)
-	bot.test_member1 = dpytest.backend.make_member(dpytest.backend.make_user("Test1", 2,
-	id_num=386420570449051641), bot.test_guild)
-	bot.test_member2 = dpytest.backend.make_member(dpytest.backend.make_user("Test2", 2,
-	id_num=386420570449051642), bot.test_guild)
-	bot.test_member3 = dpytest.backend.make_member(dpytest.backend.make_user("Test3", 2,
-	id_num=386420570449051643), bot.test_guild)
+	dpytest.configure(bot, num_members=6)
+	config = dpytest.get_config()
+	pytest.test_guild = config.guilds[0]
+	pytest.test_channel = config.channels[0]
+	for (ind, member) in enumerate(config.members):
+		setattr(pytest, f"test_member{ind}", member)
 	return bot
 
 @pytest_asyncio.fixture(autouse=True)
@@ -48,16 +41,16 @@ async def cleanUp() -> None:
 	await dpytest.empty_queue()
 
 @pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="module")
-async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]: # TODO alias
+@pytest_asyncio.fixture(scope="module", name="db")
+async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	with open("test_db_secret.sec") as text:
 		aconn = await initDB(text.readline(), text.readline())
 		return aconn
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="module", autouse=True)
-async def createTargetTable(setupDB) -> None:
-	async with setupDB.cursor() as acur:
+async def createTargetTable(db) -> None:
+	async with db.cursor() as acur:
 		await acur.execute(
 			"""CREATE TABLE public.target (
 			id bigint,
@@ -80,9 +73,9 @@ async def createTargetTable(setupDB) -> None:
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="function", autouse=True)
-async def deleteTargetTable(setupDB) -> None:
+async def deleteTargetTable(db) -> None:
 	yield
-	async with setupDB.cursor() as acur:
+	async with db.cursor() as acur:
 		await acur.execute(
 			"DELETE FROM target;"
 		)
