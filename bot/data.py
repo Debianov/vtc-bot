@@ -130,7 +130,7 @@ class TargetGroup(DBObjectsGroup):
 			match name:
 				case "act":
 					checking_nvalue = nvalue.replace(" ", "")
-					if not checking_nvalue.isalpha():
+					if not checking_nvalue.isalpha(): # TODO а нахрена я так сделал?
 						if not checking_nvalue.isdigit():
 							raise ValueError(name, nvalue)
 				case "name":
