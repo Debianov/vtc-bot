@@ -15,12 +15,20 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError) 
 		# TODO склонение + убрать пинг при упоминании, если возможно.
 		await ctx.send("Убедитесь, что вы указали существующие объекты \"{}\" в параметре {}, и у меня есть к ним доступ.".format(
 			error.errors[0].argument, error.param.name))
+	elif isinstance(error, commands.MissingRequiredArgument):
+		params = list(ctx.command.clean_params.keys())
+		current_parameter = error.param.name
+		# TODO бажочек: если определяется параметр по серединке (в порядке сигнатуры), то пропущенные параметры до него не указываются.
+		missing_parameters: List[str] = list(filter(lambda x: x != "flags", params[params.index(current_parameter):])) 
+			# flags — всегда необязательные
+		await ctx.send(f"Убедитесь, что вы указали все обязательные параметры. Не найденный/(е) параметр/(ы):"
+			f" {', '.join(missing_parameters)}") # TODO склонения.
 	else:
 		raise error
 
 @bot.group(aliases=["logs"], invoke_without_command=True)
 async def log(ctx: commands.Context) -> None:
-	await ctx.send("Убедитесь, что вы указали пункт меню.")
+	await ctx.send("Убедитесь, что вы указали подкоманду.")
 
 @log.command(aliases=["1", "cr"])
 #? походу у типов с упоминанием нет поддержки группировки через кавычки.
@@ -39,6 +47,9 @@ async def create(
 	*,
 	flags: UserLogFlags
 ) -> None:
+	if not d_in:
+		raise commands.MissingRequiredArgument(ctx.command.clean_params["d_in"])
+
 	target_instance = TargetGroup(ctx)
 	target_instance.target = target
 	target_instance.act = act # TODO всегда должен идти список.
