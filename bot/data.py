@@ -173,12 +173,14 @@ class TargetGroup(DBObjectsGroup):
 				result.append(cls(row[1], row[0], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
 		return result
 
-	def getComparableAttrs(self) -> Set[Any]:
-		comparable_attrs = set({str(self.act).lower(), str(self.name).lower()})
-		objects_id = []
-		for target in (self.target + self.d_in):
-			objects_id.append(str(target.id))
-		comparable_attrs.update(objects_id)
+	def getComparableAttrs(self) -> List[Any]:
+		comparable_attrs: List[Any] = []
+		objects_id: List[Any] = []
+		for discord_objects in (self.target + self.d_in):
+			objects_id.append(str(discord_objects.id))
+		comparable_attrs += objects_id
+		comparable_attrs.insert(len(self.target), self.act)
+		comparable_attrs.append(self.name)
 		return comparable_attrs
 
 	def getCoincidenceTo(self, target: 'TargetGroup') -> str:
@@ -186,9 +188,12 @@ class TargetGroup(DBObjectsGroup):
 		# TODO CASE WHEN как замена всему этому методу.
 		# TODO SELECT Name, Price, Category, CASE WHEN Name LIKE '%Apple%' THEN 'Name Match' WHEN Price < 10 THEN 
 		# 'Price Match' ELSE 'No Match' END AS Match_Condition FROM Products WHERE Name LIKE '%Apple%' OR Price < 10;
-		current_attr: Set[Any] = self.getComparableAttrs()
-		compared_attr: Set[Any] = target.getComparableAttrs()
-		coincidence_attrs: Set[Any] = current_attr & compared_attr
+		current_attr: List[Any] = self.getComparableAttrs()
+		compared_attr: List[Any] = target.getComparableAttrs()
+		coincidence_attrs: List[Any] = []
+		for current_attr in current_attr:
+			if current_attr in compared_attr:
+				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
 
 class DiscordObjectsDumper(psycopg.adapt.Dumper):
