@@ -63,13 +63,63 @@ async def test_good_log_create(
 # 	pass
 
 @pytest.mark.parametrize(
-	"target, act, d_in, name",
+	"target, act, d_in, name, compared_target, compared_act, compared_d_in, compared_name",
+	# compared — т.е те параметры, которые будем отправлять вторым сообщением.
 	[
 		(
 			['pytest.test_member0'],
 			"26",
 			['pytest.test_member1'],
+			"Aboba",
+
+			['pytest.test_member0'],
+			"26",
+			['pytest.test_member1'],
 			"Aboba"
+		),
+		(
+			['pytest.test_member0'],
+			"26",
+			['pytest.test_member1'],
+			"Aboba",
+
+			['pytest.test_member2'],
+			"26",
+			['pytest.test_member1'],
+			"Aboba"
+		),
+		(
+			['pytest.test_member0', 'pytest.test_member1'],
+			"26",
+			['pytest.test_member2', 'pytest.test_member3'],
+			"Aboba",
+
+			['pytest.test_member0', 'pytest.test_member1'],
+			"26",
+			['pytest.test_member2'],
+			"Aboba"
+		),
+		(
+			['pytest.test_member0'],
+			"26",
+			['pytest.test_member1'],
+			"Aboba",
+
+			['pytest.test_member2'],
+			"8",
+			['pytest.test_member3'],
+			"Aboba"
+		),
+		(
+			['pytest.test_member0'],
+			"26",
+			['pytest.test_member1'],
+			"Aboba",
+
+			['pytest.test_member0'],
+			"26",
+			['pytest.test_member1'],
+			"aboba",
 		)
 	]
 )
@@ -80,13 +130,16 @@ async def test_coincidence_targets(
 	target: List[Optional[str]],
 	act: str,
 	d_in: List[Optional[str]],
-	name: str
+	name: str,
+	compared_target: List[Optional[str]],
+	compared_act: str,
+	compared_d_in: List[Optional[str]],
+	compared_name: str
 	) -> None:
-	target_objects = target[:]
-	d_in_objects = target[:]
 	target_message_part = extractIDAndGenerateObject(target)
 	d_in_message_part = extractIDAndGenerateObject(d_in)
 	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} {act} {' '.join(d_in_message_part)} -name {name}")
+	dpytest.get_message() # пропускаем ненужное сообщение
 	async with db.cursor() as acur:
 		await acur.execute(
 			"SELECT * FROM target"
@@ -95,31 +148,29 @@ async def test_coincidence_targets(
 		row = rows[0]
 		target_id = row[0]
 		target_name = row[5]
-	attr_to_change = ['target_message_part', 'act', 'd_in_message_part', 'name']
-	for (ind, part_to_change) in enumerate(attr_to_change):
-		old_part_value = locals().get(part_to_change)
-		if part_to_change in ["target_message_part", "d_in_message_part"]:
-			locals().update({part_to_change: pytest.test_member2.id}) #! якорь: остаётся только eval.
+	compared_target_message_part = extractIDAndGenerateObject(compared_target)
+	compared_d_in_message_part = extractIDAndGenerateObject(compared_d_in)
+	await dpytest.message(f"sudo log 1 {' '.join(compared_target_message_part)} {compared_act} {' '.join(compared_d_in_message_part)}"
+	f" -name {compared_name}")
+	coincidence_elements = []
+	current_objects = []
+	compared_objects = []
+	for check_object in [target_message_part, act, d_in_message_part, name]: # склеивание списков.
+		if isinstance(check_object, list):
+			current_objects += check_object
 		else:
-			locals()[part_to_change] = "32"
-		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} {act} {' '.join(d_in_message_part)} -name {name}")
-		
-		unchanged_attr = attr_to_change[:]
-		unchanged_attr.remove(part_to_change)
-		coincidence_elements: List[str] = []
-		for attr in unchanged_attr:
-			unchanged_attr_value = locals()[attr]
-			if isinstance(unchanged_attr_value, list):
-				coincidence_elements += unchanged_attr_value
-			else:
-				coincidence_elements.append(unchanged_attr_value)
-		print(dpytest.get_message().content)
-		print(f"Цель с подобными параметрами уже существует: {target_id}"
-		f" ({target_name}). Совпадающие элементы: {', '.join(coincidence_elements)}")
-		# assert dpytest.verify().message().content(f"Цель с подобными параметрами уже существует: {target_id}"
-		# f" ({target_name}). Совпадающие элементы: {', '.join(coincidence_elements)}")
-		locals()[part_to_change] = old_part_value
-	# await dpytest.message(f"sudo log 1 {[pytest.test_member2.id]} {act} {[pytest.test_member5.id]} {name}")
+			current_objects.append(check_object)
+	for check_object in [compared_target_message_part, compared_act, # склеивание списков.
+		compared_d_in_message_part, compared_name]:
+		if isinstance(check_object, list):
+			compared_objects += check_object
+		else:
+			compared_objects.append(check_object)
+	for current_object in current_objects:
+		if current_object in compared_objects:
+			coincidence_elements.append(current_object)
+	assert dpytest.verify().message().contains().content(f"Цель с подобными параметрами уже существует: {target_id}"
+	f" ({target_name}). Совпадающие элементы: {', '.join(coincidence_elements)}")
 
 def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]: # TODO посмотреть, что будет при list.
 	message_part: List[Optional[str]] = []
