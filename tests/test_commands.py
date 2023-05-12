@@ -7,7 +7,7 @@ from typing import List, Union, Optional, Dict, Tuple, Iterable, Sequence, Any, 
 
 import bot.commands as user_commands
 
-# TODO возврат при вызове без подкоманды, без явного указания флагов, 
+# TODO без явного указания флагов, 
 # тест при указании пользователя вне гильдии/несуществующего.
 # тест expression-ов.
 # тест https://discord.com/channels/476793048756387850/757216070925811722/1103660030269603880
@@ -58,9 +58,50 @@ async def test_good_log_create(
 			flags_values = list(map(lambda x: None if not x else x, flags.values()))
 			assert row == ("0", str(pytest.test_guild.id), target, act, d_in, *flags_values)
 
-# @pytest.mark.asyncio
-# async def test_bad_log(botInit) -> None:
-# 	pass
+@pytest.mark.asyncio
+async def test_log_without_subcommand() -> None:
+	await dpytest.message(f"sudo log")
+	assert dpytest.verify().message().content("Убедитесь, что вы указали подкоманду.")
+
+@pytest.mark.parametrize(
+	"target, act, d_in, missing_params",
+	[
+		(
+			['pytest.test_member0'],
+			"",
+			[""],
+			["act", "d_in"]
+		),
+		(
+			['pytest.test_member0'],
+			"23",
+			[""],
+			["d_in"]
+		),
+		(
+			[""],
+			"",
+			[""],
+			["target", "act", "d_in"]
+		),
+	]
+)
+@pytest.mark.asyncio
+async def test_log_without_require_params(
+	target: List[Optional[str]],
+	act: str,
+	d_in: List[Optional[str]],
+	missing_params: List[str]
+) -> None:
+	target_message_part = extractIDAndGenerateObject(target)
+	d_in_message_part = extractIDAndGenerateObject(d_in)
+	with pytest.raises(commands.MissingRequiredArgument): #! dpytest почему-то 
+		# принудительно поднимает исключения, хотя они могут обрабатываться в 
+		# on_command_error и проч. ивентах. 
+		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} {act}"
+			f" {' '.join(d_in_message_part)}")
+	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
+		f" обязательные параметры. Не найденный/(е) параметр/(ы): {', '.join(missing_params)}")
 
 @pytest.mark.parametrize(
 	"target, act, d_in, name, compared_target, compared_act, compared_d_in, compared_name",
