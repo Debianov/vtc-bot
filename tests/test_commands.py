@@ -166,10 +166,10 @@ async def test_coincidence_targets(
 			compared_objects += check_object
 		else:
 			compared_objects.append(check_object)
-	for current_object in current_objects:
+	for current_object in current_objects: # поиск совпадений.
 		if current_object in compared_objects:
 			coincidence_elements.append(current_object)
-	assert dpytest.verify().message().contains().content(f"Цель с подобными параметрами уже существует: {target_id}"
+	assert dpytest.verify().message().content(f"Цель с подобными параметрами уже существует: {target_id}"
 	f" ({target_name}). Совпадающие элементы: {', '.join(coincidence_elements)}")
 
 def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]: # TODO посмотреть, что будет при list.
