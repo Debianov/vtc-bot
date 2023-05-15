@@ -192,7 +192,8 @@ class TargetGroup(DBObjectsGroup):
 		compared_attr: List[Any] = target.getComparableAttrs()
 		coincidence_attrs: List[Any] = []
 		for current_attr in current_attr:
-			if current_attr in compared_attr:
+			if current_attr in compared_attr and current_attr is not None: # is not None — исключаем из проверки 
+				# None-объекты, которые появляются только при отсутствии указания флага -name.
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
 

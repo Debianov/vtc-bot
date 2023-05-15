@@ -1,3 +1,5 @@
+# TODO Вместо __all__ лучше будет импортировать списком в самом модуле
+
 import discord
 from discord.ext import commands
 from typing import Optional, Union, Tuple, List, Any, Final
@@ -55,7 +57,9 @@ async def create(
 	*,
 	flags: UserLogFlags
 ) -> None:
-	if not d_in:
+	print(ctx.args)
+	if not d_in: # если пропускается последний обязательный параметр — ошибка не выводится, поэтому приходится
+		# выкручиваться.
 		raise commands.MissingRequiredArgument(ctx.command.clean_params["d_in"])
 
 	target_instance = TargetGroup(ctx)

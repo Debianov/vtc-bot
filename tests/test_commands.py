@@ -161,6 +161,17 @@ async def test_log_without_require_params(
 			"26",
 			['pytest.test_member1'],
 			"aboba",
+		),
+		(
+			['pytest.test_member0'],
+			"26",
+			['pytest.test_member1'],
+			"Aboba",
+
+			['pytest.test_member0'],
+			"26",
+			['pytest.test_member1'],
+			"",
 		)
 	]
 )
