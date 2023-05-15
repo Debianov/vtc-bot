@@ -17,10 +17,18 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError) 
 			error.errors[0].argument, error.param.name))
 	elif isinstance(error, commands.MissingRequiredArgument):
 		params = list(ctx.command.clean_params.keys())
-		current_parameter = error.param.name
-		# TODO бажочек: если определяется параметр по серединке (в порядке сигнатуры), то пропущенные параметры до него не указываются.
-		missing_parameters: List[str] = list(filter(lambda x: x != "flags", params[params.index(current_parameter):])) 
-			# flags — всегда необязательные
+		if len(ctx.args[1]) == 0: # если список обработанных аргументов пустой, значит никакой из аргументов 
+			# не был указан впринципе (в контексте текущего исключения). 
+			# discord.py почему-то кидает ошибку с пропущенным act когда пропущен 
+			# самый первый аргумент — target.
+			missing_parameters = params
+		else:
+			current_parameter = error.param.name
+			# TODO бажочек: если определяется параметр по серединке (в порядке сигнатуры),
+			# то пропущенные параметры до него не указываются.
+			missing_parameters = params[params.index(current_parameter):]
+				# flags — всегда необязательные
+		missing_parameters = list(filter(lambda x: x != "flags", missing_parameters)) 
 		await ctx.send(f"Убедитесь, что вы указали все обязательные параметры. Не найденный/(е) параметр/(ы):"
 			f" {', '.join(missing_parameters)}") # TODO склонения.
 	else:
