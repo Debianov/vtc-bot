@@ -49,6 +49,7 @@ async def log(ctx: commands.Context) -> None:
 # TODO походу надо делать свои конвертеры + завести на существующих
 # группировку тоже.
 # TODO ошибка при написании дальше параметров без указания флагов.
+# TODO d_in в сравнении при поиске совпадений убрать, наверн.
 async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
@@ -57,7 +58,10 @@ async def create(
 	*,
 	flags: UserLogFlags
 ) -> None:
-	print(ctx.args)
+
+	await checkForExplicitFlag(ctx, target, act, d_in, flags.name, flags.output,
+		flags.priority, flags.other)
+
 	if not d_in: # если пропускается последний обязательный параметр — ошибка не выводится, поэтому приходится
 		# выкручиваться.
 		raise commands.MissingRequiredArgument(ctx.command.clean_params["d_in"])
@@ -84,3 +88,9 @@ async def create(
 	else:
 		await target_instance.writeData()
 		await ctx.send("Цель добавлена успешно.")
+
+async def checkForExplicitFlag(ctx: commands.Context, *parameters: Any) -> None:
+	if not ctx.current_argument.startswith("-"):
+		await ctx.send("Убедитесь, что вы указали флаги явно. Необработанная часть"
+			f" сообщения: {ctx.current_argument}") # TODO можно интерактив подвезти.
+		raise commands.FlagError(f"flag {ctx.current_argument} unhandle")

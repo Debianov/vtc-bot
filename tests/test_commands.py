@@ -7,7 +7,7 @@ from typing import List, Union, Optional, Dict, Tuple, Iterable, Sequence, Any, 
 
 import bot.commands as user_commands
 
-# TODO без явного указания флагов, 
+# TODO
 # тест при указании пользователя вне гильдии/несуществующего.
 # тест expression-ов.
 # тест https://discord.com/channels/476793048756387850/757216070925811722/1103660030269603880
@@ -102,6 +102,13 @@ async def test_log_without_require_params(
 			f" {' '.join(d_in_message_part)}")
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
 		f" обязательные параметры. Не найденный/(е) параметр/(ы): {', '.join(missing_params)}")
+
+@pytest.mark.asyncio
+async def test_log_without_explicit_flags() -> None:
+	with pytest.raises(commands.FlagError):
+		await dpytest.message(f"sudo log 1 {pytest.test_member0} 43 {pytest.test_member1} barhatniy_tyagi")
+	assert dpytest.verify().message().content(f"Убедитесь, что вы указали флаги"
+		" явно. Необработанная часть сообщения: barhatniy_tyagi")
 
 @pytest.mark.parametrize(
 	"target, act, d_in, name, compared_target, compared_act, compared_d_in, compared_name",
