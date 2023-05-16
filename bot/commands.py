@@ -59,7 +59,7 @@ async def create(
 	flags: UserLogFlags
 ) -> None:
 
-	await checkForExplicitFlag(ctx, target, act, d_in, flags.name, flags.output,
+	await checkForUnhandleContent(ctx, target, act, d_in, flags.name, flags.output,
 		flags.priority, flags.other)
 
 	if not d_in: # если пропускается последний обязательный параметр — ошибка не выводится, поэтому приходится
@@ -89,8 +89,20 @@ async def create(
 		await target_instance.writeData()
 		await ctx.send("Цель добавлена успешно.")
 
-async def checkForExplicitFlag(ctx: commands.Context, *parameters: Any) -> None:
-	if not ctx.current_argument.startswith("-"):
-		await ctx.send("Убедитесь, что вы указали флаги явно. Необработанная часть"
-			f" сообщения: {ctx.current_argument}") # TODO можно интерактив подвезти.
-		raise commands.FlagError(f"flag {ctx.current_argument} unhandle")
+async def checkForUnhandleContent(ctx: commands.Context, *parameters: Any) -> None:
+	current_argument = ctx.current_argument.split(" ")
+	for maybe_argument in current_argument[:]:
+		if maybe_argument.startswith("-"):
+			current_argument.remove(maybe_argument)
+	parameters = list(parameters)
+	for (ind, element) in enumerate(parameters[:]):
+		if isinstance(element, discord.abc.Messageable):
+			parameters[ind] = element.id
+		elif isinstance(element, list):
+			parameters[ind] = list(map(lambda x: x.id, element))
+	for argument in current_argument:
+		if not argument in parameters:
+			await ctx.send("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
+				f" Необработанная часть сообщения: {ctx.current_argument}") 
+			# TODO можно интерактив подвезти.
+			raise commands.CommandError(f"message_part {ctx.current_argument} unhandle")
