@@ -91,18 +91,26 @@ async def create(
 
 async def checkForUnhandleContent(ctx: commands.Context, *parameters: Any) -> None:
 	current_argument = ctx.current_argument.split(" ")
-	for maybe_argument in current_argument[:]:
+	for (ind, maybe_argument) in enumerate(current_argument[:]):
 		if maybe_argument.startswith("-"):
 			current_argument.remove(maybe_argument)
-	parameters = list(parameters)
-	for (ind, element) in enumerate(parameters[:]):
+		elif maybe_argument.startswith("<") and maybe_argument.\
+			endswith(">"):
+			converter = commands.ObjectConverter()
+			discord_object = await converter.convert(ctx, maybe_argument)
+			current_argument[ind] = str(discord_object.id)
+	ready_check_parameters: List[str] = []
+	for element in parameters:
 		if isinstance(element, discord.abc.Messageable):
-			parameters[ind] = element.id
+			ready_check_parameters.append(str(element.id))
 		elif isinstance(element, list):
-			parameters[ind] = list(map(lambda x: x.id, element))
+			for d_id in map(lambda x: str(x.id), element):
+				ready_check_parameters.append(d_id)
+		else:
+			ready_check_parameters.append(element)
 	for argument in current_argument:
-		if not argument in parameters:
+		if not argument in ready_check_parameters:
 			await ctx.send("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
-				f" Необработанная часть сообщения: {ctx.current_argument}") 
+				f" Необработанная часть сообщения: {ctx.current_argument}")
 			# TODO можно интерактив подвезти.
 			raise commands.CommandError(f"message_part {ctx.current_argument} unhandle")

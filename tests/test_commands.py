@@ -30,11 +30,11 @@ import bot.commands as user_commands
 			"23",
 			['pytest.test_member1'],
 			{"-name": "Aboba", "-output": "", "-priority": "-1", "other": ""}
-		),
+		)
 	],
 )
 @pytest.mark.asyncio
-async def test_good_log_create(
+async def test_good_log_create_with_flags(
 	bot: commands.Bot,
 	db: Optional[psycopg.AsyncConnection[Any]],
 	target: List[Optional[str]],
@@ -56,6 +56,18 @@ async def test_good_log_create(
 		for row in await acur.fetchall():
 			flags_values = list(map(lambda x: None if not x else x, flags.values()))
 			assert row == ("0", str(pytest.test_guild.id), target, act, d_in, *flags_values)
+
+@pytest.mark.asyncio
+async def test_good_log_create_without_flags(db: Optional[psycopg.AsyncConnection[Any]]):
+	await dpytest.message(f"sudo log 1 {pytest.test_member0.id} 23 {pytest.test_member1.id}")
+	assert dpytest.verify().message().content("Цель добавлена успешно.")
+	async with db.cursor() as acur:
+		await acur.execute(
+			"SELECT * FROM target"
+		)
+		for row in await acur.fetchall():
+			flags_values = [None, None, '-1', None]
+			assert row == ("0", str(pytest.test_guild.id), [pytest.test_member0], '23', [pytest.test_member1], *flags_values)
 
 @pytest.mark.asyncio
 async def test_log_without_subcommand() -> None:
@@ -258,6 +270,12 @@ async def test_coincidence_targets(
 			coincidence_elements.append(current_object)
 	assert dpytest.verify().message().content(f"Цель с подобными параметрами уже существует: {target_id}"
 	f" ({target_name}). Совпадающие элементы: {', '.join(coincidence_elements)}")
+
+@pytest.mark.asyncio
+async def test_log_1_with_mention() -> None:
+	await dpytest.message(f"sudo log 1 <@{pytest.test_member0.id}> 23"
+		f" <@{pytest.test_member1.id}>")
+	assert dpytest.verify().message().content("Цель добавлена успешно.")
 
 def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]: # TODO посмотреть, что будет при list.
 	message_part: List[Optional[str]] = []
