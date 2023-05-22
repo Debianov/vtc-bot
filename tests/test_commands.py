@@ -7,9 +7,6 @@ from typing import List, Union, Optional, Dict, Tuple, Iterable, Sequence, Any, 
 
 import bot.commands as user_commands
 
-# TODO
-# тест expression-ов.
-# тест https://discord.com/channels/476793048756387850/757216070925811722/1103660030269603880
 @pytest.mark.parametrize(
 	"target, act, d_in, flags",
 	[
@@ -277,6 +274,73 @@ async def test_log_1_with_mention() -> None:
 		f" <@{pytest.test_member1.id}>")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 
+@pytest.mark.parametrize(
+	"exp1, exp2, calls_sequence",
+	[
+		(
+			"usr:*", "usr:*", ['current_ctx.guild.members', 'current_ctx.guild.members']
+		),
+		(
+			"ch:*", "usr:*", ['current_ctx.guild.channels', 'current_ctx.guild.members']
+		),
+		(
+			"ch:*", "ch:*", ['current_ctx.guild.channels', 'current_ctx.guild.channels']
+		)
+	]
+)
+@pytest.mark.asyncio
+async def test_log_1_good_expression(
+	bot: commands.Bot,
+	db: Optional[psycopg.AsyncConnection[Any]],
+	exp1: str,
+	exp2: str,
+	calls_sequence: List[str]
+	) -> None:
+	message = await dpytest.message(f"sudo log 1 {exp1} 23"
+		f" {exp2}")
+	current_ctx = await bot.get_context(message)
+	compared_objects = extractObjects(calls_sequence, current_ctx)
+	assert dpytest.verify().message().content("Цель добавлена успешно.")
+	async with db.cursor() as acur:
+		await acur.execute(
+			"SELECT * FROM target"
+		)
+		for row in await acur.fetchall():
+			flags_values = [None, None, '-1', None]
+			assert row == ("0", str(pytest.test_guild.id), compared_objects[0],
+				'23', compared_objects[1], *flags_values)
+
+@pytest.mark.parametrize(
+	"exp1, exp2, unhandle_message_part",
+	[
+		(
+			"fger", "erert", "23 erert"
+		),
+		(
+			"fger", "", "23"
+		),
+		(
+			"usr:*", "*df", "*df"
+		),
+		(
+			"fe:*", "", ""
+		)
+	]
+)
+@pytest.mark.asyncio
+async def test_log_1_bad_expression(
+	bot: commands.Bot,
+	db: Optional[psycopg.AsyncConnection[Any]],
+	exp1: str,
+	exp2: str,
+	unhandle_message_part: str
+) -> None:
+	with pytest.raises(commands.CommandError):
+		await dpytest.message(f"sudo log 1 {exp1} 23"
+			f" {exp2}")
+	assert dpytest.verify().message().content("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
+		f" Необработанная часть сообщения: {unhandle_message_part}")
+
 def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]: # TODO посмотреть, что будет при list.
 	message_part: List[Optional[str]] = []
 	for (ind, string) in enumerate(sequence):
@@ -287,6 +351,16 @@ def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]: 
 		except Exception:
 			continue
 	return message_part if message_part else sequence
+
+def extractObjects(
+	calls_sequence: List[str],
+	current_ctx: commands.Context
+) -> List[List[discord.abc.Messageable]]:
+	result: List[List[discord.abc.Messageable]] = []
+	for call in calls_sequence:
+		discord_objects = eval(call)
+		result.append(list(discord_objects))
+	return result
 
 # # TODO вычисляем популярные команды и вставляет в тест сюда. Все команды в
 # # одном файле здесь проверять смысла нет, поскольку для методов, которые

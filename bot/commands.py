@@ -7,7 +7,8 @@ import asyncio
 from datetime import timedelta
 
 from .flags import *
-from .converters import SearchExpression, ShortSearchExpression, SpecialExpression
+from .converters import Expression, SearchExpression, ShortSearchExpression, SpecialExpression
+from .exceptions import SearchExpressionNotFound
 from .data import *
 from .config import bot
 
@@ -59,8 +60,12 @@ async def create(
 	flags: UserLogFlags
 ) -> None:
 
-	await checkForUnhandleContent(ctx, target, act, d_in, flags.name, flags.output,
-		flags.priority, flags.other)
+	initial_target = removeNesting(target)
+	initial_act = removeNesting(act)
+	initial_d_in = removeNesting(d_in)
+
+	await checkForUnhandleContent(ctx, initial_target or target, initial_act or act,
+	initial_d_in or d_in, flags.name, flags.output, flags.priority, flags.other)
 
 	if not d_in: # если пропускается последний обязательный параметр — ошибка не выводится, поэтому приходится
 		# выкручиваться.
@@ -90,7 +95,8 @@ async def create(
 		await ctx.send("Цель добавлена успешно.")
 
 async def checkForUnhandleContent(ctx: commands.Context, *parameters: Any) -> None:
-	current_argument = ctx.current_argument.split(" ")
+	current_argument = ctx.current_argument.split(" ") # discord.py останавливается на
+	# необработанном аргументе, если ни один из конвертеров не подошёл.
 	for (ind, maybe_argument) in enumerate(current_argument[:]):
 		if maybe_argument.startswith("-"):
 			current_argument.remove(maybe_argument)
@@ -99,6 +105,9 @@ async def checkForUnhandleContent(ctx: commands.Context, *parameters: Any) -> No
 			converter = commands.ObjectConverter()
 			discord_object = await converter.convert(ctx, maybe_argument)
 			current_argument[ind] = str(discord_object.id)
+	if checkExpressions(current_argument): # второй раз проверяю, поскольку других методов игнорирования
+		# верных expression-ов не нашёл.
+		return
 	ready_check_parameters: List[str] = []
 	for element in parameters:
 		if isinstance(element, discord.abc.Messageable):
@@ -114,3 +123,24 @@ async def checkForUnhandleContent(ctx: commands.Context, *parameters: Any) -> No
 				f" Необработанная часть сообщения: {ctx.current_argument}")
 			# TODO можно интерактив подвезти.
 			raise commands.CommandError(f"message_part {ctx.current_argument} unhandle")
+
+def removeNesting(instance: List[Any])\
+	-> Optional[List[discord.abc.Messageable]]:
+	if len(instance) == 1 and isinstance(instance[0], list):
+		tmp = instance[0]
+		instance.remove(tmp)
+		instance.extend(tmp)
+
+def checkExpressions(maybe_expressions: List[str]) -> bool:
+	expression_classes = (SearchExpression, ShortSearchExpression, SpecialExpression) # TODO
+	# сделать метод с проходам по иерархия классов, когда (если) у меня разрастётся converters.
+	for argument in maybe_expressions:
+		for d_class in expression_classes:
+			instance = d_class()
+			try:
+				instance.checkExpression(argument)
+			except SearchExpressionNotFound:
+				continue
+			else:
+				return True
+	return False
