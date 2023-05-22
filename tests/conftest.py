@@ -41,14 +41,14 @@ async def cleanUp() -> None:
 	await dpytest.empty_queue()
 
 @pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="package", name="db")
+@pytest_asyncio.fixture(scope="module", name="db")
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	with open("test_db_secret.sec") as text:
 		aconn = await initDB(text.readline(), text.readline())
 		return aconn
 
 @pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="package", autouse=True)
+@pytest_asyncio.fixture(scope="module", autouse=True)
 async def createTargetTable(db) -> None:
 	async with db.cursor() as acur:
 		await acur.execute(
