@@ -8,12 +8,15 @@ from datetime import timedelta
 
 from .flags import *
 from .converters import Expression, SearchExpression, ShortSearchExpression, SpecialExpression
-from .exceptions import SearchExpressionNotFound
+from .exceptions import ExpressionNotFound
 from .data import *
 from .config import bot
 
 @bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
+	#!якорь: выводит разные ошибки, но не до конца. Так, например, при выводе sudo log 1 hfg:* 43 usr:*
+	# сразу крашит в нужную ошибку (хоть и описание не правильное). При выводе log 1 hfg:* 43 улетает 
+	# unhandle, хотя также не хватает недостающего параметра, а все raise в конвертерах дописаны.
 	if isinstance(error, commands.BadUnionArgument):
 		# TODO склонение + убрать пинг при упоминании, если возможно.
 		await ctx.send("Убедитесь, что вы указали существующие объекты \"{}\" в параметре {}, и у меня есть к ним доступ.".format(
@@ -139,7 +142,7 @@ def checkExpressions(maybe_expressions: List[str]) -> bool:
 			instance = d_class()
 			try:
 				instance.checkExpression(argument)
-			except SearchExpressionNotFound:
+			except ExpressionNotFound:
 				continue
 			else:
 				return True

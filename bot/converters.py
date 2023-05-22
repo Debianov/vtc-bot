@@ -3,7 +3,7 @@ from discord.ext import commands
 from typing import List, Optional, Any, Union, Type
 
 from .data import DataGroupAnalyzator, DiscordObjectsGroup
-from .exceptions import SearchExpressionNotFound
+from .exceptions import SearchExpressionNotFound, ShortSearchExpressionNotFound, SpecialExpressionNotFound
 
 class Expression(commands.Converter):
 	pass
@@ -11,7 +11,8 @@ class Expression(commands.Converter):
 class SearchExpression(Expression):
 
 	async def convert(self, ctx: commands.Context, argument: str) -> 'self':
-		self.checkExpression(argument)
+		self.argument = argument
+		self.checkExpression()
 		self.string: List[str] = argument.split(":")
 		self.result: List[discord.Messageable] = []
 		self.ctx = ctx
@@ -19,12 +20,17 @@ class SearchExpression(Expression):
 		self.analyzeWildcard()
 		return self.result
 
-	def checkExpression(self, argument) -> None:
+	def checkExpression(self, argument: Optional[str] = None) -> None:
+		if not argument: # данный метод подлежит вызову вне аннотаций команд для проверки
+			# других аргументов в обход convert.
+			argument = self.argument
 		if argument.find(":") == -1:
 			raise SearchExpressionNotFound(argument)
 
 	def extractDataGroup(self) -> None:
 		self.data_groups: List[DiscordObjectsGroup] = DataGroupAnalyzator(self.ctx, self.string[0]).analyze()
+		if not self.data_groups:
+			raise SearchExpressionNotFound(self.argument)
 
 	def analyzeWildcard(self) -> None:
 		for data_group in self.data_groups:
@@ -33,7 +39,7 @@ class SearchExpression(Expression):
 
 class ShortSearchExpression(SearchExpression):
 
-	def __class_getitem__(cls, default_data_group: DiscordObjectsGroup) -> 'ShortSearchExpression':
+	def __class_getitem__(cls, default_data_group: DiscordObjectsGroup = DiscordObjectsGroup) -> 'ShortSearchExpression':
 		cls.data_group = default_data_group()
 		return cls
 
@@ -46,7 +52,7 @@ class ShortSearchExpression(SearchExpression):
 
 	def checkExpression(self, argument) -> None:
 		if not argument == "*": # все допустимые форматы маски. На данный момент пока хватит звёздочки TODO.
-			raise SearchExpressionNotFound(argument) # TODO сделать отдельный класс ошибок.
+			raise ShortSearchExpressionNotFound(argument) # TODO сделать отдельный класс ошибок.
 
 	def analyzeWildcard(self) -> None:
 		if self.string == "*":
@@ -61,5 +67,5 @@ class SpecialExpression(Expression):
 
 	def checkExpression(self, argument: str) -> None:
 		if not argument in ["df", "default"]: # все допустимые форматы. Будет дополняться TODO.
-			raise SearchExpressionNotFound(argument)
+			raise SpecialExpressionNotFound(argument)
 		# TODO извлечение из БД дефолтного сервера.

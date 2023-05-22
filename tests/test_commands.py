@@ -7,6 +7,8 @@ from typing import List, Union, Optional, Dict, Tuple, Iterable, Sequence, Any, 
 
 import bot.commands as user_commands
 
+# TODO больше тестов на MissingRequiredArgument.
+
 @pytest.mark.parametrize(
 	"target, act, d_in, flags",
 	[

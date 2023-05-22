@@ -17,7 +17,21 @@ class ErrorMessage:
 			text_rest += "{}. ".format(str(i)) + self.__dict__[str(i)] + ("\n" if i != self.current_point else ...)
 		return self.text_start + text_rest
 
-class SearchExpressionNotFound(commands.BadArgument):
 
-	def __init__(self, argument) -> None:
-		self.argument = "Search Expression \"{}\" not found".format(argument)
+class ExpressionNotFound(commands.BadArgument):
+	pass
+
+class SearchExpressionNotFound(ExpressionNotFound):
+
+	def __init__(self, argument: str) -> None:
+		self.argument = "Search search expression \"{}\" not found".format(argument)
+
+class ShortSearchExpressionNotFound(SearchExpressionNotFound):
+
+	def __init__(self, argument: str) -> None:
+		self.argument = "Short search expression \"{}\" not found".format(argument)
+
+class SpecialExpressionNotFound(ExpressionNotFound):
+
+	def __init__(self, argument: str) -> None:
+		self.argument = "Special expression \"{}\" not found".format(argument)
