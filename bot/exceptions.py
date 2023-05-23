@@ -35,3 +35,11 @@ class SpecialExpressionNotFound(ExpressionNotFound):
 
 	def __init__(self, argument: str) -> None:
 		self.argument = "Special expression \"{}\" not found".format(argument)
+
+class UnhandlePartMessageSignal(Exception):
+
+	def __init__(self, argument: str) -> None:
+		self.argument = f"message_part {argument} unhandle"
+
+	def __str__(self) -> str:
+		return self.argument

@@ -6,6 +6,7 @@ from discord.ext import commands
 from typing import List, Union, Optional, Dict, Tuple, Iterable, Sequence, Any, Sized
 
 import bot.commands as user_commands
+from bot.exceptions import UnhandlePartMessageSignal
 
 # TODO больше тестов на MissingRequiredArgument.
 
@@ -135,19 +136,19 @@ async def test_log_bad_flag(
 ) -> None:
 	target_message_part = extractIDAndGenerateObject(target)
 	d_in_message_part = extractIDAndGenerateObject(d_in)
-	with pytest.raises(commands.CommandError):
+	with pytest.raises(commands.CommandInvokeError):
 		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} 43"
-		f" {' '.join(d_in_message_part)} {flag}")
+			f" {' '.join(d_in_message_part)} {flag}")
 	assert dpytest.verify().message().content("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
-			f" Необработанная часть сообщения: {unhandle_message_part}")
+		f" Необработанная часть сообщения: {unhandle_message_part}")
 
 @pytest.mark.asyncio
 async def test_log_bad_parameters() -> None:
-	with pytest.raises(commands.CommandError):
+	with pytest.raises(commands.CommandInvokeError):
 		await dpytest.message(f"sudo log 1 336420570449051649 43"
 		f" 1107606170375565372")
 	assert dpytest.verify().message().content("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
-			f" Необработанная часть сообщения: 1107606170375565372")
+		f" Необработанная часть сообщения: 1107606170375565372")
 
 @pytest.mark.parametrize(
 	"target, act, d_in, name, compared_target, compared_act, compared_d_in, compared_name",

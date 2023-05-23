@@ -8,7 +8,7 @@ from datetime import timedelta
 
 from .flags import *
 from .converters import Expression, SearchExpression, ShortSearchExpression, SpecialExpression
-from .exceptions import ExpressionNotFound
+from .exceptions import ExpressionNotFound, UnhandlePartMessageSignal
 from .data import *
 from .config import bot
 
@@ -37,6 +37,11 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError) 
 		missing_parameters = list(filter(lambda x: x != "flags", missing_parameters)) 
 		await ctx.send(f"Убедитесь, что вы указали все обязательные параметры. Не найденный/(е) параметр/(ы):"
 			f" {', '.join(missing_parameters)}") # TODO склонения.
+	elif isinstance(error.original, UnhandlePartMessageSignal): # данная ошибка передаётся
+		# только через атрибут
+		await ctx.send("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
+			f" Необработанная часть сообщения: {ctx.current_argument}")
+		# TODO можно интерактив подвезти.
 	else:
 		raise error
 
@@ -67,12 +72,12 @@ async def create(
 	initial_act = removeNesting(act)
 	initial_d_in = removeNesting(d_in)
 
-	await checkForUnhandleContent(ctx, initial_target or target, initial_act or act,
-	initial_d_in or d_in, flags.name, flags.output, flags.priority, flags.other)
-
 	if not d_in: # если пропускается последний обязательный параметр — ошибка не выводится, поэтому приходится
 		# выкручиваться.
 		raise commands.MissingRequiredArgument(ctx.command.clean_params["d_in"])
+	else:
+		await checkForUnhandleContent(ctx, initial_target or target, initial_act or act,
+			initial_d_in or d_in, flags.name, flags.output, flags.priority, flags.other)
 
 	target_instance = TargetGroup(ctx)
 	target_instance.target = target
@@ -122,10 +127,7 @@ async def checkForUnhandleContent(ctx: commands.Context, *parameters: Any) -> No
 			ready_check_parameters.append(element)
 	for argument in current_argument:
 		if not argument in ready_check_parameters:
-			await ctx.send("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
-				f" Необработанная часть сообщения: {ctx.current_argument}")
-			# TODO можно интерактив подвезти.
-			raise commands.CommandError(f"message_part {ctx.current_argument} unhandle")
+			raise UnhandlePartMessageSignal(ctx.current_argument)
 
 def removeNesting(instance: List[Any])\
 	-> Optional[List[discord.abc.Messageable]]:
