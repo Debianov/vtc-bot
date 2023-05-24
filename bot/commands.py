@@ -1,4 +1,6 @@
 # TODO Вместо __all__ лучше будет импортировать списком в самом модуле
+# TODO Мистика: при пропущенном d_in приходится поднимать исключение вручную;
+# если все обязательные аргументы пустые, выводится, что пропущен act.
 
 import discord
 from discord.ext import commands
@@ -22,21 +24,9 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError) 
 		await ctx.send("Убедитесь, что вы указали существующие объекты \"{}\" в параметре {}, и у меня есть к ним доступ.".format(
 			error.errors[0].argument, error.param.name))
 	elif isinstance(error, commands.MissingRequiredArgument):
-		params = list(ctx.command.clean_params.keys())
-		if len(ctx.args[1]) == 0: # если список обработанных аргументов пустой, значит никакой из аргументов 
-			# не был указан впринципе (в контексте текущего исключения). 
-			# discord.py почему-то кидает ошибку с пропущенным act когда пропущен 
-			# самый первый аргумент — target.
-			missing_parameters = params
-		else:
-			current_parameter = error.param.name
-			# TODO бажочек: если определяется параметр по серединке (в порядке сигнатуры),
-			# то пропущенные параметры до него не указываются.
-			missing_parameters = params[params.index(current_parameter):]
-				# flags — всегда необязательные
-		missing_parameters = list(filter(lambda x: x != "flags", missing_parameters)) 
-		await ctx.send(f"Убедитесь, что вы указали все обязательные параметры. Не найденный/(е) параметр/(ы):"
-			f" {', '.join(missing_parameters)}") # TODO склонения.
+		current_parameter = error.param.name
+		await ctx.send(f"Убедитесь, что вы указали все обязательные параметры. Не найденный параметр:"
+			f" {current_parameter}")
 	elif isinstance(error.original, UnhandlePartMessageSignal): # данная ошибка передаётся
 		# только через атрибут
 		await ctx.send("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
@@ -74,6 +64,7 @@ async def create(
 
 	if not d_in: # если пропускается последний обязательный параметр — ошибка не выводится, поэтому приходится
 		# выкручиваться.
+		#? как сделать, чтоб перестать вручную вызывать вывод при пустом d_in?
 		raise commands.MissingRequiredArgument(ctx.command.clean_params["d_in"])
 	else:
 		await checkForUnhandleContent(ctx, initial_target or target, initial_act or act,

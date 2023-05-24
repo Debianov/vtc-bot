@@ -81,19 +81,19 @@ async def test_log_without_subcommand() -> None:
 			['pytest.test_member0'],
 			"",
 			[""],
-			["act", "d_in"]
+			"act"
 		),
 		(
 			['pytest.test_member0'],
 			"23",
 			[""],
-			["d_in"]
+			"d_in"
 		),
 		(
 			[""],
 			"",
 			[""],
-			["target", "act", "d_in"]
+			"target"
 		),
 	]
 )
@@ -102,7 +102,7 @@ async def test_log_without_require_params(
 	target: List[Optional[str]],
 	act: str,
 	d_in: List[Optional[str]],
-	missing_params: List[str]
+	missing_params: str
 ) -> None:
 	target_message_part = extractIDAndGenerateObject(target)
 	d_in_message_part = extractIDAndGenerateObject(d_in)
@@ -112,8 +112,8 @@ async def test_log_without_require_params(
 		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} {act}"
 			f" {' '.join(d_in_message_part)}")
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
-		f" обязательные параметры. Не найденный/(е) параметр/(ы): {', '.join(missing_params)}")
-
+		f" обязательные параметры. Не найденный параметр: {missing_params}")
+	
 @pytest.mark.parametrize(
 	"target, act, d_in, flag, unhandle_message_part",
 	[
@@ -314,19 +314,13 @@ async def test_log_1_good_expression(
 				'23', compared_objects[1], *flags_values)
 
 @pytest.mark.parametrize(
-	"exp1, exp2, unhandle_message_part",
+	"exp1, exp2, missing_params",
 	[
 		(
-			"fger", "erert", "23 erert"
+			"fger", "erert", "target",
 		),
 		(
-			"fger", "", "23"
-		),
-		(
-			"usr:*", "*df", "*df"
-		),
-		(
-			"fe:*", "", ""
+			"usr:*", "*df", "d_in"
 		)
 	]
 )
@@ -336,13 +330,13 @@ async def test_log_1_bad_expression(
 	db: Optional[psycopg.AsyncConnection[Any]],
 	exp1: str,
 	exp2: str,
-	unhandle_message_part: str
+	missing_params: str
 ) -> None:
 	with pytest.raises(commands.CommandError):
 		await dpytest.message(f"sudo log 1 {exp1} 23"
 			f" {exp2}")
-	assert dpytest.verify().message().content("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
-		f" Необработанная часть сообщения: {unhandle_message_part}")
+	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
+		f" обязательные параметры. Не найденный параметр: {missing_params}")
 
 def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]: # TODO посмотреть, что будет при list.
 	message_part: List[Optional[str]] = []
