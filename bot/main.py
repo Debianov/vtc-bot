@@ -1,4 +1,4 @@
-import discord # TODO отсутствуют stubs-ы.
+import discord
 import logging
 from bot.commands import bot, initDB
 

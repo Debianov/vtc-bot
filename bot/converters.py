@@ -51,8 +51,8 @@ class ShortSearchExpression(SearchExpression):
 		return self.result
 
 	def checkExpression(self, argument) -> None:
-		if not argument == "*": # все допустимые форматы маски. На данный момент пока хватит звёздочки TODO.
-			raise ShortSearchExpressionNotFound(argument) # TODO сделать отдельный класс ошибок.
+		if not argument == "*":
+			raise ShortSearchExpressionNotFound(argument)
 
 	def analyzeWildcard(self) -> None:
 		if self.string == "*":
@@ -66,6 +66,5 @@ class SpecialExpression(Expression):
 		return argument
 
 	def checkExpression(self, argument: str) -> None:
-		if not argument in ["df", "default"]: # все допустимые форматы. Будет дополняться TODO.
+		if not argument in ["df", "default"]:
 			raise SpecialExpressionNotFound(argument)
-		# TODO извлечение из БД дефолтного сервера.

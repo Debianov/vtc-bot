@@ -1,4 +1,3 @@
-#? что с кешированием?
 import discord
 from discord.ext import commands
 from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict, Set
@@ -14,7 +13,7 @@ __all__ = (
 	"initDB"
 )
 
-aconn: Optional[psycopg.AsyncConnection[Any]] = None # TODO убрать, Dependency Injection. https://youtube.com/watch?v=r8_Bpx2cZSE
+aconn: Optional[psycopg.AsyncConnection[Any]] = None
 
 async def initDB(
 	dbname: str, 
@@ -89,7 +88,6 @@ class ActGroup(DBObjectsGroup):
 	def extractData(self, coord: Optional[str] = None) -> List[str]:
 		if not coord:
 			pass
-			# TODO извлекаем всю БД нахрен.
 		return [""]
 
 class TargetGroup(DBObjectsGroup):
@@ -98,7 +96,7 @@ class TargetGroup(DBObjectsGroup):
 
 	def __init__(
 		self,
-		ctx: Union[discord.Guild, discord.Client], # TODO посмотреть по разновидностям. 
+		ctx: discord.Guild,
 		id: int = None,
 		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None, 
 		act: Union[str, None] = None,
@@ -110,16 +108,16 @@ class TargetGroup(DBObjectsGroup):
 	) -> None:
 		self.id = id or self.generateID()
 		self.ctx = ctx
-		self.target = target # TODO не может быть ID бота.
-		self.act = act # TODO act в ActGroup (подумать).
-		self.d_in = d_in # TODO не может быть ID бота.
+		self.target = target
+		self.act = act
+		self.d_in = d_in
 		self.name = name
 		self.output = output
 		self.priority = priority
 		self.other = other
 
 	def generateID(self) -> int:
-		return 0 # TODO сделать нормальную генерацию ID.
+		return 0
 
 	def __setattr__(
 		self, 
@@ -130,7 +128,7 @@ class TargetGroup(DBObjectsGroup):
 			match name:
 				case "act":
 					checking_nvalue = nvalue.replace(" ", "")
-					if not checking_nvalue.isalpha(): # TODO а нахрена я так сделал?
+					if not checking_nvalue.isalpha():
 						if not checking_nvalue.isdigit():
 							raise ValueError(name, nvalue)
 				case "name":
@@ -140,7 +138,6 @@ class TargetGroup(DBObjectsGroup):
 
 	async def writeData(self) -> None:
 		async with aconn.cursor() as acur:
-			# TODO вписывать id гильдии.
 			await acur.execute("""
 					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""", [self.id, self.ctx, self.target, 
 					self.act, self.d_in, self.name, self.output, self.priority, self.other])
@@ -184,10 +181,6 @@ class TargetGroup(DBObjectsGroup):
 		return comparable_attrs
 
 	def getCoincidenceTo(self, target: 'TargetGroup') -> str:
-		# TODO метод сравнения прокачать.
-		# TODO CASE WHEN как замена всему этому методу.
-		# TODO SELECT Name, Price, Category, CASE WHEN Name LIKE '%Apple%' THEN 'Name Match' WHEN Price < 10 THEN 
-		# 'Price Match' ELSE 'No Match' END AS Match_Condition FROM Products WHERE Name LIKE '%Apple%' OR Price < 10;
 		current_attr: List[Any] = self.getComparableAttrs()
 		compared_attr: List[Any] = target.getComparableAttrs()
 		coincidence_attrs: List[Any] = []
@@ -207,7 +200,6 @@ class DiscordObjectsDumper(psycopg.adapt.Dumper):
 class DiscordObjectsLoader(psycopg.adapt.Loader):
 
 	def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]: 
-		#? есть варианты, как передавать в load discord_context через параметр, а не aconn?
 		string_data: str = data.decode()
 		for attr in ('get_member', 'get_user', 'get_channel'):
 			try:

@@ -1,7 +1,3 @@
-# TODO Вместо __all__ лучше будет импортировать списком в самом модуле
-# TODO Мистика: при пропущенном d_in приходится поднимать исключение вручную;
-# если все обязательные аргументы пустые, выводится, что пропущен act.
-
 import discord
 from discord.ext import commands
 from typing import Optional, Union, Tuple, List, Any, Final
@@ -16,11 +12,7 @@ from .config import bot
 
 @bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
-	#!якорь: выводит разные ошибки, но не до конца. Так, например, при выводе sudo log 1 hfg:* 43 usr:*
-	# сразу крашит в нужную ошибку (хоть и описание не правильное). При выводе log 1 hfg:* 43 улетает 
-	# unhandle, хотя также не хватает недостающего параметра, а все raise в конвертерах дописаны.
 	if isinstance(error, commands.BadUnionArgument):
-		# TODO склонение + убрать пинг при упоминании, если возможно.
 		await ctx.send("Убедитесь, что вы указали существующие объекты \"{}\" в параметре {}, и у меня есть к ним доступ.".format(
 			error.errors[0].argument, error.param.name))
 	elif isinstance(error, commands.MissingRequiredArgument):
@@ -28,10 +20,9 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError) 
 		await ctx.send(f"Убедитесь, что вы указали все обязательные параметры. Не найденный параметр:"
 			f" {current_parameter}")
 	elif isinstance(error.original, UnhandlePartMessageSignal): # данная ошибка передаётся
-		# только через атрибут
+		# только через атрибут original
 		await ctx.send("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
 			f" Необработанная часть сообщения: {ctx.current_argument}")
-		# TODO можно интерактив подвезти.
 	else:
 		raise error
 
@@ -40,15 +31,6 @@ async def log(ctx: commands.Context) -> None:
 	await ctx.send("Убедитесь, что вы указали подкоманду.")
 
 @log.command(aliases=["1", "cr"])
-#? походу у типов с упоминанием нет поддержки группировки через кавычки.
-# int и str работает только, а вот TextChannel и ост. подобные — нет.
-#! пока ситуация такая, что target и d_in приходится делать жадным, а 
-# act приходится работать через группировку (если сделать act жадным
-# он начинает кушать в том числе упоминания из d_in, но это уже другая история).
-# TODO походу надо делать свои конвертеры + завести на существующих
-# группировку тоже.
-# TODO ошибка при написании дальше параметров без указания флагов.
-# TODO d_in в сравнении при поиске совпадений убрать, наверн.
 async def create(
 	ctx: commands.Context,
 	target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
@@ -64,7 +46,6 @@ async def create(
 
 	if not d_in: # если пропускается последний обязательный параметр — ошибка не выводится, поэтому приходится
 		# выкручиваться.
-		#? как сделать, чтоб перестать вручную вызывать вывод при пустом d_in?
 		raise commands.MissingRequiredArgument(ctx.command.clean_params["d_in"])
 	else:
 		await checkForUnhandleContent(ctx, initial_target or target, initial_act or act,
@@ -84,8 +65,7 @@ async def create(
 	if coincidence_targets_instance:
 		coincidence_target = coincidence_targets_instance[0]
 		await ctx.send(f"Цель с подобными параметрами уже существует: {coincidence_target.id} ({coincidence_target.name})"
-		f". Совпадающие элементы: {target_instance.getCoincidenceTo(coincidence_target)}") # TODO вывод доработать.
-		# TODO подумать над уникальностью name.
+		f". Совпадающие элементы: {target_instance.getCoincidenceTo(coincidence_target)}")
 	else:
 		await target_instance.writeData()
 		await ctx.send("Цель добавлена успешно.")
@@ -125,8 +105,7 @@ def removeNesting(instance: List[Any])\
 		instance.extend(tmp)
 
 def checkExpressions(maybe_expressions: List[str]) -> bool:
-	expression_classes = (SearchExpression, ShortSearchExpression, SpecialExpression) # TODO
-	# сделать метод с проходам по иерархия классов, когда (если) у меня разрастётся converters.
+	expression_classes = (SearchExpression, ShortSearchExpression, SpecialExpression)
 	for argument in maybe_expressions:
 		for d_class in expression_classes:
 			instance = d_class()

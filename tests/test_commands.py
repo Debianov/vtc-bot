@@ -8,8 +8,6 @@ from typing import List, Union, Optional, Dict, Tuple, Iterable, Sequence, Any, 
 import bot.commands as user_commands
 from bot.exceptions import UnhandlePartMessageSignal
 
-# TODO больше тестов на MissingRequiredArgument.
-
 @pytest.mark.parametrize(
 	"target, act, d_in, flags",
 	[
@@ -338,7 +336,7 @@ async def test_log_1_bad_expression(
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
 		f" обязательные параметры. Не найденный параметр: {missing_params}")
 
-def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]: # TODO посмотреть, что будет при list.
+def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]:
 	message_part: List[Optional[str]] = []
 	for (ind, string) in enumerate(sequence):
 		try:
@@ -358,10 +356,3 @@ def extractObjects(
 		discord_objects = eval(call)
 		result.append(list(discord_objects))
 	return result
-
-# # TODO вычисляем популярные команды и вставляет в тест сюда. Все команды в
-# # одном файле здесь проверять смысла нет, поскольку для методов, которые
-# # задействуются при вызове команд будут проверяться в отдельных модулях.
-# @pytest.mark.asyncio
-# async def test_on_message_with_popular_commands() -> None:
-# 	pass
