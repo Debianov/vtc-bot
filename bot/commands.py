@@ -72,10 +72,7 @@ async def create(
 
 	target_instance = TargetGroup(ctx)
 	target_instance.target = target
-	target_instance.act = act # TODO всегда должен идти список.
-	
-	if target_instance.d_in in ["df", "default"]:
-		pass # TODO Special для этого есть.
+	target_instance.act = act
 	target_instance.d_in = d_in
 
 	for key in flags.get_flags().keys():
