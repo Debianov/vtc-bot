@@ -15,6 +15,7 @@ dsAPI_secret.sec
 db_secret.sec
 test_db_secret.sec
 venv/
+docs/_build
 
 # mypy
 .mypy_cache
