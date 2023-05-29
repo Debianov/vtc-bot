@@ -1,3 +1,7 @@
+"""
+Модуль хранит основную логику всех пользовательских команд.
+"""
+
 import discord
 from discord.ext import commands
 from typing import Optional, Union, Tuple, List, Any, Final
@@ -12,6 +16,12 @@ from .config import bot
 
 @bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
+	"""
+	Функция обработки ошибок. Является обработчиком discord.py. Обрабатывает все общие ошибки.
+
+	Raises:
+		error: если обработка исключения error не предусмотрена.
+	"""
 	if isinstance(error, commands.BadUnionArgument):
 		await ctx.send("Убедитесь, что вы указали существующие объекты \"{}\" в параметре {}, и у меня есть к ним доступ.".format(
 			error.errors[0].argument, error.param.name))
@@ -28,6 +38,9 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError) 
 
 @bot.group(aliases=["logs"], invoke_without_command=True)
 async def log(ctx: commands.Context) -> None:
+	"""
+	Основная часть составной команды log. Вызывается только при отсутствии подкоманды в сообщении.
+	"""
 	await ctx.send("Убедитесь, что вы указали подкоманду.")
 
 @log.command(aliases=["1", "cr"])
@@ -39,6 +52,19 @@ async def create(
 	*,
 	flags: UserLogFlags
 ) -> None:
+	"""
+	Подкоманда для создания и записи цели логирования.
+
+	Args:
+		target (commands.Greedy[Union[discord.TextChannel, discord.Member,
+		discord.CategoryChannel, SearchExpression]]): за кем/чем следить.
+		act (Union[ShortSearchExpression[ActGroup], str]): какие действия отслеживать.
+		d_in (commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression,
+		SpecialExpression]]): куда отправлять логи.
+
+	Raises:
+		commands.MissingRequiredArgument: принудительный вызов исключения в случае, если d_in пустой.
+	"""
 
 	initial_target = removeNesting(target)
 	initial_act = removeNesting(act)
@@ -71,6 +97,19 @@ async def create(
 		await ctx.send("Цель добавлена успешно.")
 
 async def checkForUnhandleContent(ctx: commands.Context, *parameters: Any) -> None:
+	"""
+	Для проверки на необработанный контент. Основан на сравнении `ctx.current_argument
+	<https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=ctx%20
+	current_argument#discord.ext.commands.Context.current_argument>`_
+	обработанного аргумента со всеми параметрами.
+
+	Args:
+		\*parameters (Any): все распарсенные параметры из команды.
+
+	Raises:
+		UnhandlePartMessageSignal: вызывается при обнаружении необработанного\
+		элемента.
+	"""
 	current_argument = ctx.current_argument.split(" ") # discord.py останавливается на
 	# необработанном аргументе, если ни один из конвертеров не подошёл.
 	for (ind, maybe_argument) in enumerate(current_argument[:]):
@@ -99,12 +138,24 @@ async def checkForUnhandleContent(ctx: commands.Context, *parameters: Any) -> No
 
 def removeNesting(instance: List[Any])\
 	-> Optional[List[discord.abc.Messageable]]:
+	"""
+		Функция для удаления вложенностей.
+
+		Returns:
+			Optional[List[discord.abc.Messageable]]
+	"""
 	if len(instance) == 1 and isinstance(instance[0], list):
 		tmp = instance[0]
 		instance.remove(tmp)
 		instance.extend(tmp)
 
 def checkExpressions(maybe_expressions: List[str]) -> bool:
+	"""
+	Команда для проверки текста на все возможные Expression.
+
+	Returns:
+		bool
+	"""
 	expression_classes = (SearchExpression, ShortSearchExpression, SpecialExpression)
 	for argument in maybe_expressions:
 		for d_class in expression_classes:

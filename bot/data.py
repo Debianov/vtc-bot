@@ -1,3 +1,7 @@
+"""
+Модуль хранит классы для работы с БД.
+"""
+
 import discord
 from discord.ext import commands
 from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict, Set
@@ -19,6 +23,9 @@ async def initDB(
 	dbname: str, 
 	user: str
 	) -> Optional[psycopg.AsyncConnection[Any]]:
+	"""
+	Функция для инициализации подключения к БД.
+	"""
 	global aconn
 	aconn = await psycopg.AsyncConnection.connect(f"dbname={dbname} user={user}", autocommit=True)
 	aconn.adapters.discord_context: Union[Type["discord.Guild"], Type["discord.Bot"], None] = None
@@ -27,6 +34,9 @@ async def initDB(
 	return aconn
 
 class DataGroupAnalyzator:
+	"""
+	Класс реализует механизм определения :class:`DataGroup` по имени из str.
+	"""
 	
 	def __init__(self, ctx: commands.Context, string: str) -> None:
 		self.split_string: List[str] = string.split("+")
@@ -34,6 +44,9 @@ class DataGroupAnalyzator:
 		self.ctx = ctx
 
 	def analyze(self) -> List['DiscordObjectsGroup']:
+		"""
+		Основной метод для определения :class:`DataGroup`.
+		"""
 		to_check: List[DiscordObjectsGroup] = DiscordObjectsGroup.__subclasses__()
 		copy_string: List[str] = self.split_string
 		for group_name in copy_string:
@@ -45,6 +58,9 @@ class DataGroupAnalyzator:
 		return self.relevant_groups
 
 class DataGroup:
+	"""
+	Абстрактный класс объектов, реализующих доступ к данным.
+	"""
 
 	def extractData(self, d_id: Optional[str] = None) -> discord.abc.Messageable:
 		pass
@@ -53,6 +69,9 @@ class DataGroup:
 		pass
 
 class DiscordObjectsGroup(DataGroup):
+	"""
+	Абстрактный класс объектов, реализующих доступ к данным через Discord API.
+	"""
 	
 	USER_IDENTIFICATOR: str = ""
 
@@ -63,6 +82,10 @@ class DiscordObjectsGroup(DataGroup):
 		return self.USER_IDENTIFICATOR == right_operand
 
 class UserGroup(DiscordObjectsGroup):
+	"""
+	Класс реализует доступ к `discord.Member <https://discordpy.readthedocs.io/en/stable\
+	/api.html?highlight=member#discord.Member>`_ в контексте гильдии.
+	"""
 
 	USER_IDENTIFICATOR: str = "usr"
 
@@ -71,6 +94,10 @@ class UserGroup(DiscordObjectsGroup):
 			return self.ctx.guild.members
 
 class ChannelGroup(DiscordObjectsGroup):
+	"""
+	Класс реализует доступ к `discord.abc.Channel <https://discordpy.readthedocs.io/en/\
+	stable/api.html?highlight=guildchannel#discord.abc.GuildChannel>`_ в контексте гильдии.
+	"""
 
 	USER_IDENTIFICATOR: str = "ch"
 
@@ -79,9 +106,16 @@ class ChannelGroup(DiscordObjectsGroup):
 			return self.ctx.guild.channels
 
 class DBObjectsGroup(DataGroup):
+	"""
+	Абстрактный класс объектов, реализующий доступ к данным через БД,
+	а также их корректную запись.
+	"""
 	pass
 
 class ActGroup(DBObjectsGroup):
+	"""
+	Класс реализует объект пользовательских действий.
+	"""
 
 	DB_IDENTIFICATOR: str = "act"
 
@@ -91,6 +125,9 @@ class ActGroup(DBObjectsGroup):
 		return [""]
 
 class TargetGroup(DBObjectsGroup):
+	"""
+	Класс реализует объект цели логирования.
+	"""
 
 	DB_IDENTIFICATOR: str = "target"
 
@@ -149,6 +186,11 @@ class TargetGroup(DBObjectsGroup):
 		placeholder: Optional[str] = "*", 
 		**object_parameters: Dict[str, Tuple[str, Any]]
 	) -> List['TargetGroup']:
+		"""
+		Args:
+			\**object_parameters: параметры, которые будут переданы в SQL запрос. Если\
+			параметров несколько, то они объединяются через логический оператора OR.
+		"""
 		aconn.adapters.discord_context = ctx
 		values_for_parameters: List[Any] = []
 		query = [psycopg.sql.SQL(f"SELECT {placeholder} FROM target WHERE context_id = %s")]
@@ -171,6 +213,13 @@ class TargetGroup(DBObjectsGroup):
 		return result
 
 	def getComparableAttrs(self) -> List[Any]:
+		"""
+		Формирует сравниваемые атрибуты.
+
+		Returns:
+			List[Any]: список атрибутов, которые имеет смысл сравнивать с другими\
+			экземплярами :class:`TargetGroup`.
+		"""
 		comparable_attrs: List[Any] = []
 		objects_id: List[Any] = []
 		for discord_objects in (self.target + self.d_in):
@@ -181,6 +230,12 @@ class TargetGroup(DBObjectsGroup):
 		return comparable_attrs
 
 	def getCoincidenceTo(self, target: 'TargetGroup') -> str:
+		"""
+		Сравнить атрибуты с другим экземпляром :class:`TargetGroup` и вычислить точные совпадения.
+
+		Returns:
+			str: все совпавшие значения, перечисленных через запятую.
+		"""
 		current_attr: List[Any] = self.getComparableAttrs()
 		compared_attr: List[Any] = target.getComparableAttrs()
 		coincidence_attrs: List[Any] = []
@@ -191,13 +246,19 @@ class TargetGroup(DBObjectsGroup):
 		return ", ".join(list(coincidence_attrs))
 
 class DiscordObjectsDumper(psycopg.adapt.Dumper):
-	
+	"""
+	Преобразовывает Discord-объекты в ID для записи в БД.
+	"""
+
 	def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> bytes:
 		if isinstance(elem, commands.Context):
 			return str(elem.guild.id).encode()
 		return str(elem.id).encode()
 
 class DiscordObjectsLoader(psycopg.adapt.Loader):
+	"""
+	Преобразовывает записи из БД в объекты Discord.
+	"""
 
 	def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]: 
 		string_data: str = data.decode()

@@ -1,3 +1,6 @@
+"""
+Модуль хранит конфигурацию бота для подключения к Discord API.
+"""
 import discord
 from discord.ext import commands
 

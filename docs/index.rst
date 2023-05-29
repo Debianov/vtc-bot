@@ -6,17 +6,44 @@
 Внутренняя документация проекта "Discord bot".
 ==============================================
 
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+Модуль bot.main
+======================
+.. automodule:: bot.main
+   :members:
+   :undoc-members:
 
+Модуль bot.commands
+====================
 .. automodule:: bot.commands
    :members:
+   :undoc-members:
 
+Модуль bot.config
+==================
+.. automodule:: bot.config
+   :members:
+   :undoc-members:
+
+Модуль bot.converters
+======================
+.. automodule:: bot.converters
+   :members:
+   :undoc-members:
+
+Модуль bot.data
+======================
+.. automodule:: bot.data
+   :members:
+   :undoc-members:
+
+Модуль bot.flags
+======================
+.. automodule:: bot.flags
+   :members:
+   :undoc-members:
 
 Indices and tables
 ==================
-
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`

@@ -1,3 +1,7 @@
+"""
+Модуль содержит объекты флагов для построения парсинга команд.
+"""
+
 from discord.ext import commands
 from typing import Optional, Union
 

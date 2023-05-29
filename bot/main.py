@@ -1,3 +1,7 @@
+"""
+Основной модуль для сбора всех модулей и запуска бота.
+"""
+
 import discord
 import logging
 from bot.commands import bot, initDB
@@ -9,6 +13,9 @@ def runForPoetry() -> None:
 		bot.run(text.readline())
 
 async def setup_hook() -> None:
+	"""
+	Хук discord.py. Вызывается при старте бота.
+	"""
 	with open("db_secret.sec") as text:
 		await initDB(text.readline(), text.readline())
 bot.setup_hook = setup_hook
