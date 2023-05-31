@@ -6,14 +6,12 @@ import asyncio
 import pathlib
 import pytest
 import pytest_asyncio
-import psycopg
-from typing import Final, Union, Iterable, Optional, Callable, Type, Any
 
 root = pathlib.Path.cwd()
 
 sys.path.append(str(root))
 
-from bot.main import bot, initDB
+from bot.main import bot
 
 pytest_plugins = ('pytest_asyncio',)
 
@@ -38,43 +36,3 @@ async def botInit() -> commands.Bot:
 async def cleanUp() -> None:
 	yield
 	await dpytest.empty_queue()
-
-@pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="package", name="db")
-async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
-	with open("test_db_secret.sec") as text:
-		aconn = await initDB(text.readline(), text.readline())
-		return aconn
-
-@pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="package", autouse=True)
-async def createTargetTable(db) -> None:
-	async with db.cursor() as acur:
-		await acur.execute(
-			"""CREATE TABLE public.target (
-			id bigint,
-			context_id bigint,
-			target bigint[],
-			act text,
-			d_in bigint[],
-			name text,
-			priority integer,
-			output text,
-			other text
-			);"""
-		)
-		yield
-		await acur.execute(
-			"""
-			DROP TABLE target;
-			"""
-		)
-
-@pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="function", autouse=True)
-async def deleteTargetTable(db) -> None:
-	yield
-	async with db.cursor() as acur:
-		await acur.execute(
-			"DELETE FROM target;"
-		)
