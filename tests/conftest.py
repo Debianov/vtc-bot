@@ -12,7 +12,6 @@ from typing import Final, Union, Iterable, Optional, Callable, Type, Any
 root = pathlib.Path.cwd()
 
 sys.path.append(str(root))
-sys.path.append(str(root) + "/bot")
 
 from bot.main import bot, initDB
 
