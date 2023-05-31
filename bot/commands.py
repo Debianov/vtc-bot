@@ -4,7 +4,7 @@
 
 import discord
 from discord.ext import commands
-from typing import Optional, Union, Tuple, List, Any, Final
+from typing import Optional, Union, Tuple, List, Any, Final, Mapping
 import asyncio
 from datetime import timedelta
 
@@ -39,7 +39,7 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError) 
 @bot.group(aliases=["logs"], invoke_without_command=True)
 async def log(ctx: commands.Context) -> None:
 	"""
-	Основная часть составной команды log. Вызывается только при отсутствии подкоманды в сообщении.
+	Команда предоставляет подкоманды, реализующие управление логированием.
 	"""
 	await ctx.send("Убедитесь, что вы указали подкоманду.")
 
@@ -53,17 +53,13 @@ async def create(
 	flags: UserLogFlags
 ) -> None:
 	"""
-	Подкоманда для создания и записи цели логирования.
+	Подкоманда для создания и записи цели, действия которой нужно логировать.
 
-	Args:
-		target (commands.Greedy[Union[discord.TextChannel, discord.Member,
-		discord.CategoryChannel, SearchExpression]]): за кем/чем следить.
-		act (Union[ShortSearchExpression[ActGroup], str]): какие действия отслеживать.
-		d_in (commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression,
-		SpecialExpression]]): куда отправлять логи.
-
-	Raises:
-		commands.MissingRequiredArgument: принудительный вызов исключения в случае, если d_in пустой.
+	Arguments:
+		target (упоминание, SearchExpression): за кем/чем следить.
+		act (ShortSearchExpression, название/ID действия): какие действия отслеживать.
+		d_in (упоминание канала/пользователя, SearchExpression, df/default): куда отправлять логи. Если df
+		— то в установленный по умолчанию объект.
 	"""
 
 	initial_target = removeNesting(target)
