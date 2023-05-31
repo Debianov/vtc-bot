@@ -337,6 +337,11 @@ async def test_log_1_bad_expression(
 		f" обязательные параметры. Не найденный параметр: {missing_params}")
 
 def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]:
+	"""
+	Существование функции обусловлено непреодолимым желанием разработчика иметь
+	в записях под декоратором parametrize человеческие извлечения атрибутов. С пр-ом там
+	имём всё довольно сложно, поскольку это происходит на этапе инициализации кода.
+	"""
 	message_part: List[Optional[str]] = []
 	for (ind, string) in enumerate(sequence):
 		try:
@@ -351,6 +356,11 @@ def extractObjects(
 	calls_sequence: List[str],
 	current_ctx: commands.Context
 ) -> List[List[discord.abc.Messageable]]:
+	"""
+	Существование функции обусловлено непреодолимым желанием разработчика иметь
+	в записях под декоратором parametrize человеческие извлечения атрибутов. С пр-ом там
+	имём всё довольно сложно, поскольку это происходит на этапе инициализации кода.
+	"""
 	result: List[List[discord.abc.Messageable]] = []
 	for call in calls_sequence:
 		discord_objects = eval(call)
