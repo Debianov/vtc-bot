@@ -13,3 +13,6 @@ class BotEmbed(discord.Embed):
 			"7324/v857324765/1d6cab/7CK2_ivIpls.jpg?size=303x391&quality=96&sign=bf7c5933c4064672c8"
 			"69a41400f46118&type=album")
 		self.colour = discord.Colour(12).green()
+
+	def add_field(self, *, name: str, value: str, inline:bool=False) -> None:
+		super().add_field(name=name, value=value, inline=inline)
