@@ -65,3 +65,12 @@ class BotHelpCommand(commands.HelpCommand):
 		)
 		channel = self.get_destination()
 		await channel.send(embed=embed)
+
+	async def send_error_message(self, error: str) -> None:
+		embed = BotEmbed(title="Документация")
+		embed.add_field(
+			name="Ошибка",
+			value="Указанная команда не найдена."
+		)
+		channel = self.get_destination()
+		await channel.send(embed=embed)
