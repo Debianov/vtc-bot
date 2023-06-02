@@ -47,5 +47,5 @@ make html
 команды — реализуется через команды типа "help".
 
 # Ресурсы проекта
-[Группа в VK](https://vk.com/vcsys)
+[Группа в VK](https://vk.com/vcsys)\
 [Цикл стримов с разработкой бота на YT](https://youtube.com/playlist?list=PLhz29l3FXDWhePFfKJw447uN3rLl020xz)
