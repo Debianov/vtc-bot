@@ -21,7 +21,7 @@ jobs:
           pip install poetry
           poetry update
       - name: Run flake8
-        run: flake 8 .
+        run: flake8 .
       - name: Run mypy
         run: mypy .
       # - name: Run tests
