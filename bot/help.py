@@ -59,9 +59,14 @@ class BotHelpCommand(commands.HelpCommand):
 		
 	async def send_command_help(self, command: commands.Command) -> None:
 		embed = BotEmbed(title="Документация")
+		value: str = ""
+		if command.name == "help":
+			value = "Вывод данного сообщения."
+		else:
+			value = command.help
 		embed.add_field(
 			name="Описание",
-			value=command.help,
+			value=value,
 		)
 		channel = self.get_destination()
 		await channel.send(embed=embed)
