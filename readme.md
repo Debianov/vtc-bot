@@ -1,3 +1,5 @@
+![Build Status](https://github.com/GREEN-Corporation/discord-bot/actions/workflows/checks.yml)
+
 # Введение
 Бот разработан в рамках проекта "[Virtual Company Systems](https://vk.com/vcsys)" и предназначен для автоматизации процессов виртуальных транспортных компаний ETS 2/ATS. 
 
