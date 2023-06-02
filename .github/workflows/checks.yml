@@ -1,0 +1,28 @@
+name: Код дискор бота чееееееееееееееееееееееееееееек
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: debian-latest
+    steps:
+      - uses: actions/checkut@v2 # непон
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11.3
+      - name: Install deps
+        run: | # | - несколько послед. команд.
+          python -m pip install --upgrade pip
+          poetry shell
+          poetry update
+      - name: Run flake8
+        run: flake 8 .
+      - name: Run mypy
+        run: mypy .
+      - name: Run tests
+        run: pytest
