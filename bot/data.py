@@ -7,32 +7,6 @@ from discord.ext import commands
 from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict, Set
 import psycopg
 
-__all__ = (
-	"DataGroupAnalyzator",
-	"DataGroup",
-	"UserGroup",
-	"ChannelGroup",
-	"ActGroup",
-	"TargetGroup",
-	"initDB"
-)
-
-aconn: Optional[psycopg.AsyncConnection[Any]] = None
-
-async def initDB(
-	dbname: str, 
-	user: str
-	) -> Optional[psycopg.AsyncConnection[Any]]:
-	"""
-	Функция для инициализации подключения к БД.
-	"""
-	global aconn
-	aconn = await psycopg.AsyncConnection.connect(f"dbname={dbname} user={user}", autocommit=True)
-	aconn.adapters.discord_context: Union[Type["discord.Guild"], Type["discord.Bot"], None] = None
-	aconn.adapters.register_dumper(discord.abc.Messageable, DiscordObjectsDumper)
-	aconn.adapters.register_loader("bigint[]", DiscordObjectsLoader)
-	return aconn
-
 class DataGroupAnalyzator:
 	"""
 	Класс реализует механизм определения :class:`DataGroup` по имени из str.
@@ -134,6 +108,7 @@ class TargetGroup(DBObjectsGroup):
 	def __init__(
 		self,
 		ctx: discord.Guild,
+		dbconn: psycopg.AsyncConnection[Any],
 		id: int = None,
 		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None, 
 		act: Union[str, None] = None,
@@ -145,6 +120,7 @@ class TargetGroup(DBObjectsGroup):
 	) -> None:
 		self.id = id or self.generateID()
 		self.ctx = ctx
+		self.dbconn = dbconn
 		self.target = target
 		self.act = act
 		self.d_in = d_in
@@ -174,7 +150,7 @@ class TargetGroup(DBObjectsGroup):
 		super().__setattr__(name, nvalue)
 
 	async def writeData(self) -> None:
-		async with aconn.cursor() as acur:
+		async with self.dbconn.cursor() as acur:
 			await acur.execute("""
 					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""", [self.id, self.ctx, self.target, 
 					self.act, self.d_in, self.name, self.output, self.priority, self.other])
@@ -202,7 +178,7 @@ class TargetGroup(DBObjectsGroup):
 				values_for_parameters.append(value)
 			query.append(psycopg.sql.SQL(f"AND ({(' OR ').join(parameters_query_part)})"))
 
-		async with aconn.cursor() as acur:
+		async with self.dbconn.cursor() as acur:
 			await acur.execute(
 				psycopg.sql.SQL(" ").join(query) + psycopg.sql.SQL(";"),
 				values_for_parameters
@@ -244,30 +220,3 @@ class TargetGroup(DBObjectsGroup):
 				# None-объекты, которые появляются только при отсутствии указания флага -name.
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
-
-class DiscordObjectsDumper(psycopg.adapt.Dumper):
-	"""
-	Преобразовывает Discord-объекты в ID для записи в БД.
-	"""
-
-	def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> bytes:
-		if isinstance(elem, commands.Context):
-			return str(elem.guild.id).encode()
-		return str(elem.id).encode()
-
-class DiscordObjectsLoader(psycopg.adapt.Loader):
-	"""
-	Преобразовывает записи из БД в объекты Discord.
-	"""
-
-	def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]: 
-		string_data: str = data.decode()
-		for attr in ('get_member', 'get_user', 'get_channel'):
-			try:
-				result: Optional[discord.abc.Messageable, discord.abc.Connectable] = getattr(
-					aconn.adapters.discord_context, attr)(int(string_data))
-				if result:
-					return result
-			except (discord.DiscordException, AttributeError):
-				continue
-		return string_data
