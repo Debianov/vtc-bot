@@ -2,16 +2,34 @@ import discord
 import pytest
 import pytest_asyncio
 import psycopg
+import asyncio
 from typing import Optional, Any
 
-from bot.main import initDB
+from bot.main import DBConnector, BotConstructor, DBConnFactory
+from bot.help import BotHelpCommand
+
+@pytest.fixture(scope="package")
+def event_loop() -> None:
+	loop = asyncio.get_event_loop()
+	yield loop
+	loop.close()
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", name="db")
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
-	with open("test_db_secret.sec") as text:
-		aconn = await initDB(text.readline(), text.readline())
-		return aconn
+	loop = asyncio.get_event_loop()
+	with open("db_secret.sec") as file:
+		dbconn = loop.run_until_complete(DBConnFactory(dbname=file.readline(), dbuser=file.readline()))
+	intents = discord.Intents.all()
+	VCSBot = BotConstructor(
+		dbconn=dbconn,
+		command_prefix="sudo ",
+		intents=intents,
+		help_command=BotHelpCommand(),
+	)
+	with open("dsAPI_secret.sec") as file:
+		VCSBot.run(file.readline())
+	return dbconn
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True)

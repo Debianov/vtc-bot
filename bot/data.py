@@ -167,7 +167,8 @@ class TargetGroup(DBObjectsGroup):
 			\**object_parameters: параметры, которые будут переданы в SQL запрос. Если\
 			параметров несколько, то они объединяются через логический оператора OR.
 		"""
-		aconn.adapters.discord_context = ctx
+		# aconn.adapters.discord_context = ctx
+
 		values_for_parameters: List[Any] = []
 		query = [psycopg.sql.SQL(f"SELECT {placeholder} FROM target WHERE context_id = %s")]
 		values_for_parameters.append(ctx.id)
@@ -220,3 +221,7 @@ class TargetGroup(DBObjectsGroup):
 				# None-объекты, которые появляются только при отсутствии указания флага -name.
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
+
+	def setCurrentContextForLoader(self, ctx):
+		loader = self.dbconn.adapters.get_loader("bigint[]", psycopg.pq.Format(1))
+		loader.ctx = ctx

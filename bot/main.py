@@ -11,8 +11,6 @@ import asyncio
 import logging
 
 from .help import BotHelpCommand
-
-intents = discord.Intents.all()
 class DBConnector:
 
 	def __init__(
@@ -36,12 +34,11 @@ class BotConstructor(commands.Bot):
 
 	def __init__(
 			self,
-			dbconn_instance: DBConnector,
+			dbconn: psycopg.AsyncConnection[Any] = None,
 			*args: Any,
 			**kwargs: Any
 		):
-		self.dbconn_instance = dbconn_instance
-		self.dbconn = None
+		self.dbconn = dbconn
 		super().__init__(*args, **kwargs)
 
 	def run(self, *args: Any, **kwargs: Any) -> None:
@@ -50,15 +47,12 @@ class BotConstructor(commands.Bot):
 		super().run(*args, **kwargs)
 
 	async def prepare(self) -> None:
-		await self.initDBConn()
-		await self.initDBService()
+		if self.dbconn:
+			await self.initDBService()
 		await self.initCogs()
 
-	async def initDBConn(self) -> None:
-		await self.dbconn_instance.initConnection()
-		self.dbconn = self.dbconn_instance.getDBconn()
-
 	async def initDBService(self) -> None:
+
 		class DiscordObjectsDumper(psycopg.adapt.Dumper):
 			"""
 			Преобразовывает Discord-объекты в ID для записи в БД.
@@ -68,6 +62,7 @@ class BotConstructor(commands.Bot):
 				if isinstance(elem, commands.Context):
 					return str(elem.guild.id).encode()
 				return str(elem.id).encode()
+
 		class DiscordObjectsLoader(psycopg.adapt.Loader):
 			"""
 			Преобразовывает записи из БД в объекты Discord.
@@ -97,11 +92,18 @@ class BotConstructor(commands.Bot):
 			cog = self.get_cog(cog_name)
 			cog.dbconn = self.dbconn
 
+async def DBConnFactory(*args: Any, **kwargs: Any) -> psycopg.AsyncConnection[Any]:
+	dbconn_instance = DBConnector(*args, **kwargs)
+	await dbconn_instance.initConnection()
+	return dbconn_instance.getDBconn()
+
 def runForPoetry() -> None:
+	loop = asyncio.get_event_loop()
 	with open("db_secret.sec") as file:
-		dbconn_instance = DBConnector(file.readline(), file.readline())
+		dbconn = loop.run_until_complete(DBConnFactory(dbname=file.readline(), dbuser=file.readline()))
+	intents = discord.Intents.all()
 	VCSBot = BotConstructor(
-		dbconn_instance=dbconn_instance,
+		dbconn=dbconn,
 		command_prefix="sudo ",
 		intents=intents,
 		help_command=BotHelpCommand(),

@@ -11,7 +11,8 @@ root = pathlib.Path.cwd()
 
 sys.path.append(str(root))
 
-from bot.main import bot
+from bot.help import BotHelpCommand
+from bot.main import BotConstructor
 
 pytest_plugins = ('pytest_asyncio',)
 
@@ -23,14 +24,22 @@ def event_loop() -> None:
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
 async def botInit() -> commands.Bot:
-	await bot._async_setup_hook()
-	dpytest.configure(bot, num_members=6)
+	intents = discord.Intents.all()
+	VCSBot = BotConstructor(
+		command_prefix="sudo ",
+		intents=intents,
+		help_command=BotHelpCommand(),
+	)
+	with open("dsAPI_secret.sec") as file:
+		VCSBot.run(file.readline())
+	await VCSBot._async_setup_hook()
+	dpytest.configure(VCSBot, num_members=6)
 	config = dpytest.get_config()
 	pytest.test_guild = config.guilds[0]
 	pytest.test_channel = config.channels[0]
 	for (ind, member) in enumerate(config.members):
 		setattr(pytest, f"test_member{ind}", member)
-	return bot
+	return VCSBot
 
 @pytest_asyncio.fixture(autouse=True)
 async def cleanUp() -> None:
