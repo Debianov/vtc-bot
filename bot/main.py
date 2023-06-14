@@ -47,7 +47,20 @@ class BotConstructor(commands.Bot):
 		super().run(*args, **kwargs)
 
 	async def prepare(self) -> None:
+		if self.dbconn:
+			await self.initDBService()
 		await self.initCogs()
+
+	async def initDBService(self) -> None:
+
+		class DiscordObjectsDumper(psycopg.adapt.Dumper):
+			"""
+			Преобразовывает Discord-объекты в ID для записи в БД.
+			"""
+			def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> bytes:
+				return str(elem.id).encode()
+				
+		self.dbconn.adapters.register_dumper(discord.abc.Messageable, DiscordObjectsDumper)
 
 	async def initCogs(self) -> None:
 		for module_name in ("commands",):

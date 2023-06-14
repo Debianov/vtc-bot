@@ -7,38 +7,32 @@ from discord.ext import commands
 from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict, Set
 import psycopg
 
-class DiscordObjectsDumper:
-	"""
-	Преобразовывает Discord-объекты в ID для записи в БД.
-	"""
-
-	def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> str:
-		if isinstance(elem, commands.Context):
-			return str(elem.guild.id).encode()
-		return elem.id
-
 class DiscordObjectsLoader:
 	"""
 	Преобразовывает записи из БД в объекты Discord.
 	Не зарегестрирован как loader psycopg, поскольку технически не нашёл решения
-	корректно без использования глобальных переменных
+	корректно без использования глобальных переменных `(тык) <https://github.com/
+	GREEN-Corporation/discord-bot/issues/8>`_
 	"""
 
-	def __init__(self, data: str):
+	def __init__(self, client: Union[discord.Guild, discord.Client], data: Optional[List[str]]):
 		self.data = data
+		self.client = client
 
-	def load(self, data: str, client: discord.Client)\
-		-> Union[discord.abc.Messageable, discord.abc.Connectable, str]:
-		string_data: str = data
-		for attr in ('get_member', 'get_user', 'get_channel'):
-			try:
-				result: Optional[discord.abc.Messageable] = getattr(
-					client, attr)(int(string_data))
-				if result:
-					return result
-			except (discord.DiscordException, AttributeError):
-				continue
-		return string_data
+	def load(self) -> List[Union[discord.abc.Messageable, discord.abc.Connectable, str]]:
+		result: List[Union[discord.abc.Messageable, discord.abc.Connectable]] = []
+		if not isinstance(self.data, list):
+			self.data = [self.data]
+		for elem in self.data:
+			old_result_length = len(result)
+			for attr in ('get_member', 'get_user', 'get_channel'):
+				try:
+					result.append(getattr(self.client, attr)(int(self.data)))
+				except (discord.DiscordException, AttributeError):
+					continue
+			if len(result) == old_result_length:
+				raise Exception
+		return result
 
 class DataGroupAnalyzator:
 	"""
@@ -141,7 +135,7 @@ class TargetGroup(DBObjectsGroup):
 	def __init__(
 		self,		
 		dbconn: psycopg.AsyncConnection[Any],
-		ctx: command.Context,
+		guild_id: int,
 		id: int = None,
 		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None,
 		act: Union[str, None] = None,
@@ -152,8 +146,8 @@ class TargetGroup(DBObjectsGroup):
       other: Union[str, None] = None
 	) -> None:
 		self.dbconn = dbconn
+		self.guild_id = guild_id
 		self.id = id or self.generateID()
-		self.ctx = ctx
 		self.target = target
 		self.act = act
 		self.d_in = d_in
@@ -185,13 +179,14 @@ class TargetGroup(DBObjectsGroup):
 	async def writeData(self) -> None:
 		async with self.dbconn.cursor() as acur:
 			await acur.execute("""
-					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""", [self.id, self.ctx, self.target, 
-					self.act, self.d_in, self.name, self.output, self.priority, self.other])
+					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+					[self.id, self.guild_id, self.target, self.act, self.d_in,	
+					self.name, self.output, self.priority, self.other])
 
 	@classmethod
 	async def extractData(
 		cls: 'TargetGroup', 
-		ctx: Union[discord.Guild, discord.Client],
+		ctx: commands.Context,
 		dbconn: psycopg.AsyncConnection[Any],
 		placeholder: Optional[str] = "*",
 		**object_parameters: Dict[str, Tuple[str, Any]]
@@ -204,7 +199,7 @@ class TargetGroup(DBObjectsGroup):
 		
 		values_for_parameters: List[Any] = []
 		query = [psycopg.sql.SQL(f"SELECT {placeholder} FROM target WHERE context_id = %s")]
-		values_for_parameters.append(ctx.id)
+		values_for_parameters.append(ctx.guild.id)
 		if object_parameters:
 			parameters_query_part: List[psycopg.sql.SQL] = []
 			for (parameter, value) in object_parameters.items():
@@ -221,9 +216,9 @@ class TargetGroup(DBObjectsGroup):
 			for row in await acur.fetchall():
 				d_id, context_id, target, act, d_in, name, priority, output, other =\
 				row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
-				target = DiscordObjectsLoader(target).get_result()
-				d_in = DiscordObjectsLoader(d_in).get_result()
-				# result.append(cls(dbconn, row[1], row[0], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
+				target = DiscordObjectsLoader(ctx, target).load()
+				d_in = DiscordObjectsLoader(ctx, d_in).load()
+				result.append(cls(dbconn, context_id, d_id, target, act, d_in, name, priority, output, other))
 		return result
 
 	def getComparableAttrs(self) -> List[Any]:
