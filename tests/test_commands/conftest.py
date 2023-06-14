@@ -4,32 +4,44 @@ import pytest_asyncio
 import psycopg
 import asyncio
 from typing import Optional, Any
+import sys
+import pathlib
+import discord.ext.test as dpytest
+
+root = pathlib.Path.cwd()
+
+sys.path.append(str(root))
 
 from bot.main import DBConnector, BotConstructor, DBConnFactory
 from bot.help import BotHelpCommand
 
-@pytest.fixture(scope="package")
-def event_loop() -> None:
-	loop = asyncio.get_event_loop()
-	yield loop
-	loop.close()
-
 @pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="package", name="db")
+@pytest_asyncio.fixture(scope="package", autouse=True, name="db")
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	loop = asyncio.get_event_loop()
-	with open("db_secret.sec") as file:
-		dbconn = loop.run_until_complete(DBConnFactory(dbname=file.readline(), dbuser=file.readline()))
+	with open("test_db_secret.sec") as file:
+		future_dbconn = await DBConnFactory(dbname=file.readline(), dbuser=file.readline())
+	return future_dbconn
+
+@pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
+async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> 'commands.Bot':
 	intents = discord.Intents.all()
 	VCSBot = BotConstructor(
-		dbconn=dbconn,
+		dbconn=db,
 		command_prefix="sudo ",
 		intents=intents,
 		help_command=BotHelpCommand(),
 	)
-	with open("dsAPI_secret.sec") as file:
-		VCSBot.run(file.readline())
-	return dbconn
+	await VCSBot._async_setup_hook()
+	await VCSBot.prepare()
+	dpytest.configure(VCSBot, num_members=6)
+	config = dpytest.get_config()
+	pytest.test_guild = config.guilds[0]
+	pytest.test_channel = config.channels[0]
+	for (ind, member) in enumerate(config.members):
+		setattr(pytest, f"test_member{ind}", member)
+		intents = discord.Intents.all()
+	return VCSBot
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True)

@@ -30,8 +30,6 @@ async def botInit() -> commands.Bot:
 		intents=intents,
 		help_command=BotHelpCommand(),
 	)
-	with open("dsAPI_secret.sec") as file:
-		VCSBot.run(file.readline())
 	await VCSBot._async_setup_hook()
 	dpytest.configure(VCSBot, num_members=6)
 	config = dpytest.get_config()
