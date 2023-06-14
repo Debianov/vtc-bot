@@ -47,43 +47,7 @@ class BotConstructor(commands.Bot):
 		super().run(*args, **kwargs)
 
 	async def prepare(self) -> None:
-		if self.dbconn:
-			await self.initDBService()
 		await self.initCogs()
-
-	async def initDBService(self) -> None:
-
-		class DiscordObjectsDumper(psycopg.adapt.Dumper):
-			"""
-			Преобразовывает Discord-объекты в ID для записи в БД.
-			"""
-
-			def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> bytes:
-				if isinstance(elem, commands.Context):
-					return str(elem.guild.id).encode()
-				return str(elem.id).encode()
-
-		class DiscordObjectsLoader(psycopg.adapt.Loader):
-			"""
-			Преобразовывает записи из БД в объекты Discord.
-			"""
-
-			ctx = None
-
-			def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]: 
-				string_data: str = data.decode()
-				for attr in ('get_member', 'get_user', 'get_channel'):
-					try:
-						result: Optional[discord.abc.Messageable] = getattr(
-							self.ctx, attr)(int(string_data))
-						if result:
-							return result
-					except (discord.DiscordException, AttributeError):
-						continue
-				return string_data
-				
-		self.dbconn.adapters.register_dumper(discord.abc.Messageable, DiscordObjectsDumper)
-		self.dbconn.adapters.register_loader("bigint[]", DiscordObjectsLoader)
 
 	async def initCogs(self) -> None:
 		for module_name in ("commands",):

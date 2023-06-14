@@ -7,6 +7,39 @@ from discord.ext import commands
 from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict, Set
 import psycopg
 
+class DiscordObjectsDumper:
+	"""
+	Преобразовывает Discord-объекты в ID для записи в БД.
+	"""
+
+	def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> str:
+		if isinstance(elem, commands.Context):
+			return str(elem.guild.id).encode()
+		return elem.id
+
+class DiscordObjectsLoader:
+	"""
+	Преобразовывает записи из БД в объекты Discord.
+	Не зарегестрирован как loader psycopg, поскольку технически не нашёл решения
+	корректно без использования глобальных переменных
+	"""
+
+	def __init__(self, data: str):
+		self.data = data
+
+	def load(self, data: str, client: discord.Client)\
+		-> Union[discord.abc.Messageable, discord.abc.Connectable, str]:
+		string_data: str = data
+		for attr in ('get_member', 'get_user', 'get_channel'):
+			try:
+				result: Optional[discord.abc.Messageable] = getattr(
+					client, attr)(int(string_data))
+				if result:
+					return result
+			except (discord.DiscordException, AttributeError):
+				continue
+		return string_data
+
 class DataGroupAnalyzator:
 	"""
 	Класс реализует механизм определения :class:`DataGroup` по имени из str.
@@ -106,11 +139,11 @@ class TargetGroup(DBObjectsGroup):
 	DB_IDENTIFICATOR: str = "target"
 
 	def __init__(
-		self,
-		ctx: discord.Guild,
+		self,		
 		dbconn: psycopg.AsyncConnection[Any],
+		ctx: command.Context,
 		id: int = None,
-		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None, 
+		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None,
 		act: Union[str, None] = None,
 		d_in: Optional[List[Union[discord.TextChannel, discord.Member]]] = None,
       name: Union[str, None] = None,
@@ -118,9 +151,9 @@ class TargetGroup(DBObjectsGroup):
       priority: Union[int, None] = None,
       other: Union[str, None] = None
 	) -> None:
+		self.dbconn = dbconn
 		self.id = id or self.generateID()
 		self.ctx = ctx
-		self.dbconn = dbconn
 		self.target = target
 		self.act = act
 		self.d_in = d_in
@@ -158,8 +191,9 @@ class TargetGroup(DBObjectsGroup):
 	@classmethod
 	async def extractData(
 		cls: 'TargetGroup', 
-		ctx: Union[discord.Guild, discord.Client], 
-		placeholder: Optional[str] = "*", 
+		ctx: Union[discord.Guild, discord.Client],
+		dbconn: psycopg.AsyncConnection[Any],
+		placeholder: Optional[str] = "*",
 		**object_parameters: Dict[str, Tuple[str, Any]]
 	) -> List['TargetGroup']:
 		"""
@@ -167,8 +201,7 @@ class TargetGroup(DBObjectsGroup):
 			\**object_parameters: параметры, которые будут переданы в SQL запрос. Если\
 			параметров несколько, то они объединяются через логический оператора OR.
 		"""
-		# aconn.adapters.discord_context = ctx
-
+		
 		values_for_parameters: List[Any] = []
 		query = [psycopg.sql.SQL(f"SELECT {placeholder} FROM target WHERE context_id = %s")]
 		values_for_parameters.append(ctx.id)
@@ -179,14 +212,18 @@ class TargetGroup(DBObjectsGroup):
 				values_for_parameters.append(value)
 			query.append(psycopg.sql.SQL(f"AND ({(' OR ').join(parameters_query_part)})"))
 
-		async with self.dbconn.cursor() as acur:
+		async with dbconn.cursor() as acur:
 			await acur.execute(
 				psycopg.sql.SQL(" ").join(query) + psycopg.sql.SQL(";"),
 				values_for_parameters
 			)
 			result: List[TargetGroup] = []
 			for row in await acur.fetchall():
-				result.append(cls(row[1], row[0], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
+				d_id, context_id, target, act, d_in, name, priority, output, other =\
+				row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
+				target = DiscordObjectsLoader(target).get_result()
+				d_in = DiscordObjectsLoader(d_in).get_result()
+				# result.append(cls(dbconn, row[1], row[0], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
 		return result
 
 	def getComparableAttrs(self) -> List[Any]:
