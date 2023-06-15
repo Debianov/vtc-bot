@@ -13,6 +13,7 @@ sys.path.append(str(root))
 
 from bot.help import BotHelpCommand
 from bot.main import BotConstructor
+from bot.utils import ContextProvider
 
 pytest_plugins = ('pytest_asyncio',)
 
@@ -31,6 +32,7 @@ async def botInit() -> commands.Bot:
 		help_command=BotHelpCommand(),
 	)
 	await VCSBot._async_setup_hook()
+	await VCSBot.prepare()
 	dpytest.configure(VCSBot, num_members=6)
 	config = dpytest.get_config()
 	pytest.test_guild = config.guilds[0]

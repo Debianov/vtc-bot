@@ -7,33 +7,6 @@ from discord.ext import commands
 from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict, Set
 import psycopg
 
-class DiscordObjectsLoader:
-	"""
-	Преобразовывает записи из БД в объекты Discord.
-	Не зарегестрирован как loader psycopg, поскольку технически не нашёл решения
-	корректно без использования глобальных переменных `(тык) <https://github.com/
-	GREEN-Corporation/discord-bot/issues/8>`_
-	"""
-
-	def __init__(self, client: Union[discord.Guild, discord.Client], data: Optional[List[str]]):
-		self.data = data
-		self.client = client
-
-	def load(self) -> List[Union[discord.abc.Messageable, discord.abc.Connectable, str]]:
-		result: List[Union[discord.abc.Messageable, discord.abc.Connectable]] = []
-		if not isinstance(self.data, list):
-			self.data = [self.data]
-		for elem in self.data:
-			old_result_length = len(result)
-			for attr in ('get_member', 'get_user', 'get_channel'):
-				try:
-					result.append(getattr(self.client, attr)(int(self.data)))
-				except (discord.DiscordException, AttributeError):
-					continue
-			if len(result) == old_result_length:
-				raise Exception
-		return result
-
 class DataGroupAnalyzator:
 	"""
 	Класс реализует механизм определения :class:`DataGroup` по имени из str.
@@ -186,7 +159,7 @@ class TargetGroup(DBObjectsGroup):
 	@classmethod
 	async def extractData(
 		cls: 'TargetGroup', 
-		ctx: commands.Context,
+		guild_id: int,
 		dbconn: psycopg.AsyncConnection[Any],
 		placeholder: Optional[str] = "*",
 		**object_parameters: Dict[str, Tuple[str, Any]]
@@ -196,10 +169,9 @@ class TargetGroup(DBObjectsGroup):
 			\**object_parameters: параметры, которые будут переданы в SQL запрос. Если\
 			параметров несколько, то они объединяются через логический оператора OR.
 		"""
-		
 		values_for_parameters: List[Any] = []
 		query = [psycopg.sql.SQL(f"SELECT {placeholder} FROM target WHERE context_id = %s")]
-		values_for_parameters.append(ctx.guild.id)
+		values_for_parameters.append(guild_id)
 		if object_parameters:
 			parameters_query_part: List[psycopg.sql.SQL] = []
 			for (parameter, value) in object_parameters.items():
@@ -216,8 +188,6 @@ class TargetGroup(DBObjectsGroup):
 			for row in await acur.fetchall():
 				d_id, context_id, target, act, d_in, name, priority, output, other =\
 				row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
-				target = DiscordObjectsLoader(ctx, target).load()
-				d_in = DiscordObjectsLoader(ctx, d_in).load()
 				result.append(cls(dbconn, context_id, d_id, target, act, d_in, name, priority, output, other))
 		return result
 
@@ -253,7 +223,3 @@ class TargetGroup(DBObjectsGroup):
 				# None-объекты, которые появляются только при отсутствии указания флага -name.
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
-
-	def setCurrentContextForLoader(self, ctx):
-		loader = self.dbconn.adapters.get_loader("bigint[]", psycopg.pq.Format(1))
-		loader.ctx = ctx

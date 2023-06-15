@@ -53,7 +53,7 @@ async def test_good_log_create_with_flags(
 		)
 		for row in await acur.fetchall():
 			flags_values = list(map(lambda x: None if not x else x, flags.values()))
-			assert row == (0, pytest.test_guild.id, target, act, d_in, *flags_values)
+			assert row == ("0", str(pytest.test_guild.id), target, act, d_in, *flags_values)
 
 @pytest.mark.asyncio
 async def test_good_log_create_without_flags(db: Optional[psycopg.AsyncConnection[Any]]):

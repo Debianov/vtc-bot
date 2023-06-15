@@ -9,6 +9,7 @@ from typing import Optional, Union, Tuple, Union, Optional, Any
 from discord.ext import commands
 import asyncio
 import logging
+from .utils import ContextProvider
 
 from .help import BotHelpCommand
 class DBConnector:
@@ -35,10 +36,12 @@ class BotConstructor(commands.Bot):
 	def __init__(
 			self,
 			dbconn: psycopg.AsyncConnection[Any] = None,
+			context_provider: ContextProvider = None,
 			*args: Any,
 			**kwargs: Any
 		):
 		self.dbconn = dbconn
+		self.context_provider = context_provider
 		super().__init__(*args, **kwargs)
 
 	def run(self, *args: Any, **kwargs: Any) -> None:
@@ -53,14 +56,34 @@ class BotConstructor(commands.Bot):
 
 	async def initDBService(self) -> None:
 
+		context_provider = self.context_provider
 		class DiscordObjectsDumper(psycopg.adapt.Dumper):
 			"""
 			Преобразовывает Discord-объекты в ID для записи в БД.
 			"""
 			def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> bytes:
 				return str(elem.id).encode()
+
+		class DiscordObjectsLoader(psycopg.adapt.Loader):
+			"""
+			Преобразовывает записи из БД в объекты Discord.
+			"""
+
+			def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]: 
+				string_data: str = data.decode()
+				ctx = context_provider.getContext()
+				for attr in ('get_member', 'get_user', 'get_channel'):
+					try:
+						result: Optional[discord.abc.Messageable] = getattr(
+							ctx, attr)(int(string_data))
+						if result:
+							return result
+					except (discord.DiscordException, AttributeError):
+						continue
+				return string_data
 				
 		self.dbconn.adapters.register_dumper(discord.abc.Messageable, DiscordObjectsDumper)
+		self.dbconn.adapters.register_loader("bigint[]", DiscordObjectsLoader)
 
 	async def initCogs(self) -> None:
 		for module_name in ("commands",):
@@ -68,6 +91,7 @@ class BotConstructor(commands.Bot):
 		for cog_name in self.cogs:
 			cog = self.get_cog(cog_name)
 			cog.dbconn = self.dbconn
+			cog.context_provider = self.context_provider
 
 async def DBConnFactory(*args: Any, **kwargs: Any) -> psycopg.AsyncConnection[Any]:
 	dbconn_instance = DBConnector(*args, **kwargs)
@@ -79,8 +103,10 @@ def runForPoetry() -> None:
 	with open("db_secret.sec") as file:
 		dbconn = loop.run_until_complete(DBConnFactory(dbname=file.readline(), dbuser=file.readline()))
 	intents = discord.Intents.all()
+	intents.dm_messages = False
 	VCSBot = BotConstructor(
 		dbconn=dbconn,
+		context_provider=ContextProvider(),
 		command_prefix="sudo ",
 		intents=intents,
 		help_command=BotHelpCommand(),

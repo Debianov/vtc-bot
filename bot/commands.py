@@ -24,6 +24,7 @@ class UserLog(commands.Cog):
 	def __init__(self, bot: commands.Bot):
 		self.bot = bot
 		self.dbconn: 'psycopg.AsyncConnection[Any]' = None
+		self.context_provider: 'ContextProvider' = None
 		bot.on_command_error = self._on_command_error
 
 	async def _on_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
@@ -73,7 +74,8 @@ class UserLog(commands.Cog):
 			d_in (упоминание канала/пользователя, SearchExpression, df/default): куда отправлять логи. Если df\
 			— то в установленный по умолчанию объект.
 		"""
-
+		self.context_provider.updateContext(ctx.guild)
+		
 		initial_target = self.removeNesting(target)
 		initial_act = self.removeNesting(act)
 		initial_d_in = self.removeNesting(d_in)
@@ -94,7 +96,7 @@ class UserLog(commands.Cog):
 			if flags.__dict__[key]:
 				setattr(target_instance, key, flags.__dict__[key])
 
-		coincidence_targets_instance = await TargetGroup.extractData(ctx, self.dbconn, target=target_instance.target, act=target_instance.act, 
+		coincidence_targets_instance = await TargetGroup.extractData(ctx.guild.id, self.dbconn, target=target_instance.target, act=target_instance.act, 
 		d_in=target_instance.d_in, name=target_instance.name)
 		if coincidence_targets_instance:
 			coincidence_target = coincidence_targets_instance[0]

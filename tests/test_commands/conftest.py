@@ -14,6 +14,7 @@ sys.path.append(str(root))
 
 from bot.main import DBConnector, BotConstructor, DBConnFactory
 from bot.help import BotHelpCommand
+from bot.utils import ContextProvider
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True, name="db")
@@ -28,6 +29,7 @@ async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> 'commands.Bot':
 	intents = discord.Intents.all()
 	VCSBot = BotConstructor(
 		dbconn=db,
+		context_provider=ContextProvider(),
 		command_prefix="sudo ",
 		intents=intents,
 		help_command=BotHelpCommand(),
@@ -40,7 +42,6 @@ async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> 'commands.Bot':
 	pytest.test_channel = config.channels[0]
 	for (ind, member) in enumerate(config.members):
 		setattr(pytest, f"test_member{ind}", member)
-		intents = discord.Intents.all()
 	return VCSBot
 
 @pytest.mark.asyncio
