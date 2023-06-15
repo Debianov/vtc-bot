@@ -146,8 +146,7 @@ class UserLog(commands.Cog):
 			if not argument in ready_check_parameters:
 				raise UnhandlePartMessageSignal(ctx.current_argument)
 
-	def removeNesting(self, instance: List[Any])\
-		-> Optional[List[discord.abc.Messageable]]:
+	def removeNesting(self, instance: List[Any]):
 		"""
 			Функция для удаления вложенностей.
 
@@ -178,5 +177,5 @@ class UserLog(commands.Cog):
 					return True
 		return False
 
-async def setup(bot):
+async def setup(bot: commands.Bot) -> None:
 	await bot.add_cog(UserLog(bot))

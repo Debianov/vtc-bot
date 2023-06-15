@@ -13,6 +13,9 @@ from .utils import ContextProvider
 
 from .help import BotHelpCommand
 class DBConnector:
+	"""
+	Основной класс для соединения с БД PostgreSQL.
+	"""
 
 	def __init__(
 		self,	
@@ -32,6 +35,9 @@ class DBConnector:
 		return self.dbconn
 
 class BotConstructor(commands.Bot):
+	"""
+	Класс для формирования экземпляра бота.
+	"""
 
 	def __init__(
 			self,
@@ -50,11 +56,15 @@ class BotConstructor(commands.Bot):
 		super().run(*args, **kwargs)
 
 	async def prepare(self) -> None:
+		"""
+		Метод для запуска механизмов инициализации компонентов бота. Обязателен к запуску,
+		если не используется метод :attr:`run`.
+		"""
 		if self.dbconn:
-			await self.initDBService()
+			await self.registerDBAdapters()
 		await self.initCogs()
 
-	async def initDBService(self) -> None:
+	async def registerDBAdapters(self) -> None:
 
 		context_provider = self.context_provider
 		class DiscordObjectsDumper(psycopg.adapt.Dumper):
@@ -94,6 +104,12 @@ class BotConstructor(commands.Bot):
 			cog.context_provider = self.context_provider
 
 async def DBConnFactory(*args: Any, **kwargs: Any) -> psycopg.AsyncConnection[Any]:
+	"""
+	Фабрика для создания готового подключения к БД PostgreSQL.
+
+	Returns:
+		psycopg.AsyncConnection[Any]
+	"""
 	dbconn_instance = DBConnector(*args, **kwargs)
 	await dbconn_instance.initConnection()
 	return dbconn_instance.getDBconn()
