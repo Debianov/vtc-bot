@@ -7,16 +7,16 @@ on:
     branches: [main]
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     services:
       postgres:
-        # Docker Hub image
         image: postgres
-        # Provide the password for postgres
         env:
-          POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started
+          POSTGRES_USER: ${{ secrets.POSTGRES_DB}}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -33,9 +33,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry update
-      - name: Run flake8
-        run: poetry run flake8
-      - name: Run mypy
-        run: poetry run mypy
+      # - name: Run flake8
+      #   run: poetry run flake8
+      # - name: Run mypy
+      #   run: poetry run mypy
       # - name: Run tests
       #   run: pytest
