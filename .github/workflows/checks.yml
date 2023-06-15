@@ -7,15 +7,18 @@ on:
     branches: [main]
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres
         env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_DB}}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432/tcp
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -24,10 +27,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Python
-        env:
-          POSTGRES_USER_SEC: "${{ secrets.POSTGRES_DB}}"
-          POSTGRES_PASSWORD_SEC: "${{ secrets.POSTGRES_PASSWORD}}"
-          POSTGRES_DB_SEC: "${{ secrets.POSTGRES_DB}}"
         uses: actions/setup-python@v2
         with:
           python-version: 3.11.3
@@ -36,11 +35,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry update
-      # - name: Run flake8
-      #   run: poetry run flake8
-      # - name: Run mypy
-      #   run: poetry run mypy
+      - name: Run flake8
+        run: poetry run flake8 --config ./config.flake8
+      - name: Run mypy
+        run: poetry run mypy
       - name: Run tests
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
         run: |
-          echo $POSTGRES_DB_SEC
           poetry run pytest
