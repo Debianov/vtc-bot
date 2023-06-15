@@ -10,6 +10,7 @@ from discord.ext import commands
 import asyncio
 import logging
 from .utils import ContextProvider
+import os
 
 from .help import BotHelpCommand
 class DBConnector:
@@ -20,7 +21,8 @@ class DBConnector:
 	def __init__(
 		self,	
 		dbname: str,
-		dbuser: str
+		dbuser: str,
+		dbpassword: str
 	) -> None:
 		self.dbname = dbname
 		self.dbuser = dbuser
@@ -29,7 +31,7 @@ class DBConnector:
 		"""
 		Функция для инициализации подключения к БД.
 		"""
-		self.dbconn = await psycopg.AsyncConnection.connect(f"dbname={self.dbname} user={self.dbuser}", autocommit=True)
+		self.dbconn = await psycopg.AsyncConnection.connect(f"dbname={self.dbname} user={self.dbuser} password={self.dbpassword}", autocommit=True)
 
 	def getDBconn(self) -> psycopg.AsyncConnection[Any]:
 		return self.dbconn
@@ -116,8 +118,8 @@ async def DBConnFactory(*args: Any, **kwargs: Any) -> psycopg.AsyncConnection[An
 
 def runForPoetry() -> None:
 	loop = asyncio.get_event_loop()
-	with open("db_secret.sec") as file:
-		dbconn = loop.run_until_complete(DBConnFactory(dbname=file.readline(), dbuser=file.readline()))
+	dbconn = loop.run_until_complete(DBConnFactory(dbname=os.getenv("POSTGRES_DB_SEC"),
+	dbuser=os.getenv("POSTGRES_USER_SEC"), dbpassword=os.getenv("POSTGRES_PASSWORD_SEC")))
 	intents = discord.Intents.all()
 	intents.dm_messages = False
 	VCSBot = BotConstructor(
@@ -127,8 +129,7 @@ def runForPoetry() -> None:
 		intents=intents,
 		help_command=BotHelpCommand(),
 	)
-	with open("dsAPI_secret.sec") as file:
-		VCSBot.run(file.readline())
+	VCSBot.run(os.getenv("DISCORD_API_SEC"))
 
 if __name__ == "__main__":
 	runForPoetry()

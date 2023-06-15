@@ -11,18 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        # Docker Hub image
         image: postgres
-        # Provide the password for postgres
         env:
-          POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started
+          POSTGRES_USER: ${{ secrets.POSTGRES_DB}}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
     steps:
+      - name: Initc
+        run: |
+          env POSTGRES_USER_SEC="${{ secrets.POSTGRES_DB}}"
+          env POSTGRES_PASSWORD_SEC="${{ secrets.POSTGRES_PASSWORD}}"
+          env POSTGRES_DB_SEC="${{ secrets.POSTGRES_DB}}"
+          env DISCORD_API_SEC="${{ secrets.DISCORD_API_KEY}}"
       - uses: actions/checkout@v2
       - name: Install Python
         uses: actions/setup-python@v2
@@ -33,9 +38,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry update
-      - name: Run flake8
-        run: poetry run flake8
-      - name: Run mypy
-        run: poetry run mypy
-      # - name: Run tests
-      #   run: pytest
+      # - name: Run flake8
+      #   run: poetry run flake8
+      # - name: Run mypy
+      #   run: poetry run mypy
+      - name: Run tests
+        run: poetry run pytest
