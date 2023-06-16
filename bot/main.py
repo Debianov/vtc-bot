@@ -22,13 +22,16 @@ class DBConnector:
 		self,	
 		# dbname: str,
 		# dbuser: str,
-		dbpassword: str,
-		dbhost: str,
-		dbport: str
+		**kwargs: str
 	) -> None:
-		self.dbhost = dbhost
-		self.dbport = dbport
-		self.dbpassword = dbpassword
+		self.conninfo: str = ""
+		self.processArgs(kwargs)
+
+	def processArgs(self, args: Dict[str, str]) -> None:
+		matched_args = []
+		for (key, value) in args.items():
+			matched_args.append(key + "=" + value)
+		self.conninfo = " ".join(matched_args)
 
 	async def initConnection(self) -> None:
 		"""
@@ -108,14 +111,14 @@ class BotConstructor(commands.Bot):
 			cog.dbconn = self.dbconn
 			cog.context_provider = self.context_provider
 
-async def DBConnFactory(*args: Any, **kwargs: Any) -> psycopg.AsyncConnection[Any]:
+async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 	"""
 	Фабрика для создания готового подключения к БД PostgreSQL.
 
 	Returns:
 		psycopg.AsyncConnection[Any]
 	"""
-	dbconn_instance = DBConnector(*args, **kwargs)
+	dbconn_instance = DBConnector(**kwargs)
 	await dbconn_instance.initConnection()
 	return dbconn_instance.getDBconn()
 
