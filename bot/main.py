@@ -20,7 +20,11 @@ class DBConnector:
 
 	def __init__(
 		self,	
-		**kwargs: str
+		# dbname: str,
+		# dbuser: str,
+		dbpassword: str,
+		dbhost: str,
+		dbport: str
 	) -> None:
 		self.conninfo: str = ""
 		self.processArgs(kwargs)
