@@ -39,7 +39,7 @@ jobs:
         run: poetry run flake8 --config ./config.flake8
       - name: Run mypy
         run: poetry run mypy
-      - name: Run tests
+      - name: Run tests        
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
