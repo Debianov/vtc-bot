@@ -26,6 +26,7 @@ class DBConnector:
 	) -> None:
 		self.dbname = dbname
 		self.dbuser = dbuser
+		self.dbpassword = dbpassword
 
 	async def initConnection(self) -> None:
 		"""
