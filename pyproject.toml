@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "Публичная версия бота для Discord"
 authors = ["GREEN Corporation <vtcgreenlogistic@gmail.com>"]
 license = "GPL-2.0"
-readme = "README.md"
+readme = "readme.md"
 packages = [{include = "bot"}]
 
 [tool.poetry.dependencies]
