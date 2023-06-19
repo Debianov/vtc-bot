@@ -122,8 +122,8 @@ async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 
 def runForPoetry() -> None:
 	loop = asyncio.get_event_loop()
-	dbconn = loop.run_until_complete(DBConnFactory(dbhost=os.getenv("POSTGRES_HOST"),
-	dbport=os.getenv("POSTGRES_PORT"), dbpassword=os.getenv("POSTGRES_PASSWORD")))
+	dbconn = loop.run_until_complete(DBConnFactory(dbname=os.getenv("POSTGRES_DBNAME", " "),
+		user=os.getenv("POSTGRES_USER", " "), password=os.getenv("POSTGRES_PASSWORD", " ")))
 	intents = discord.Intents.all()
 	intents.dm_messages = False
 	VCSBot = BotConstructor(
@@ -133,7 +133,7 @@ def runForPoetry() -> None:
 		intents=intents,
 		help_command=BotHelpCommand(),
 	)
-	VCSBot.run(os.getenv("DISCORD_API_SEC"))
+	VCSBot.run(os.getenv("DISCORD_API_TOKEN", " "))
 
 if __name__ == "__main__":
 	runForPoetry()
