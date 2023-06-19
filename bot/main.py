@@ -5,7 +5,7 @@
 import discord
 import logging
 import psycopg
-from typing import Optional, Union, Tuple, Union, Optional, Any
+from typing import Optional, Union, Tuple, Union, Optional, Any, Dict
 from discord.ext import commands
 import asyncio
 import logging
@@ -20,8 +20,6 @@ class DBConnector:
 
 	def __init__(
 		self,	
-		# dbname: str,
-		# dbuser: str,
 		**kwargs: str
 	) -> None:
 		self.conninfo: str = ""
@@ -37,7 +35,7 @@ class DBConnector:
 		"""
 		Функция для инициализации подключения к БД.
 		"""
-		self.dbconn = await psycopg.AsyncConnection.connect(f"host={self.dbhost} port={self.dbport} password={self.dbpassword}", autocommit=True)
+		self.dbconn = await psycopg.AsyncConnection.connect(self.conninfo, autocommit=True)
 
 	def getDBconn(self) -> psycopg.AsyncConnection[Any]:
 		return self.dbconn
