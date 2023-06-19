@@ -22,10 +22,9 @@ from bot.utils import ContextProvider
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	loop = asyncio.get_event_loop()
 	future_dbconn = await DBConnFactory(
-	dbpassword=os.getenv("POSTGRES_PASSWORD_SEC"),
-	dbhost=os.getenv("POSTGRES_HOST"),
-	dbport=os.getenv("POSTGRES_PORT")
-		)
+		user=os.getenv("POSTGRES_USER"),
+		password=os.getenv("POSTGRES_PASSWORD")
+	)
 	return future_dbconn
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
