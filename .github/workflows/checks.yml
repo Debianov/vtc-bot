@@ -27,15 +27,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Python
-<<<<<<< HEAD
-=======
-        env:
-          # POSTGRES_HOST: postgres
-          # POSTGRES_PORT: 5432
-          POSTGRES_USER: "${{ secrets.POSTGRES_USER}}"
-          POSTGRES_PASSWORD: "${{ secrets.POSTGRES_PASSWORD}}"
-          # POSTGRES_DB_SEC: "${{ secrets.POSTGRES_DB}}"
->>>>>>> d9dbfa8 (Интегрирована сотая попытка запустить тесты в workflow.)
         uses: actions/setup-python@v2
         with:
           python-version: 3.11.3
