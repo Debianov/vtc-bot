@@ -22,16 +22,8 @@ from bot.utils import ContextProvider
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	loop = asyncio.get_event_loop()
 	future_dbconn = await DBConnFactory(
-<<<<<<< HEAD
-		host=os.getenv("POSTGRES_HOST"),
-		port=os.getenv("POSTGRES_PORT"),
-		password="postgres",
-		dbname="postgres",
-		user="postgres"
-=======
 		user=os.getenv("POSTGRES_USER"),
 		password=os.getenv("POSTGRES_PASSWORD")
->>>>>>> d9dbfa8 (Интегрирована сотая попытка запустить тесты в workflow.)
 	)
 	return future_dbconn
 
