@@ -1,21 +1,25 @@
+# Secrets
+dsAPI_secret.sec
+db_secret.sec
+test_db_secret.sec
+
 # Byte-compile / optimized / DLL files
-__pycache__
+__pycache__/
 
 # Logs
 bot.log
 
 # Unit test / coverage reports
-.pytest_cache
+.pytest_cache/
+
+# Sphinx documentation
+docs/_build/
 
 # poetry
 poetry.lock
 
 # Environments
-dsAPI_secret.sec
-db_secret.sec
-test_db_secret.sec
 venv/
-docs/_build
 
 # mypy
-.mypy_cache
+.mypy_cache/
