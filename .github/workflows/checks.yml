@@ -48,11 +48,7 @@ jobs:
           pip install poetry
           poetry update
       - name: Run flake8
-<<<<<<< HEAD
-        run: poetry run flake8 --config ./config.flake8
-=======
         run: poetry run flake8
->>>>>>> 6732bfe (Добавлена попытка получить доступ к БД.)
       - name: Run mypy
         run: poetry run mypy
       - name: Run tests
