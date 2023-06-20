@@ -22,12 +22,19 @@ from bot.utils import ContextProvider
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	loop = asyncio.get_event_loop()
 	future_dbconn = await DBConnFactory(
+<<<<<<< HEAD
 		host=os.getenv("POSTGRES_HOST"),
 		port=os.getenv("POSTGRES_PORT"),
 		password="postgres",
 		dbname="postgres",
 		user="postgres"
 	)
+=======
+	dbpassword=os.getenv("POSTGRES_PASSWORD_SEC"),
+	dbhost=os.getenv("POSTGRES_HOST"),
+	dbport=os.getenv("POSTGRES_PORT")
+		)
+>>>>>>> 3914f1d (Добавлено кеширование.)
 	return future_dbconn
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")

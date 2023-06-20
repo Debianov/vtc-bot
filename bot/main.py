@@ -20,6 +20,7 @@ class DBConnector:
 
 	def __init__(
 		self,	
+<<<<<<< HEAD
 		**kwargs: str
 	) -> None:
 		self.conninfo: str = ""
@@ -30,12 +31,27 @@ class DBConnector:
 		for (key, value) in args.items():
 			matched_args.append(key + "=" + value)
 		self.conninfo = " ".join(matched_args)
+=======
+		# dbname: str,
+		# dbuser: str,
+		dbpassword: str,
+		dbhost: str,
+		dbport: str
+	) -> None:
+		self.dbhost = dbhost
+		self.dbport = dbport
+		self.dbpassword = dbpassword
+>>>>>>> 3914f1d (Добавлено кеширование.)
 
 	async def initConnection(self) -> None:
 		"""
 		Функция для инициализации подключения к БД.
 		"""
+<<<<<<< HEAD
 		self.dbconn = await psycopg.AsyncConnection.connect(self.conninfo, autocommit=True)
+=======
+		self.dbconn = await psycopg.AsyncConnection.connect(f"host={self.dbhost} port={self.dbport} password={self.dbpassword}", autocommit=True)
+>>>>>>> 3914f1d (Добавлено кеширование.)
 
 	def getDBconn(self) -> psycopg.AsyncConnection[Any]:
 		return self.dbconn
@@ -122,8 +138,13 @@ async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 
 def runForPoetry() -> None:
 	loop = asyncio.get_event_loop()
+<<<<<<< HEAD
 	dbconn = loop.run_until_complete(DBConnFactory(dbname=os.getenv("POSTGRES_DBNAME", " "),
 		user=os.getenv("POSTGRES_USER", " "), password=os.getenv("POSTGRES_PASSWORD", " ")))
+=======
+	dbconn = loop.run_until_complete(DBConnFactory(dbhost=os.getenv("POSTGRES_HOST"),
+	dbport=os.getenv("POSTGRES_PORT"), dbpassword=os.getenv("POSTGRES_PASSWORD")))
+>>>>>>> 3914f1d (Добавлено кеширование.)
 	intents = discord.Intents.all()
 	intents.dm_messages = False
 	VCSBot = BotConstructor(
