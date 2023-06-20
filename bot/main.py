@@ -5,11 +5,12 @@
 import discord
 import logging
 import psycopg
-from typing import Optional, Union, Tuple, Union, Optional, Any
+from typing import Optional, Union, Tuple, Union, Optional, Any, Dict
 from discord.ext import commands
 import asyncio
 import logging
 from .utils import ContextProvider
+import os
 
 from .help import BotHelpCommand
 class DBConnector:
@@ -19,17 +20,22 @@ class DBConnector:
 
 	def __init__(
 		self,	
-		dbname: str,
-		dbuser: str
+		**kwargs: str
 	) -> None:
-		self.dbname = dbname
-		self.dbuser = dbuser
+		self.conninfo: str = ""
+		self.processArgs(kwargs)
+
+	def processArgs(self, args: Dict[str, str]) -> None:
+		matched_args = []
+		for (key, value) in args.items():
+			matched_args.append(key + "=" + value)
+		self.conninfo = " ".join(matched_args)
 
 	async def initConnection(self) -> None:
 		"""
 		Функция для инициализации подключения к БД.
 		"""
-		self.dbconn = await psycopg.AsyncConnection.connect(f"dbname={self.dbname} user={self.dbuser}", autocommit=True)
+		self.dbconn = await psycopg.AsyncConnection.connect(self.conninfo, autocommit=True)
 
 	def getDBconn(self) -> psycopg.AsyncConnection[Any]:
 		return self.dbconn
@@ -103,21 +109,21 @@ class BotConstructor(commands.Bot):
 			cog.dbconn = self.dbconn
 			cog.context_provider = self.context_provider
 
-async def DBConnFactory(*args: Any, **kwargs: Any) -> psycopg.AsyncConnection[Any]:
+async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 	"""
 	Фабрика для создания готового подключения к БД PostgreSQL.
 
 	Returns:
 		psycopg.AsyncConnection[Any]
 	"""
-	dbconn_instance = DBConnector(*args, **kwargs)
+	dbconn_instance = DBConnector(**kwargs)
 	await dbconn_instance.initConnection()
 	return dbconn_instance.getDBconn()
 
 def runForPoetry() -> None:
 	loop = asyncio.get_event_loop()
-	with open("db_secret.sec") as file:
-		dbconn = loop.run_until_complete(DBConnFactory(dbname=file.readline(), dbuser=file.readline()))
+	dbconn = loop.run_until_complete(DBConnFactory(dbname=os.getenv("POSTGRES_DBNAME", " "),
+		user=os.getenv("POSTGRES_USER", " "), password=os.getenv("POSTGRES_PASSWORD", " ")))
 	intents = discord.Intents.all()
 	intents.dm_messages = False
 	VCSBot = BotConstructor(
@@ -127,8 +133,7 @@ def runForPoetry() -> None:
 		intents=intents,
 		help_command=BotHelpCommand(),
 	)
-	with open("dsAPI_secret.sec") as file:
-		VCSBot.run(file.readline())
+	VCSBot.run(os.getenv("DISCORD_API_TOKEN", " "))
 
 if __name__ == "__main__":
 	runForPoetry()

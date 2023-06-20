@@ -7,6 +7,7 @@ from typing import Optional, Any
 import sys
 import pathlib
 import discord.ext.test as dpytest
+import os
 
 root = pathlib.Path.cwd()
 
@@ -20,8 +21,13 @@ from bot.utils import ContextProvider
 @pytest_asyncio.fixture(scope="package", autouse=True, name="db")
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	loop = asyncio.get_event_loop()
-	with open("test_db_secret.sec") as file:
-		future_dbconn = await DBConnFactory(dbname=file.readline(), dbuser=file.readline())
+	future_dbconn = await DBConnFactory(
+		host=os.getenv("POSTGRES_HOST"),
+		port=os.getenv("POSTGRES_PORT"),
+		password="postgres",
+		dbname="postgres",
+		user="postgres"
+	)
 	return future_dbconn
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
