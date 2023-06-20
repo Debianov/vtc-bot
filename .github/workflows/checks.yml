@@ -31,12 +31,27 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Python
+<<<<<<< HEAD
         env:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
           # POSTGRES_USER_SEC: "${{ secrets.POSTGRES_DB}}"
           POSTGRES_PASSWORD: "${{ secrets.POSTGRES_PASSWORD}}"
           # POSTGRES_DB_SEC: "${{ secrets.POSTGRES_DB}}"
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        env:
+          # POSTGRES_HOST: postgres
+          # POSTGRES_PORT: 5432
+          POSTGRES_USER: "${{ secrets.POSTGRES_USER}}"
+          POSTGRES_PASSWORD: "${{ secrets.POSTGRES_PASSWORD}}"
+          # POSTGRES_DB_SEC: "${{ secrets.POSTGRES_DB}}"
+>>>>>>> d9dbfa8 (Интегрирована сотая попытка запустить тесты в workflow.)
+=======
+>>>>>>> 6732bfe (Добавлена попытка получить доступ к БД.)
+>>>>>>> idealism44-patch-3
         uses: actions/setup-python@v2
         with:
           python-version: 3.11.3
@@ -46,7 +61,7 @@ jobs:
           pip install poetry
           poetry update
       - name: Run flake8
-        run: poetry run flake8 --config ./config.flake8
+        run: poetry run flake8
       - name: Run mypy
         run: poetry run mypy
       - name: Run tests
@@ -55,9 +70,15 @@ jobs:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
         run: |
+<<<<<<< HEAD
           poetry run pytest
 =======
+<<<<<<< HEAD
         run: |
           echo $POSTGRES_DB_SEC
           poetry run pytest
 >>>>>>> 3914f1d (Добавлено кеширование.)
+=======
+          poetry run pytest
+>>>>>>> 6732bfe (Добавлена попытка получить доступ к БД.)
+>>>>>>> idealism44-patch-3

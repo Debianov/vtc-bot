@@ -21,7 +21,17 @@ class DBConnector:
 	def __init__(
 		self,	
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+		# dbname: str,
+		# dbuser: str,
+		dbpassword: str,
+		dbhost: str,
+		dbport: str
+=======
+>>>>>>> idealism44-patch-3
 		**kwargs: str
+>>>>>>> d9dbfa8 (Интегрирована сотая попытка запустить тесты в workflow.)
 	) -> None:
 		self.conninfo: str = ""
 		self.processArgs(kwargs)

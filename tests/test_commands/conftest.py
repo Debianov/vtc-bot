@@ -23,11 +23,18 @@ async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	loop = asyncio.get_event_loop()
 	future_dbconn = await DBConnFactory(
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+		user=os.getenv("POSTGRES_USER"),
+		password=os.getenv("POSTGRES_PASSWORD")
+=======
+>>>>>>> idealism44-patch-3
 		host=os.getenv("POSTGRES_HOST"),
 		port=os.getenv("POSTGRES_PORT"),
 		password="postgres",
 		dbname="postgres",
 		user="postgres"
+>>>>>>> 6732bfe (Добавлена попытка получить доступ к БД.)
 	)
 =======
 	dbpassword=os.getenv("POSTGRES_PASSWORD_SEC"),
