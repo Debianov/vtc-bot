@@ -1,8 +1,3 @@
-# Secrets
-dsAPI_secret.sec
-db_secret.sec
-test_db_secret.sec
-
 # Byte-compile / optimized / DLL files
 __pycache__/
 
@@ -20,6 +15,9 @@ poetry.lock
 
 # Environments
 venv/
+
+# vars
+.env
 
 # mypy
 .mypy_cache/
