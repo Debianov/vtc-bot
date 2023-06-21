@@ -122,7 +122,6 @@ async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 
 def runForPoetry() -> None:
 	loop = asyncio.get_event_loop()
-	print(os.environ)
 	dbconn = loop.run_until_complete(DBConnFactory(dbname=os.getenv("POSTGRES_DBNAME"),
 		user=os.getenv("POSTGRES_USER")))
 	intents = discord.Intents.all()
