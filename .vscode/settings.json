@@ -3,5 +3,12 @@
 		"."
 	],
 	"python.testing.unittestEnabled": false,
-	"python.testing.pytestEnabled": true
+	"python.testing.pytestEnabled": true,
+	"[python]": {
+		"editor.defaultFormatter": "ms-python.autopep8"
+	},
+	"python.formatting.provider": "none",
+	"autopep8.args": [
+		"--global-config", "./config.flake8"
+	]
 }
