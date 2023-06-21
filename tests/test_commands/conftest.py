@@ -24,9 +24,9 @@ async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	future_dbconn = await DBConnFactory(
 		host=os.getenv("POSTGRES_HOST"),
 		port=os.getenv("POSTGRES_PORT"),
-		password="postgres",
-		dbname="postgres",
-		user="postgres"
+		password=os.getenv("POSTGRES_PASSWORD"),
+		dbname=os.getenv("POSTGRES_TEST_DBNAME"),
+		user=os.getenv("POSTGRES_USER")
 	)
 	return future_dbconn
 
