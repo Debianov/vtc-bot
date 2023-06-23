@@ -1,26 +1,25 @@
+import os
+import pathlib
+import sys
+from typing import Any, Optional
+
 import discord
+import discord.ext.test as dpytest
+import psycopg
 import pytest
 import pytest_asyncio
-import psycopg
-import asyncio
-from typing import Optional, Any
-import sys
-import pathlib
-import discord.ext.test as dpytest
-import os
+from discord.ext import commands
+
+from bot.help import BotHelpCommand
+from bot.main import BotConstructor, DBConnFactory
+from bot.utils import ContextProvider
 
 root = pathlib.Path.cwd()
-
 sys.path.append(str(root))
-
-from bot.main import DBConnector, BotConstructor, DBConnFactory
-from bot.help import BotHelpCommand
-from bot.utils import ContextProvider
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True, name="db")
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
-	loop = asyncio.get_event_loop()
 	future_dbconn = await DBConnFactory(
 		host=os.getenv("POSTGRES_HOST"),
 		port=os.getenv("POSTGRES_PORT"),
@@ -31,7 +30,7 @@ async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
 	return future_dbconn
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
-async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> 'commands.Bot':
+async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> commands.Bot:
 	intents = discord.Intents.all()
 	VCSBot = BotConstructor(
 		dbconn=db,

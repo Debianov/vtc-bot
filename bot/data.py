@@ -2,16 +2,17 @@
 Модуль хранит классы для работы с БД.
 """
 
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import discord
-from discord.ext import commands
-from typing import List, Optional, Any, Final, Callable, Tuple, Union, Type, Dict, Set
 import psycopg
+from discord.ext import commands
 
 class DataGroupAnalyzator:
 	"""
 	Класс реализует механизм определения :class:`DataGroup` по имени из str.
 	"""
-	
+
 	def __init__(self, ctx: commands.Context, string: str) -> None:
 		self.split_string: List[str] = string.split("+")
 		self.relevant_groups: List[DataGroup] = []
@@ -46,7 +47,7 @@ class DiscordObjectsGroup(DataGroup):
 	"""
 	Абстрактный класс объектов, реализующих доступ к данным через Discord API.
 	"""
-	
+
 	USER_IDENTIFICATOR: str = ""
 
 	def __init__(self, ctx: commands.Context) -> None:
@@ -57,8 +58,9 @@ class DiscordObjectsGroup(DataGroup):
 
 class UserGroup(DiscordObjectsGroup):
 	"""
-	Класс реализует доступ к `discord.Member <https://discordpy.readthedocs.io/en/stable\
-	/api.html?highlight=member#discord.Member>`_ в контексте гильдии.
+	Класс реализует доступ к `discord.Member <https://discordpy.\
+	readthedocs.io/en/stable/api.html?highlight=member#discord.Member>`_
+	в контексте гильдии.
 	"""
 
 	USER_IDENTIFICATOR: str = "usr"
@@ -69,13 +71,18 @@ class UserGroup(DiscordObjectsGroup):
 
 class ChannelGroup(DiscordObjectsGroup):
 	"""
-	Класс реализует доступ к `discord.abc.Channel <https://discordpy.readthedocs.io/en/\
-	stable/api.html?highlight=guildchannel#discord.abc.GuildChannel>`_ в контексте гильдии.
+	Класс реализует доступ к `discord.abc.Channel \
+	<https://discordpy.readthedocs.io/en/stable/api.\
+	html?highlight=guildchannel#discord.abc.GuildChannel>`_ в контексте
+	гильдии.
 	"""
 
 	USER_IDENTIFICATOR: str = "ch"
 
-	def extractData(self, d_id: Optional[str] = None) -> List[discord.abc.GuildChannel]:
+	def extractData(
+		self,
+		d_id: Optional[str] = None
+	) -> List[discord.abc.GuildChannel]:
 		if not d_id:
 			return self.ctx.guild.channels
 
@@ -106,17 +113,18 @@ class TargetGroup(DBObjectsGroup):
 	DB_IDENTIFICATOR: str = "target"
 
 	def __init__(
-		self,		
+		self,
 		dbconn: psycopg.AsyncConnection[Any],
 		guild_id: int,
 		id: int = None,
-		target: Optional[List[Union[discord.TextChannel, discord.Member, discord.CategoryChannel]]] = None,
+		target: Optional[List[Union[discord.TextChannel,
+			discord.Member, discord.CategoryChannel]]] = None,
 		act: Union[str, None] = None,
 		d_in: Optional[List[Union[discord.TextChannel, discord.Member]]] = None,
-      name: Union[str, None] = None,
-      output: Union[str, None] = None,
-      priority: Union[int, None] = None,
-      other: Union[str, None] = None
+		name: Union[str, None] = None,
+		output: Union[str, None] = None,
+		priority: Union[int, None] = None,
+		other: Union[str, None] = None
 	) -> None:
 		self.dbconn = dbconn
 		self.guild_id = guild_id
@@ -133,8 +141,8 @@ class TargetGroup(DBObjectsGroup):
 		return 0
 
 	def __setattr__(
-		self, 
-		name: str, 
+		self,
+		name: str,
 		nvalue: Optional[str]
 	) -> None:
 		if nvalue:
@@ -153,31 +161,33 @@ class TargetGroup(DBObjectsGroup):
 		async with self.dbconn.cursor() as acur:
 			await acur.execute("""
 					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-					[self.id, self.guild_id, self.target, self.act, self.d_in,	
+					[self.id, self.guild_id, self.target, self.act, self.d_in,
 					self.name, self.output, self.priority, self.other])
 
 	@classmethod
 	async def extractData(
-		cls: 'TargetGroup', 
+		cls: 'TargetGroup',
 		guild_id: int,
 		dbconn: psycopg.AsyncConnection[Any],
 		placeholder: Optional[str] = "*",
 		**object_parameters: Dict[str, Tuple[str, Any]]
 	) -> List['TargetGroup']:
-		"""
+		r"""
 		Args:
 			\**object_parameters: параметры, которые будут переданы в SQL запрос. Если\
 			параметров несколько, то они объединяются через логический оператора OR.
 		"""
 		values_for_parameters: List[Any] = []
-		query = [psycopg.sql.SQL(f"SELECT {placeholder} FROM target WHERE context_id = %s")]
+		query = [psycopg.sql.SQL(
+			f"SELECT {placeholder} FROM target WHERE context_id = %s")]
 		values_for_parameters.append(guild_id)
 		if object_parameters:
 			parameters_query_part: List[psycopg.sql.SQL] = []
 			for (parameter, value) in object_parameters.items():
 				parameters_query_part.append(f"{parameter} = %s")
 				values_for_parameters.append(value)
-			query.append(psycopg.sql.SQL(f"AND ({(' OR ').join(parameters_query_part)})"))
+			query.append(psycopg.sql.SQL(
+				f"AND ({(' OR ').join(parameters_query_part)})"))
 
 		async with dbconn.cursor() as acur:
 			await acur.execute(
@@ -188,7 +198,8 @@ class TargetGroup(DBObjectsGroup):
 			for row in await acur.fetchall():
 				d_id, context_id, target, act, d_in, name, priority, output, other =\
 				row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
-				result.append(cls(dbconn, context_id, d_id, target, act, d_in, name, priority, output, other))
+				result.append(cls(dbconn, context_id, d_id, target,
+					act, d_in, name, priority, output, other))
 		return result
 
 	def getComparableAttrs(self) -> List[Any]:
@@ -210,7 +221,8 @@ class TargetGroup(DBObjectsGroup):
 
 	def getCoincidenceTo(self, target: 'TargetGroup') -> str:
 		"""
-		Сравнить атрибуты с другим экземпляром :class:`TargetGroup` и вычислить точные совпадения.
+		Сравнить атрибуты с другим экземпляром :class:`TargetGroup`
+		и вычислить точные совпадения.
 
 		Returns:
 			str: все совпавшие значения, перечисленных через запятую.
@@ -219,7 +231,8 @@ class TargetGroup(DBObjectsGroup):
 		compared_attr: List[Any] = target.getComparableAttrs()
 		coincidence_attrs: List[Any] = []
 		for current_attr in current_attr:
-			if current_attr in compared_attr and current_attr is not None: # is not None — исключаем из проверки 
-				# None-объекты, которые появляются только при отсутствии указания флага -name.
+			if current_attr in compared_attr and current_attr is not None:
+				# is not None — исключаем из проверки None-объекты,
+				# которые появляются только при отсутствии указания флага -name.
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))

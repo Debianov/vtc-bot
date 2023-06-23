@@ -2,23 +2,22 @@
 Модуль хранит основную логику всех пользовательских команд.
 """
 
-import discord
-from discord.ext import commands
-from typing import Optional, Union, Tuple, List, Any, Final, Mapping
-import asyncio
-from datetime import timedelta
+from typing import Any, List, Union
 
-from .flags import *
-from .converters import Expression, SearchExpression, ShortSearchExpression, SpecialExpression
-from .exceptions import ExpressionNotFound, UnhandlePartMessageSignal
-from .data import (
-	DataGroupAnalyzator,
-	DataGroup,
-	UserGroup,
-	ChannelGroup,
-	ActGroup,
-	TargetGroup
+import discord
+import psycopg
+from discord.ext import commands
+
+from .converters import (
+	SearchExpression,
+	ShortSearchExpression,
+	SpecialExpression
 )
+from .data import ActGroup, TargetGroup
+from .exceptions import ExpressionNotFound, UnhandlePartMessageSignal
+from .flags import UserLogFlags
+from .utils import ContextProvider
+
 class UserLog(commands.Cog):
 
 	def __init__(self, bot: commands.Bot):
@@ -27,23 +26,31 @@ class UserLog(commands.Cog):
 		self.context_provider: 'ContextProvider' = None
 		bot.on_command_error = self._on_command_error
 
-	async def _on_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
+	async def _on_command_error(
+		self,
+		ctx: commands.Context,
+		error: commands.CommandError
+	) -> None:
 		"""
-		Функция обработки ошибок. Является обработчиком discord.py. Обрабатывает все общие ошибки.
+		Функция обработки ошибок. Является обработчиком discord.py.
+		Обрабатывает все общие ошибки.
 
 		Raises:
 			error: если обработка исключения error не предусмотрена.
 		"""
 		if isinstance(error, commands.BadUnionArgument):
-			await ctx.send("Убедитесь, что вы указали существующие объекты \"{}\" в параметре {}, и у меня есть к ним доступ.".format(
+			await ctx.send("Убедитесь, что вы указали существующие "
+				"объекты\"{}\" в параметре {}, и у меня есть к ним доступ.".format(
 				error.errors[0].argument, error.param.name))
 		elif isinstance(error, commands.MissingRequiredArgument):
 			current_parameter = error.param.name
-			await ctx.send(f"Убедитесь, что вы указали все обязательные параметры. Не найденный параметр:"
+			await ctx.send(f"Убедитесь, что вы указали все обязательные "
+				"параметры. Не найденный параметр:"
 				f" {current_parameter}")
-		elif isinstance(error.original, UnhandlePartMessageSignal): # данная ошибка передаётся
-			# только через атрибут original
-			await ctx.send("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
+		elif isinstance(error.original, UnhandlePartMessageSignal):
+			# данная ошибка передаётся только через атрибут original
+			await ctx.send("Убедитесь, что вы указали флаги явно, либо "
+				"указали корректные данные."
 				f" Необработанная часть сообщения: {ctx.current_argument}")
 		else:
 			raise error
@@ -59,9 +66,11 @@ class UserLog(commands.Cog):
 	async def create(
 		self,
 		ctx: commands.Context,
-		target: commands.Greedy[Union[discord.TextChannel, discord.Member, discord.CategoryChannel, SearchExpression]],
+		target: commands.Greedy[Union[discord.TextChannel,
+			discord.Member, discord.CategoryChannel, SearchExpression]],
 		act: Union[ShortSearchExpression[ActGroup], str],
-		d_in: commands.Greedy[Union[discord.TextChannel, discord.Member, SearchExpression, SpecialExpression]],
+		d_in: commands.Greedy[Union[discord.TextChannel,
+			discord.Member, SearchExpression, SpecialExpression]],
 		*,
 		flags: UserLogFlags
 	) -> None:
@@ -70,22 +79,25 @@ class UserLog(commands.Cog):
 
 		Аргументы:
 			target (упоминание, SearchExpression): за кем/чем следить.
-			act (ShortSearchExpression, название/ID действия): какие действия отслеживать.
-			d_in (упоминание канала/пользователя, SearchExpression, df/default): куда отправлять логи. Если df\
+			act (ShortSearchExpression, название/ID действия):
+			какие действия отслеживать.
+			d_in (упоминание канала/пользователя, SearchExpression, df/default):
+			куда отправлять логи. Если df\
 			— то в установленный по умолчанию объект.
 		"""
 		self.context_provider.updateContext(ctx.guild)
-		
+
 		initial_target = self.removeNesting(target)
 		initial_act = self.removeNesting(act)
 		initial_d_in = self.removeNesting(d_in)
 
-		if not d_in: # если пропускается последний обязательный параметр — ошибка не выводится, поэтому приходится
-			# выкручиваться.
+		if not d_in: # если пропускается последний обязательный параметр
+			# — ошибка не выводится, поэтому приходится выкручиваться.
 			raise commands.MissingRequiredArgument(ctx.command.clean_params["d_in"])
 		else:
-			await self.checkForUnhandleContent(ctx, initial_target or target, initial_act or act,
-				initial_d_in or d_in, flags.name, flags.output, flags.priority, flags.other)
+			await self.checkForUnhandleContent(ctx, initial_target or target,
+				initial_act or act, initial_d_in or d_in, flags.name,
+				flags.output, flags.priority, flags.other)
 
 		target_instance = TargetGroup(self.dbconn, ctx.guild.id)
 		target_instance.target = target
@@ -96,20 +108,33 @@ class UserLog(commands.Cog):
 			if flags.__dict__[key]:
 				setattr(target_instance, key, flags.__dict__[key])
 
-		coincidence_targets_instance = await TargetGroup.extractData(ctx.guild.id, self.dbconn, target=target_instance.target, act=target_instance.act, 
-		d_in=target_instance.d_in, name=target_instance.name)
+		coincidence_targets_instance = await TargetGroup.extractData(
+			ctx.guild.id,
+			self.dbconn,
+			target=target_instance.target,
+			act=target_instance.act,
+			d_in=target_instance.d_in,
+			name=target_instance.name
+		)
 		if coincidence_targets_instance:
 			coincidence_target = coincidence_targets_instance[0]
-			await ctx.send(f"Цель с подобными параметрами уже существует: {coincidence_target.id} ({coincidence_target.name})"
-			f". Совпадающие элементы: {target_instance.getCoincidenceTo(coincidence_target)}")
+			await ctx.send(f"Цель с подобными параметрами уже существует: "
+			f"{coincidence_target.id} ({coincidence_target.name})"
+			f". Совпадающие элементы: "
+			f"{target_instance.getCoincidenceTo(coincidence_target)}")
 		else:
 			await target_instance.writeData()
 			await ctx.send("Цель добавлена успешно.")
 
-	async def checkForUnhandleContent(self, ctx: commands.Context, *parameters: Any) -> None:
-		"""
-		Для проверки на необработанный контент. Основан на сравнении `ctx.current_argument
-		<https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=ctx%20
+	async def checkForUnhandleContent(
+		self,
+		ctx: commands.Context,
+		*parameters: Any
+	) -> None:
+		r"""
+		Для проверки на необработанный контент. Основан на сравнении
+		`ctx.current_argument <https://discordpy.readthedocs.io/en/
+		stable/ext/commands/api.html?highlight=ctx%20
 		current_argument#discord.ext.commands.Context.current_argument>`_
 		обработанного аргумента со всеми параметрами.
 
@@ -120,7 +145,8 @@ class UserLog(commands.Cog):
 			UnhandlePartMessageSignal: вызывается при обнаружении необработанного\
 			элемента.
 		"""
-		current_argument = ctx.current_argument.split(" ") # discord.py останавливается на
+		current_argument = ctx.current_argument.split(
+			" ") # discord.py останавливается на
 		# необработанном аргументе, если ни один из конвертеров не подошёл.
 		for (ind, maybe_argument) in enumerate(current_argument[:]):
 			if maybe_argument.startswith("-"):
@@ -130,7 +156,8 @@ class UserLog(commands.Cog):
 				converter = commands.ObjectConverter()
 				discord_object = await converter.convert(ctx, maybe_argument)
 				current_argument[ind] = str(discord_object.id)
-		if self.checkExpressions(current_argument): # второй раз проверяю, поскольку других методов игнорирования
+		# второй раз проверяю, поскольку других методов игнорирования
+		if self.checkExpressions(current_argument):
 			# верных expression-ов не нашёл.
 			return
 		ready_check_parameters: List[str] = []
@@ -143,7 +170,7 @@ class UserLog(commands.Cog):
 			else:
 				ready_check_parameters.append(element)
 		for argument in current_argument:
-			if not argument in ready_check_parameters:
+			if argument not in ready_check_parameters:
 				raise UnhandlePartMessageSignal(ctx.current_argument)
 
 	def removeNesting(self, instance: List[Any]):
@@ -165,7 +192,8 @@ class UserLog(commands.Cog):
 		Returns:
 			bool
 		"""
-		expression_classes = (SearchExpression, ShortSearchExpression, SpecialExpression)
+		expression_classes = (
+			SearchExpression, ShortSearchExpression, SpecialExpression)
 		for argument in maybe_expressions:
 			for d_class in expression_classes:
 				instance = d_class()

@@ -1,12 +1,10 @@
-import pytest
-import psycopg
-import discord.ext.test as dpytest
-import discord
-from discord.ext import commands
-from typing import List, Union, Optional, Dict, Tuple, Iterable, Sequence, Any, Sized
+from typing import Any, Dict, Iterable, List, Optional
 
-import bot.commands as user_commands
-from bot.exceptions import UnhandlePartMessageSignal
+import discord
+import discord.ext.test as dpytest
+import psycopg
+import pytest
+from discord.ext import commands
 
 @pytest.mark.parametrize(
 	"target, act, d_in, flags",
@@ -17,7 +15,7 @@ from bot.exceptions import UnhandlePartMessageSignal
 			['pytest.test_member1'],
 			{"-name": "Test", "-output": "", "-priority": "-1", "other": ""}
 		),
-		(	
+		(
 			['pytest.test_member0', 'pytest.test_member1'],
 			"23",
 			['pytest.test_member2', 'pytest.test_member3'],
@@ -36,16 +34,17 @@ async def test_good_log_create_with_flags(
 	bot: commands.Bot,
 	db: Optional[psycopg.AsyncConnection[Any]],
 	target: List[Optional[str]],
-	act: str, 
+	act: str,
 	d_in: List[Optional[str]],
 	flags: Dict[str, str]
-	) -> None:
+) -> None:
 	target_message_part = extractIDAndGenerateObject(target)
 	d_in_message_part = extractIDAndGenerateObject(d_in)
-	joint_flags: Iterable[str] = filter(lambda x: False if not bool(x[1]) else x, flags.items())
+	joint_flags: Iterable[str] = filter(
+		lambda x: False if not bool(x[1]) else x, flags.items())
 	joint_flags = list(map(lambda x: " ".join(list(x)), joint_flags))
-	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} {act} {' '.join(d_in_message_part)}"
-	f" {' '.join(joint_flags)}")
+	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} "
+	f"{act} {' '.join(d_in_message_part)} {' '.join(joint_flags)}")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
@@ -53,11 +52,14 @@ async def test_good_log_create_with_flags(
 		)
 		for row in await acur.fetchall():
 			flags_values = list(map(lambda x: None if not x else x, flags.values()))
-			assert row == ("0", str(pytest.test_guild.id), target, act, d_in, *flags_values)
+			assert row == ("0", str(pytest.test_guild.id),
+				target, act, d_in, *flags_values)
 
 @pytest.mark.asyncio
-async def test_good_log_create_without_flags(db: Optional[psycopg.AsyncConnection[Any]]):
-	await dpytest.message(f"sudo log 1 {pytest.test_member0.id} 23 {pytest.test_member1.id}")
+async def test_good_log_create_without_flags(db:
+		Optional[psycopg.AsyncConnection[Any]]) -> None:
+	await dpytest.message(f"sudo log 1 {pytest.test_member0.id} "
+		f"23 {pytest.test_member1.id}")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
@@ -65,12 +67,14 @@ async def test_good_log_create_without_flags(db: Optional[psycopg.AsyncConnectio
 		)
 		for row in await acur.fetchall():
 			flags_values = [None, None, '-1', None]
-			assert row == ("0", str(pytest.test_guild.id), [pytest.test_member0], '23', [pytest.test_member1], *flags_values)
+			assert row == ("0", str(pytest.test_guild.id),
+				[pytest.test_member0], '23', [pytest.test_member1], *flags_values)
 
 @pytest.mark.asyncio
 async def test_log_without_subcommand() -> None:
-	await dpytest.message(f"sudo log")
-	assert dpytest.verify().message().content("Убедитесь, что вы указали подкоманду.")
+	await dpytest.message("sudo log")
+	assert dpytest.verify().message().content(
+		"Убедитесь, что вы указали подкоманду.")
 
 @pytest.mark.parametrize(
 	"target, act, d_in, missing_params",
@@ -104,14 +108,14 @@ async def test_log_without_require_params(
 ) -> None:
 	target_message_part = extractIDAndGenerateObject(target)
 	d_in_message_part = extractIDAndGenerateObject(d_in)
-	with pytest.raises(commands.MissingRequiredArgument): #! dpytest почему-то 
-		# принудительно поднимает исключения, хотя они могут обрабатываться в 
-		# on_command_error и проч. ивентах. 
+	with pytest.raises(commands.MissingRequiredArgument): #! dpytest почему-то
+		# принудительно поднимает исключения, хотя они могут обрабатываться в
+		# on_command_error и проч. ивентах.
 		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} {act}"
 			f" {' '.join(d_in_message_part)}")
-	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
-		f" обязательные параметры. Не найденный параметр: {missing_params}")
-	
+	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все "
+		f"обязательные параметры. Не найденный параметр: {missing_params}")
+
 @pytest.mark.parametrize(
 	"target, act, d_in, flag, unhandle_message_part",
 	[
@@ -137,19 +141,22 @@ async def test_log_bad_flag(
 	with pytest.raises(commands.CommandInvokeError):
 		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} 43"
 			f" {' '.join(d_in_message_part)} {flag}")
-	assert dpytest.verify().message().content("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
+	assert dpytest.verify().message().content("Убедитесь, что вы "
+		"указали флаги явно, либо указали корректные данные."
 		f" Необработанная часть сообщения: {unhandle_message_part}")
 
 @pytest.mark.asyncio
 async def test_log_bad_parameters() -> None:
 	with pytest.raises(commands.CommandInvokeError):
-		await dpytest.message(f"sudo log 1 336420570449051649 43"
-		f" 1107606170375565372")
-	assert dpytest.verify().message().content("Убедитесь, что вы указали флаги явно, либо указали корректные данные."
-		f" Необработанная часть сообщения: 1107606170375565372")
+		await dpytest.message("sudo log 1 336420570449051649 43 "
+		"1107606170375565372")
+	assert dpytest.verify().message().content("Убедитесь, что вы указали "
+		"флаги явно, либо указали корректные данные. "
+		"Необработанная часть сообщения: 1107606170375565372")
 
 @pytest.mark.parametrize(
-	"target, act, d_in, name, compared_target, compared_act, compared_d_in, compared_name",
+	"target, act, d_in, name, compared_target, compared_act, compared_d_in,"
+	"compared_name",
 	# compared — т.е те параметры, которые будем отправлять вторым сообщением.
 	[
 		(
@@ -232,10 +239,11 @@ async def test_coincidence_targets(
 	compared_act: str,
 	compared_d_in: List[Optional[str]],
 	compared_name: str
-	) -> None:
+) -> None:
 	target_message_part = extractIDAndGenerateObject(target)
 	d_in_message_part = extractIDAndGenerateObject(d_in)
-	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} {act} {' '.join(d_in_message_part)} -name {name}")
+	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} "
+		f"{act} {' '.join(d_in_message_part)} -name {name}")
 	dpytest.get_message() # пропускаем ненужное сообщение
 	async with db.cursor() as acur:
 		await acur.execute(
@@ -247,17 +255,20 @@ async def test_coincidence_targets(
 		target_name = row[5]
 	compared_target_message_part = extractIDAndGenerateObject(compared_target)
 	compared_d_in_message_part = extractIDAndGenerateObject(compared_d_in)
-	await dpytest.message(f"sudo log 1 {' '.join(compared_target_message_part)} {compared_act} {' '.join(compared_d_in_message_part)}"
-	f" -name {compared_name}")
+	await dpytest.message(f"sudo log 1 {' '.join(compared_target_message_part)} "
+		f"{compared_act} {' '.join(compared_d_in_message_part)}"
+		f" -name {compared_name}")
 	coincidence_elements = []
 	current_objects = []
 	compared_objects = []
-	for check_object in [target_message_part, act, d_in_message_part, name]: # склеивание списков.
+	# склеивание списков.
+	for check_object in [target_message_part, act, d_in_message_part, name]:
 		if isinstance(check_object, list):
 			current_objects += check_object
 		else:
 			current_objects.append(check_object)
-	for check_object in [compared_target_message_part, compared_act, # склеивание списков.
+	# склеивание списков.
+	for check_object in [compared_target_message_part, compared_act,
 		compared_d_in_message_part, compared_name]:
 		if isinstance(check_object, list):
 			compared_objects += check_object
@@ -266,8 +277,9 @@ async def test_coincidence_targets(
 	for current_object in current_objects: # поиск совпадений.
 		if current_object in compared_objects:
 			coincidence_elements.append(current_object)
-	assert dpytest.verify().message().content(f"Цель с подобными параметрами уже существует: {target_id}"
-	f" ({target_name}). Совпадающие элементы: {', '.join(coincidence_elements)}")
+	assert dpytest.verify().message().content(f"Цель с подобными параметрами "
+		f"уже существует: {target_id} "
+		f"({target_name}). Совпадающие элементы: {', '.join(coincidence_elements)}")
 
 @pytest.mark.asyncio
 async def test_log_1_with_mention() -> None:
@@ -296,7 +308,7 @@ async def test_log_1_good_expression(
 	exp1: str,
 	exp2: str,
 	calls_sequence: List[str]
-	) -> None:
+) -> None:
 	message = await dpytest.message(f"sudo log 1 {exp1} 23"
 		f" {exp2}")
 	current_ctx = await bot.get_context(message)
@@ -338,9 +350,10 @@ async def test_log_1_bad_expression(
 
 def extractIDAndGenerateObject(sequence: List[Optional[str]]) -> Iterable[str]:
 	"""
-	Существование функции обусловлено непреодолимым желанием разработчика иметь
-	в записях под декоратором parametrize человеческие извлечения атрибутов. С пр-ом там
-	имём всё довольно сложно, поскольку это происходит на этапе инициализации кода.
+	Существование функции обусловлено непреодолимым желанием разработчика
+	иметь в записях под декоратором parametrize человеческие извлечения
+	атрибутов. С пр-ом там имём всё довольно сложно, поскольку это
+	происходит на этапе инициализации кода.
 	"""
 	message_part: List[Optional[str]] = []
 	for (ind, string) in enumerate(sequence):

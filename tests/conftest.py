@@ -1,19 +1,20 @@
-from discord.ext import commands
-import discord.ext.test as dpytest
-import discord
-import sys
 import asyncio
 import pathlib
+import sys
+
+import discord
+import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
+from discord.ext import commands
+
+from bot.help import BotHelpCommand
+from bot.main import BotConstructor
 
 root = pathlib.Path.cwd()
 
 sys.path.append(str(root))
 
-from bot.help import BotHelpCommand
-from bot.main import BotConstructor
-from bot.utils import ContextProvider
 
 pytest_plugins = ('pytest_asyncio',)
 

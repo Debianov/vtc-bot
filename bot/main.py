@@ -2,24 +2,24 @@
 Основной модуль для сбора всех модулей и запуска бота.
 """
 
-import discord
-import logging
-import psycopg
-from typing import Optional, Union, Tuple, Union, Optional, Any, Dict
-from discord.ext import commands
 import asyncio
-import logging
-from .utils import ContextProvider
 import os
+from typing import Any, Dict, Optional, Union
+
+import discord
+import psycopg
+from discord.ext import commands
 
 from .help import BotHelpCommand
+from .utils import ContextProvider
+
 class DBConnector:
 	"""
 	Основной класс для соединения с БД PostgreSQL.
 	"""
 
 	def __init__(
-		self,	
+		self,
 		**kwargs: str
 	) -> None:
 		self.conninfo: str = ""
@@ -36,7 +36,10 @@ class DBConnector:
 		"""
 		Функция для инициализации подключения к БД.
 		"""
-		self.dbconn = await psycopg.AsyncConnection.connect(self.conninfo, autocommit=True)
+		self.dbconn = await psycopg.AsyncConnection.connect(
+			self.conninfo,
+			autocommit=True
+		)
 
 	def getDBconn(self) -> psycopg.AsyncConnection[Any]:
 		return self.dbconn
@@ -47,12 +50,12 @@ class BotConstructor(commands.Bot):
 	"""
 
 	def __init__(
-			self,
-			dbconn: psycopg.AsyncConnection[Any] = None,
-			context_provider: ContextProvider = None,
-			*args: Any,
-			**kwargs: Any
-		):
+		self,
+		dbconn: psycopg.AsyncConnection[Any] = None,
+		context_provider: ContextProvider = None,
+		*args: Any,
+		**kwargs: Any
+	) -> None:
 		self.dbconn = dbconn
 		self.context_provider = context_provider
 		super().__init__(*args, **kwargs)
@@ -64,8 +67,9 @@ class BotConstructor(commands.Bot):
 
 	async def prepare(self) -> None:
 		"""
-		Метод для запуска механизмов инициализации компонентов бота. Обязателен к запуску,
-		если не используется метод :attr:`run`.
+		Метод для запуска механизмов инициализации
+		компонентов бота. Обязателен к запуску, если не
+		используется метод :attr:`run`.
 		"""
 		if self.dbconn:
 			await self.registerDBAdapters()
@@ -74,11 +78,16 @@ class BotConstructor(commands.Bot):
 	async def registerDBAdapters(self) -> None:
 
 		context_provider = self.context_provider
+
 		class DiscordObjectsDumper(psycopg.adapt.Dumper):
 			"""
 			Преобразовывает Discord-объекты в ID для записи в БД.
 			"""
-			def dump(self, elem: Union[discord.abc.Messageable, discord.abc.Connectable]) -> bytes:
+
+			def dump(
+				self,
+				elem: Union[discord.abc.Messageable, discord.abc.Connectable]
+			) -> bytes:
 				return str(elem.id).encode()
 
 		class DiscordObjectsLoader(psycopg.adapt.Loader):
@@ -86,7 +95,10 @@ class BotConstructor(commands.Bot):
 			Преобразовывает записи из БД в объекты Discord.
 			"""
 
-			def load(self, data: bytes) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]: 
+			def load(
+				self,
+				data: bytes
+			) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]:
 				string_data: str = data.decode()
 				ctx = context_provider.getContext()
 				for attr in ('get_member', 'get_user', 'get_channel'):
@@ -98,8 +110,9 @@ class BotConstructor(commands.Bot):
 					except (discord.DiscordException, AttributeError):
 						continue
 				return string_data
-				
-		self.dbconn.adapters.register_dumper(discord.abc.Messageable, DiscordObjectsDumper)
+
+		self.dbconn.adapters.register_dumper(
+			discord.abc.Messageable, DiscordObjectsDumper)
 		self.dbconn.adapters.register_loader("bigint[]", DiscordObjectsLoader)
 
 	async def initCogs(self) -> None:
@@ -123,8 +136,10 @@ async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 
 def runForPoetry() -> None:
 	loop = asyncio.get_event_loop()
-	dbconn = loop.run_until_complete(DBConnFactory(dbname=os.getenv("POSTGRES_DBNAME"),
-		user=os.getenv("POSTGRES_USER")))
+	dbconn = loop.run_until_complete(DBConnFactory(
+		dbname=os.getenv("POSTGRES_DBNAME"),
+		user=os.getenv("POSTGRES_USER")
+	))
 	intents = discord.Intents.all()
 	intents.dm_messages = False
 	VCSBot = BotConstructor(

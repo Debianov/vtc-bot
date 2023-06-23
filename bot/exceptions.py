@@ -8,20 +8,21 @@ class ErrorMessage:
 	"""
 		Класс реализует пользовательское сообщение со всеми ошибками.
 	"""
-	
+
 	def __init__(self) -> None:
-		self.text_start = ("При выполнении операции произошла пользовательская ошибка.\n"
-		"Пожалуйста, убедитесь в следующем:\n")
+		self.text_start = ("При выполнении операции произошла"
+			"пользовательская ошибка.\nПожалуйста, убедитесь в следующем:\n")
 		self.current_point: int = 0
 
 	def addError(self, error_text: str) -> None:
 		self.current_point += 1
-		self.__dict__[current_point] = error_text
+		self.__dict__[self.current_point] = error_text
 
 	def gatherError(self) -> str:
 		text_rest: str = ""
 		for i in range(1, self.current_point + 1):
-			text_rest += "{}. ".format(str(i)) + self.__dict__[str(i)] + ("\n" if i != self.current_point else ...)
+			text_rest += "{}. ".format(str(i)) + self.__dict__[str(i)] + (
+				"\n" if i != self.current_point else ...)
 		return self.text_start + text_rest
 
 
