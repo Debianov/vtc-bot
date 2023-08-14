@@ -8,7 +8,4 @@
 		"editor.defaultFormatter": "ms-python.autopep8"
 	},
 	"python.formatting.provider": "none",
-	"autopep8.args": [
-		"--global-config", "./config.flake8"
-	]
 }
