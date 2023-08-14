@@ -2,8 +2,10 @@
 Модуль содержит переопределённый embeds с некоторыми предустановками.
 """
 
-import discord
 from typing import Any
+
+import discord
+
 
 class BotEmbed(discord.Embed):
 

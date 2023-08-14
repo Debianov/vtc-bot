@@ -4,6 +4,7 @@
 
 from discord.ext import commands
 
+
 class ErrorMessage:
 	"""
 		Класс реализует пользовательское сообщение со всеми ошибками.

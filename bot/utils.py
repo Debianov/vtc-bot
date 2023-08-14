@@ -2,6 +2,7 @@ from typing import Optional
 
 import discord
 
+
 class ContextProvider:
 	"""
 	Класс-локатор для приёма и передачи контекста.

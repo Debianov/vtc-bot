@@ -2,9 +2,12 @@
 Модуль содержит логику для обработки и вывода пользовательской документации
 """
 
-from typing import Mapping, Optional, List
+from typing import List, Mapping, Optional
+
 from discord.ext import commands
+
 from .embeds import BotEmbed
+
 
 class BotHelpCommand(commands.HelpCommand):
 

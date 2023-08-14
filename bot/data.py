@@ -8,6 +8,7 @@ import discord
 import psycopg
 from discord.ext import commands
 
+
 class DataGroupAnalyzator:
 	"""
 	Класс реализует механизм определения :class:`DataGroup` по имени из str.

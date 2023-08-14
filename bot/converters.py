@@ -13,6 +13,7 @@ from .exceptions import (
 	SpecialExpressionNotFound
 )
 
+
 class Expression(commands.Converter):
 	"""
 	Абстрактный класс объектов, реализующих выражения.

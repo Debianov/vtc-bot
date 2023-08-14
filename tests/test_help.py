@@ -4,6 +4,7 @@ from discord.ext import commands
 
 from bot.embeds import BotEmbed
 
+
 @pytest.mark.asyncio
 async def test_main_help_page() -> None:
 	await dpytest.message("sudo help")

@@ -13,6 +13,7 @@ from discord.ext import commands
 from .help import BotHelpCommand
 from .utils import ContextProvider
 
+
 class DBConnector:
 	"""
 	Основной класс для соединения с БД PostgreSQL.

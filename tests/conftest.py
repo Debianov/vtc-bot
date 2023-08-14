@@ -8,14 +8,13 @@ import pytest
 import pytest_asyncio
 from discord.ext import commands
 
-from bot.help import BotHelpCommand
-from bot.main import BotConstructor
-
 root = pathlib.Path.cwd()
 
 sys.path.append(str(root))
 
-
+from bot.help import BotHelpCommand # flake8: noqa: I005
+from bot.main import BotConstructor # flake8: noqa: I005
+# flake8: noqa: I005
 pytest_plugins = ('pytest_asyncio',)
 
 @pytest.fixture(scope="package")

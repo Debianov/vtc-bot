@@ -6,6 +6,7 @@ import psycopg
 import pytest
 from discord.ext import commands
 
+
 @pytest.mark.parametrize(
 	"target, act, d_in, flags",
 	[
