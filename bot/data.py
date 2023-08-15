@@ -167,7 +167,7 @@ class TargetGroup(DBObjectsGroup):
 
 	@classmethod
 	async def extractData(
-		cls: 'TargetGroup',
+		cls,
 		guild_id: int,
 		dbconn: psycopg.AsyncConnection[Any],
 		placeholder: Optional[str] = "*",

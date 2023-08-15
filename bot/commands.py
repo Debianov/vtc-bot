@@ -105,10 +105,13 @@ class UserLog(commands.Cog):
 				initial_act or act, initial_d_in or d_in, flags.name,
 				flags.output, flags.priority, flags.other)
 
-		target_instance = TargetGroup(self.dbconn, ctx.guild.id)
-		target_instance.target = target
-		target_instance.act = act
-		target_instance.d_in = d_in
+		target_instance = TargetGroup(
+			self.dbconn,
+			ctx.guild.id,
+			target=target,
+			act=act,
+			d_in=d_in
+		)
 
 		for key in flags.get_flags().keys():
 			if flags.__dict__[key]:
