@@ -117,9 +117,7 @@ class UserLog(commands.Cog):
 			if flags.__dict__[key]:
 				setattr(target_instance, key, flags.__dict__[key])
 
-		coincidence_targets_instance = await TargetGroup.extractData(
-			ctx.guild.id,
-			self.dbconn,
+		coincidence_targets_instance = await target_instance.extractData(
 			target=target_instance.target,
 			act=target_instance.act,
 			d_in=target_instance.d_in,

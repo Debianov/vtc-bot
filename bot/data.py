@@ -41,7 +41,7 @@ class DataGroup:
 	def extractData(self, d_id: Optional[str] = None) -> discord.abc.Messageable:
 		pass
 
-	def writeData(self) -> None:
+	async def writeData(self) -> None:
 		pass
 
 class DiscordObjectsGroup(DataGroup):
@@ -165,11 +165,8 @@ class TargetGroup(DBObjectsGroup):
 					[self.id, self.guild_id, self.target, self.act, self.d_in,
 					self.name, self.output, self.priority, self.other])
 
-	@classmethod
 	async def extractData(
-		cls,
-		guild_id: int,
-		dbconn: psycopg.AsyncConnection[Any],
+		self,
 		placeholder: Optional[str] = "*",
 		**object_parameters: Dict[str, Tuple[str, Any]]
 	) -> List['TargetGroup']:
@@ -181,7 +178,7 @@ class TargetGroup(DBObjectsGroup):
 		values_for_parameters: List[Any] = []
 		query = [psycopg.sql.SQL(
 			f"SELECT {placeholder} FROM target WHERE context_id = %s")]
-		values_for_parameters.append(guild_id)
+		values_for_parameters.append(self.guild_id)
 		if object_parameters:
 			parameters_query_part: List[psycopg.sql.SQL] = []
 			for (parameter, value) in object_parameters.items():
@@ -190,7 +187,7 @@ class TargetGroup(DBObjectsGroup):
 			query.append(psycopg.sql.SQL(
 				f"AND ({(' OR ').join(parameters_query_part)})"))
 
-		async with dbconn.cursor() as acur:
+		async with self.dbconn.cursor() as acur:
 			await acur.execute(
 				psycopg.sql.SQL(" ").join(query) + psycopg.sql.SQL(";"),
 				values_for_parameters
@@ -199,7 +196,7 @@ class TargetGroup(DBObjectsGroup):
 			for row in await acur.fetchall():
 				d_id, context_id, target, act, d_in, name, priority, output, other =\
 				row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
-				result.append(cls(dbconn, context_id, d_id, target,
+				result.append(TargetGroup(self.dbconn, context_id, d_id, target,
 					act, d_in, name, priority, output, other))
 		return result
 
