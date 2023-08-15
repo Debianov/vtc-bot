@@ -119,10 +119,6 @@ class BotConstructor(commands.Bot):
 	async def initCogs(self) -> None:
 		for module_name in ("commands",):
 			await self.load_extension(f"bot.{module_name}")
-		for cog_name in self.cogs:
-			cog = self.get_cog(cog_name)
-			cog.dbconn = self.dbconn
-			cog.context_provider = self.context_provider
 
 async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 	"""

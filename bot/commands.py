@@ -21,10 +21,15 @@ from .utils import ContextProvider
 
 class UserLog(commands.Cog):
 
-	def __init__(self, bot: commands.Bot):
+	def __init__(
+		self,
+		bot: commands.Bot,
+		dbconn: psycopg.AsyncConnection[Any],
+		context_provider: ContextProvider
+	) -> None:
 		self.bot = bot
-		self.dbconn: 'psycopg.AsyncConnection[Any]' = None
-		self.context_provider: 'ContextProvider' = None
+		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
+		self.context_provider: ContextProvider = context_provider
 		bot.on_command_error = self._on_command_error
 
 	async def _on_command_error(
@@ -69,7 +74,7 @@ class UserLog(commands.Cog):
 		ctx: commands.Context,
 		target: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, discord.CategoryChannel, SearchExpression]],
-		act: Union[ShortSearchExpression[ActGroup], str],
+		act: Union[ShortSearchExpression[ActGroup], str], #!
 		d_in: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, SearchExpression, SpecialExpression]],
 		*,
@@ -89,7 +94,7 @@ class UserLog(commands.Cog):
 		self.context_provider.updateContext(ctx.guild)
 
 		initial_target = self.removeNesting(target)
-		initial_act = self.removeNesting(act)
+		initial_act = self.removeNesting(act) #!
 		initial_d_in = self.removeNesting(d_in)
 
 		if not d_in: # если пропускается последний обязательный параметр
@@ -206,5 +211,7 @@ class UserLog(commands.Cog):
 					return True
 		return False
 
-async def setup(bot: commands.Bot) -> None:
-	await bot.add_cog(UserLog(bot))
+async def setup(
+	bot: commands.Bot,
+) -> None:
+	await bot.add_cog(UserLog(bot, bot.dbconn, bot.context_provider))
