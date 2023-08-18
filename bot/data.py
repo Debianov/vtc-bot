@@ -2,7 +2,7 @@
 Модуль хранит классы для работы с БД.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Union
 
 import discord
 import psycopg
@@ -168,7 +168,7 @@ class TargetGroup(DBObjectsGroup):
 	async def extractData(
 		self,
 		placeholder: Optional[str] = "*",
-		**object_parameters: Dict[str, Tuple[str, Any]]
+		**object_parameters: Any
 	) -> List['TargetGroup']:
 		r"""
 		Args:

@@ -27,7 +27,7 @@ class Expression(commands.Converter):
 		"""
 		pass
 
-	def checkExpression(self) -> None:
+	def checkExpression(self, argument: str) -> None:
 		"""
 		Проверяет выражение с точки зрения синтаксиса.
 		"""

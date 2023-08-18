@@ -2,13 +2,14 @@
 Модуль хранит основную логику всех пользовательских команд.
 """
 
-from typing import Any, List, Union
+from typing import Any, List, Tuple, Type, Union
 
 import discord
 import psycopg
 from discord.ext import commands
 
 from .converters import (
+	Expression,
 	SearchExpression,
 	ShortSearchExpression,
 	SpecialExpression
@@ -163,13 +164,13 @@ class UserLog(commands.Cog):
 				converter = commands.ObjectConverter()
 				discord_object = await converter.convert(ctx, maybe_argument)
 				current_argument[ind] = str(discord_object.id)
-		# второй раз проверяю, поскольку других методов игнорирования
+			# второй раз проверяю, поскольку других методов игнорирования
 		if self.checkExpressions(current_argument):
 			# верных expression-ов не нашёл.
 			return
 		ready_check_parameters: List[str] = []
 		for element in parameters:
-			if isinstance(element, discord.abc.Messageable):
+			if hasattr(element, "id"):
 				ready_check_parameters.append(str(element.id))
 			elif isinstance(element, list):
 				for d_id in map(lambda x: str(x.id), element):
@@ -199,8 +200,9 @@ class UserLog(commands.Cog):
 		Returns:
 			bool
 		"""
-		expression_classes = (
-			SearchExpression, ShortSearchExpression, SpecialExpression)
+		expression_classes: Tuple[Type[Expression], ...] = (
+			SearchExpression, ShortSearchExpression, SpecialExpression
+		)
 		for argument in maybe_expressions:
 			for d_class in expression_classes:
 				instance = d_class()
