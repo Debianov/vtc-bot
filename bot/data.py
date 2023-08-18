@@ -2,7 +2,7 @@
 Модуль хранит классы для работы с БД.
 """
 
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Type, Union
 
 import discord
 import psycopg
@@ -16,14 +16,15 @@ class DataGroupAnalyzator:
 
 	def __init__(self, ctx: commands.Context, string: str) -> None:
 		self.split_string: List[str] = string.split("+")
-		self.relevant_groups: List[DataGroup] = []
+		self.relevant_groups: List[DiscordObjectsGroup] = []
 		self.ctx = ctx
 
 	def analyze(self) -> List['DiscordObjectsGroup']:
 		"""
 		Основной метод для определения :class:`DataGroup`.
 		"""
-		to_check: List[DiscordObjectsGroup] = DiscordObjectsGroup.__subclasses__()
+		to_check: List[Type[DiscordObjectsGroup]] =\
+			DiscordObjectsGroup.__subclasses__()
 		copy_string: List[str] = self.split_string
 		for group_name in copy_string:
 			for group_type in to_check:
@@ -33,18 +34,7 @@ class DataGroupAnalyzator:
 					break
 		return self.relevant_groups
 
-class DataGroup:
-	"""
-	Абстрактный класс объектов, реализующих доступ к данным.
-	"""
-
-	def extractData(self, d_id: Optional[str] = None) -> discord.abc.Messageable:
-		pass
-
-	async def writeData(self) -> None:
-		pass
-
-class DiscordObjectsGroup(DataGroup):
+class DiscordObjectsGroup:
 	"""
 	Абстрактный класс объектов, реализующих доступ к данным через Discord API.
 	"""
@@ -67,8 +57,7 @@ class UserGroup(DiscordObjectsGroup):
 	USER_IDENTIFICATOR: str = "usr"
 
 	def extractData(self, d_id: Optional[str] = None) -> List[discord.Member]:
-		if not d_id:
-			return self.ctx.guild.members
+		return self.ctx.guild.members
 
 class ChannelGroup(DiscordObjectsGroup):
 	"""
@@ -84,10 +73,9 @@ class ChannelGroup(DiscordObjectsGroup):
 		self,
 		d_id: Optional[str] = None
 	) -> List[discord.abc.GuildChannel]:
-		if not d_id:
-			return self.ctx.guild.channels
+		return self.ctx.guild.channels
 
-class DBObjectsGroup(DataGroup):
+class DBObjectsGroup:
 	"""
 	Абстрактный класс объектов, реализующий доступ к данным через БД,
 	а также их корректную запись.
@@ -180,7 +168,7 @@ class TargetGroup(DBObjectsGroup):
 			f"SELECT {placeholder} FROM target WHERE context_id = %s")]
 		values_for_parameters.append(self.guild_id)
 		if object_parameters:
-			parameters_query_part: List[psycopg.sql.SQL] = []
+			parameters_query_part: List[str] = []
 			for (parameter, value) in object_parameters.items():
 				parameters_query_part.append(f"{parameter} = %s")
 				values_for_parameters.append(value)
@@ -200,7 +188,7 @@ class TargetGroup(DBObjectsGroup):
 					act, d_in, name, priority, output, other))
 		return result
 
-	def getComparableAttrs(self) -> List[Any]:
+	def getComparableAttrs(self) -> Union[List[Any], None]:
 		"""
 		Формирует сравниваемые атрибуты.
 
@@ -208,14 +196,16 @@ class TargetGroup(DBObjectsGroup):
 			List[Any]: список атрибутов, которые имеет смысл сравнивать с другими\
 			экземплярами :class:`TargetGroup`.
 		"""
-		comparable_attrs: List[Any] = []
-		objects_id: List[Any] = []
-		for discord_objects in (self.target + self.d_in):
-			objects_id.append(str(discord_objects.id))
-		comparable_attrs += objects_id
-		comparable_attrs.insert(len(self.target), self.act)
-		comparable_attrs.append(self.name)
-		return comparable_attrs
+		if self.target and self.d_in:
+			comparable_attrs: List[Any] = []
+			objects_id: List[Any] = []
+			for discord_objects in (self.target + self.d_in):
+				objects_id.append(str(discord_objects.id))
+			comparable_attrs += objects_id
+			comparable_attrs.insert(len(self.target), self.act)
+			comparable_attrs.append(self.name)
+			return comparable_attrs
+		return None
 
 	def getCoincidenceTo(self, target: 'TargetGroup') -> str:
 		"""
@@ -225,8 +215,10 @@ class TargetGroup(DBObjectsGroup):
 		Returns:
 			str: все совпавшие значения, перечисленных через запятую.
 		"""
-		current_attr: List[Any] = self.getComparableAttrs()
-		compared_attr: List[Any] = target.getComparableAttrs()
+		if ((maybe_current_attr := self.getComparableAttrs()) and
+			(maybe_compared_attr := target.getComparableAttrs())):
+			current_attr: List[Any] = maybe_current_attr
+			compared_attr: List[Any] = maybe_compared_attr
 		coincidence_attrs: List[Any] = []
 		for current_attr in current_attr:
 			if current_attr in compared_attr and current_attr is not None:

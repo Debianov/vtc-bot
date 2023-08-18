@@ -1,7 +1,7 @@
 """
 Модуль хранит конвертеры, необходимый для парсинга команд.
 """
-from typing import List, Optional
+from typing import List, Optional, Type
 
 import discord
 from discord.ext import commands
@@ -88,7 +88,7 @@ class SearchExpression(Expression):
 			if self.string[1] == "*":
 				self.result += data_group.extractData()
 
-class ShortSearchExpression(SearchExpression):
+class ShortSearchExpression(Expression):
 	r"""
 	Класс представляет реализацию короткого поискового выражения —
 	аналога :class:`SearchExpression`, но без явного указания
@@ -97,17 +97,17 @@ class ShortSearchExpression(SearchExpression):
 	Examples:
 		\* — передача всех объектов.
 	"""
-
+	@classmethod
 	def __class_getitem__(
 		cls,
-		default_data_group: DiscordObjectsGroup = DiscordObjectsGroup
-	) -> 'ShortSearchExpression':
+		default_data_group: Type[DiscordObjectsGroup] = DiscordObjectsGroup,
+	) -> Type['ShortSearchExpression']:
 		"""
 		Args:
 			default_data_group (DiscordObjectsGroup): один из объектов
 			:class:`DataGroup`, который использоваться для выполнения wildcard.
 		"""
-		cls.data_group = default_data_group()
+		cls.data_group = default_data_group
 		return cls
 
 	async def convert(
@@ -116,11 +116,11 @@ class ShortSearchExpression(SearchExpression):
 		argument: str
 	) -> List[discord.abc.Messageable]:
 		self.checkExpression(argument)
-		self.string: str = argument
+		self.string: str = argument # type: ignore
 		self.result: List[discord.abc.Messageable] = []
 		self.analyzeWildcard()
 		return self.result
-
+	
 	def checkExpression(self, argument: str) -> None:
 		if not argument == "*":
 			raise ShortSearchExpressionNotFound(argument)
@@ -138,8 +138,7 @@ class SpecialExpression(Expression):
 		df — передача дефолтного объекта из настроек.
 	"""
 
-	async def convert(self, ctx: commands.Context, argument: List[str]) -> str:
-		argument = "".join(argument)
+	async def convert(self, ctx: commands.Context, argument: str) -> str:
 		self.checkExpression(argument)
 		return argument
 
