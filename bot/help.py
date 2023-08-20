@@ -22,20 +22,6 @@ class BotHelpCommand(commands.HelpCommand):
 			value="Введите конкретную команду, чтобы получить справку:\n"
 			" :keyboard:help <название команды>"
 		)
-		embed.add_field(
-			name="Список команд представлен ниже.",
-			value="",
-		)
-		commands = mapping.get(None)
-		commands = await self.filter_commands(commands, sort=True)
-		commands = filter(lambda x: x.name != "help", commands)
-		for command_object in commands:
-			embed.add_field(
-				name=f"{command_object.name}{'/' if command_object.aliases else ...}"
-				f"{'/'.join(command_object.aliases)}",
-				value=f"{command_object.help[:80]} "
-				f"{'' if len(command_object.help) < 80 else '...'}",
-			)
 		channel = self.get_destination()
 		await channel.send(embed=embed)
 
