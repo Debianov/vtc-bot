@@ -19,7 +19,7 @@ class BotHelpCommand(commands.HelpCommand):
 		embed = BotEmbed(title="Документация")
 		embed.add_field(
 			name="Добро пожаловать в документацию бота!",
-			value="Введите конкретную конкретную команду, чтобы получить справку:\n"
+			value="Введите конкретную команду, чтобы получить справку:\n"
 			" :keyboard:help <название команды>"
 		)
 		embed.add_field(
