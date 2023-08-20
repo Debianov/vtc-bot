@@ -17,7 +17,7 @@ class ErrorMessage:
 
 	def addError(self, error_text: str) -> None:
 		self.current_point += 1
-		self.__dict__[self.current_point] = error_text
+		self.__dict__[str(self.current_point)] = error_text
 
 	def gatherError(self) -> str:
 		text_rest: str = ""
