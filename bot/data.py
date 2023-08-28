@@ -2,11 +2,12 @@
 Модуль хранит классы для работы с БД.
 """
 
-from typing import Any, List, Optional, Type, Union
+from typing import Any, List, Optional, Sequence, Type, Union
 
 import discord
 import psycopg
 from discord.ext import commands
+import discord
 
 
 class DataGroupAnalyzator:
@@ -56,8 +57,10 @@ class UserGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "usr"
 
-	def extractData(self, d_id: Optional[str] = None) -> List[discord.Member]:
-		return self.ctx.guild.members
+	def extractData(self, d_id: Optional[str] = None) -> Sequence[discord.Member]:
+		if self.ctx.guild:
+			return self.ctx.guild.members
+		return []
 
 class ChannelGroup(DiscordObjectsGroup):
 	"""
@@ -72,8 +75,13 @@ class ChannelGroup(DiscordObjectsGroup):
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> List[discord.abc.GuildChannel]:
-		return self.ctx.guild.channels
+	) -> Sequence[
+		discord.VoiceChannel | discord.StageChannel | discord.ForumChannel |
+		discord.TextChannel | discord.CategoryChannel
+	] | Any:
+		if self.ctx.guild:
+			return self.ctx.guild.channels
+		return []
 
 class DBObjectsGroup:
 	"""
@@ -105,15 +113,14 @@ class TargetGroup(DBObjectsGroup):
 		self,
 		dbconn: psycopg.AsyncConnection[Any],
 		guild_id: int,
-		id: int = None,
-		target: Optional[List[Union[discord.TextChannel,
-			discord.Member, discord.CategoryChannel]]] = None,
-		act: Union[str, None] = None,
-		d_in: Optional[List[Union[discord.TextChannel, discord.Member]]] = None,
+		target: commands.Greedy[discord.TextChannel | discord.Member | discord.CategoryChannel | 'SearchExpression'],
+		act: 'ShortSearchExpression' | str,
+		d_in: commands.Greedy[discord.TextChannel | discord.Member | 'SearchExpression' | 'SpecialExpression'],
 		name: Union[str, None] = None,
 		output: Union[str, None] = None,
 		priority: Union[int, None] = None,
-		other: Union[str, None] = None
+		other: Union[str, None] = None,
+		id: Union[int, None] = None
 	) -> None:
 		self.dbconn = dbconn
 		self.guild_id = guild_id
@@ -184,8 +191,8 @@ class TargetGroup(DBObjectsGroup):
 			for row in await acur.fetchall():
 				d_id, context_id, target, act, d_in, name, priority, output, other =\
 				row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
-				result.append(TargetGroup(self.dbconn, context_id, d_id, target,
-					act, d_in, name, priority, output, other))
+				result.append(TargetGroup(self.dbconn, context_id, target,
+					act, d_in, name, priority, output, other, d_id)) # якорь.
 		return result
 
 	def getComparableAttrs(self) -> Union[List[Any], None]:

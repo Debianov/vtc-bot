@@ -42,7 +42,8 @@ async def test_good_log_create_with_flags(
 	target_message_part = extractIDAndGenerateObject(target)
 	d_in_message_part = extractIDAndGenerateObject(d_in)
 	joint_flags: Iterable[str] = filter(
-		lambda x: False if not bool(x[1]) else x, flags.items())
+		lambda x: False if not bool(x[1]) else x, # type: ignore [arg-type]
+		flags.items())
 	joint_flags = list(map(lambda x: " ".join(list(x)), joint_flags))
 	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} "
 	f"{act} {' '.join(d_in_message_part)} {' '.join(joint_flags)}")

@@ -12,10 +12,10 @@ class ContextProvider:
 	def __init__(self) -> None:
 		self.context: Optional[discord.Guild] = None
 
-	def updateContext(self, context: discord.Guild) -> None:
+	def updateContext(self, context: discord.Guild | None) -> None:
 		self.context = context
 
-	def getContext(self) -> discord.Guild:
+	def getContext(self) -> Optional[discord.Guild]:
 		return self.context
 
 

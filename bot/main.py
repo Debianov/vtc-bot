@@ -54,8 +54,8 @@ class BotConstructor(commands.Bot):
 
 	def __init__(
 		self,
-		dbconn: psycopg.AsyncConnection[Any] = None,
-		context_provider: ContextProvider = None,
+		dbconn: Optional[psycopg.AsyncConnection[Any]] = None,
+		context_provider: Optional[ContextProvider] = None,
 		*args: Any,
 		**kwargs: Any
 	) -> None:
@@ -74,11 +74,11 @@ class BotConstructor(commands.Bot):
 		компонентов бота. Обязателен к запуску, если не
 		используется метод :attr:`run`.
 		"""
-		if self.dbconn:
-			await self.registerDBAdapters()
-		await self.initCogs()
+		if self.dbconn and self.context_provider:
+			await self._registerDBAdapters()
+		await self._initCogs()
 
-	async def registerDBAdapters(self) -> None:
+	async def _registerDBAdapters(self) -> None:
 
 		context_provider = self.context_provider
 
@@ -89,7 +89,7 @@ class BotConstructor(commands.Bot):
 
 			def dump(
 				self,
-				elem: Union[discord.abc.Messageable, discord.abc.Connectable]
+				elem: IDSupportObjects
 			) -> bytes:
 				return str(elem.id).encode()
 
@@ -103,7 +103,7 @@ class BotConstructor(commands.Bot):
 				data: bytes
 			) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]:
 				string_data: str = data.decode()
-				ctx = context_provider.getContext()
+				ctx = context_provider.getContext() # type: ignore [union-attr]
 				for attr in ('get_member', 'get_user', 'get_channel'):
 					try:
 						result: Optional[discord.abc.Messageable] = getattr(
@@ -114,11 +114,12 @@ class BotConstructor(commands.Bot):
 						continue
 				return string_data
 
-		self.dbconn.adapters.register_dumper(
+		self.dbconn.adapters.register_dumper( # type: ignore [union-attr]
 			discord.abc.Messageable, DiscordObjectsDumper)
-		self.dbconn.adapters.register_loader("bigint[]", DiscordObjectsLoader)
+		self.dbconn.adapters.register_loader("bigint[]", # type: ignore [union-attr]
+			DiscordObjectsLoader)
 
-	async def initCogs(self) -> None:
+	async def _initCogs(self) -> None:
 		for module_name in ("commands",):
 			await self.load_extension(f"bot.{module_name}")
 

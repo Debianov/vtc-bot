@@ -31,7 +31,7 @@ class UserLog(commands.Cog):
 		self.bot = bot
 		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
 		self.context_provider: ContextProvider = context_provider
-		bot.on_command_error = self._on_command_error
+		bot.on_command_error = self._on_command_error # type: ignore [method-assign]
 
 	async def _on_command_error(
 		self,
@@ -48,13 +48,13 @@ class UserLog(commands.Cog):
 		if isinstance(error, commands.BadUnionArgument):
 			await ctx.send("Убедитесь, что вы указали существующие "
 				"объекты\"{}\" в параметре {}, и у меня есть к ним доступ.".format(
-				error.errors[0].argument, error.param.name))
+				error.errors[0].argument, error.param.name)) # type: ignore
 		elif isinstance(error, commands.MissingRequiredArgument):
 			current_parameter = error.param.name
 			await ctx.send(f"Убедитесь, что вы указали все обязательные "
 				"параметры. Не найденный параметр:"
 				f" {current_parameter}")
-		elif isinstance(error.original, UnhandlePartMessageSignal):
+		elif isinstance(error.original, UnhandlePartMessageSignal): # type: ignore
 			# данная ошибка передаётся только через атрибут original
 			await ctx.send("Убедитесь, что вы указали флаги явно, либо "
 				"указали корректные данные."
@@ -92,6 +92,9 @@ class UserLog(commands.Cog):
 			куда отправлять логи. Если df\
 			— то в установленный по умолчанию объект.
 		"""
+		if not ctx.guild:
+			return None
+
 		self.context_provider.updateContext(ctx.guild)
 
 		initial_target = self.removeNesting(target)
