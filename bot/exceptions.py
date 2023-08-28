@@ -52,3 +52,8 @@ class UnhandlePartMessageSignal(Exception):
 
 	def __str__(self) -> str:
 		return self.argument
+
+
+class StartupBotError(Exception):
+	
+	pass

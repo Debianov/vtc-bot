@@ -10,8 +10,10 @@ import discord
 import psycopg
 from discord.ext import commands
 
+from ._types import IDSupportObjects
+from .exceptions import StartupBotError
 from .help import BotHelpCommand
-from .utils import ContextProvider
+from .utils import ContextProvider, getEnvIfExist
 
 
 class DBConnector:
@@ -133,10 +135,13 @@ async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 
 def runForPoetry() -> None:
 	loop = asyncio.get_event_loop()
-	dbconn = loop.run_until_complete(DBConnFactory(
-		dbname=os.getenv("POSTGRES_DBNAME"),
-		user=os.getenv("POSTGRES_USER")
-	))
+	if extract_envs := getEnvIfExist("POSTGRES_DBNAME", "POSTGRES_USER"):
+		dbconn = loop.run_until_complete(DBConnFactory(
+			dbname=extract_envs[0],
+			user=extract_envs[1]
+		))
+	else:
+		raise StartupBotError("Не удалось извлечь данные БД для подключения.")
 	intents = discord.Intents.all()
 	intents.dm_messages = False
 	VCSBot = BotConstructor(
