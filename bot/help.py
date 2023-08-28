@@ -36,17 +36,22 @@ class BotHelpCommand(commands.HelpCommand):
 		embed = BotEmbed(title="Документация")
 		embed.add_field(
 			name="Описание",
-			value=group.help
+			value=group.help if group.help else "Отсутствует."
 		)
 		embed.add_field(
 			name="Подкоманды:",
 			value=""
 		)
 		for command in group.commands:
+			if command.help:
+				field_value = f"{command.help[:80]} \
+				{'' if len(command.help) < 80 else '...'}"
+			else:
+				field_value = "Описание отсутствует."
 			embed.add_field(
 				name=f"{command.name}{'/' if command.aliases else ...}"
 				f"{'/'.join(command.aliases)}",
-				value=f"{command.help[:80]} {'' if len(command.help) < 80 else '...'}",
+				value=field_value,
 			)
 		channel = self.get_destination()
 		await channel.send(embed=embed)
@@ -57,7 +62,7 @@ class BotHelpCommand(commands.HelpCommand):
 		if command.name == "help":
 			value = "Вывод данного сообщения."
 		else:
-			value = command.help
+			value = command.help if command.help else "Отсутствует."
 		embed.add_field(
 			name="Описание",
 			value=value,
