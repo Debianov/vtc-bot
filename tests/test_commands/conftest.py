@@ -1,7 +1,6 @@
-import os
 import pathlib
 import sys
-from typing import Any, Optional
+from typing import Any, AsyncGenerator, Optional
 
 import discord
 import discord.ext.test as dpytest
@@ -10,9 +9,10 @@ import pytest
 import pytest_asyncio
 from discord.ext import commands
 
+from bot.exceptions import StartupBotError
 from bot.help import BotHelpCommand
 from bot.main import BotConstructor, DBConnFactory
-from bot.utils import ContextProvider
+from bot.utils import ContextProvider, getEnvIfExist
 
 root = pathlib.Path.cwd()
 sys.path.append(str(root))
@@ -20,13 +20,30 @@ sys.path.append(str(root))
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True, name="db")
 async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
-	future_dbconn = await DBConnFactory(
-		host=os.getenv("POSTGRES_HOST"),
-		port=os.getenv("POSTGRES_PORT"),
-		password=os.getenv("POSTGRES_PASSWORD"),
-		dbname=os.getenv("POSTGRES_TEST_DBNAME"),
-		user=os.getenv("POSTGRES_USER")
-	)
+	if github_action_envs := getEnvIfExist(
+		"POSTGRES_HOST",
+		"POSTGRES_PORT",
+		"POSTGRES_PASSWORD",
+		"POSTGRES_TEST_DBNAME",
+		"POSTGRES_USER"
+	):
+		future_dbconn = await DBConnFactory(
+			host=github_action_envs[0],
+			port=github_action_envs[1],
+			password=github_action_envs[2],
+			dbname=github_action_envs[3],
+			user=github_action_envs[4]
+		)
+	elif envs := getEnvIfExist(
+		"POSTGRES_TEST_DBNAME",
+		"POSTGRES_USER"
+	):
+		future_dbconn = await DBConnFactory(
+			dbname=envs[0],
+			user=envs[1]
+		)
+	else:
+		raise StartupBotError("Не удалось извлечь переменные окружения.")
 	return future_dbconn
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
