@@ -49,6 +49,12 @@ class DiscordObjectsGroup:
 	def __eq__(self, right_operand: Any) -> bool:
 		return self.USER_IDENTIFICATOR == right_operand
 
+	def extractData(
+		self,
+		d_id: Optional[str] = None
+	) -> Sequence[DiscordGuildObjects]:
+		raise NotImplementedError
+
 class UserGroup(DiscordObjectsGroup):
 	"""
 	Класс реализует доступ к `discord.Member <https://discordpy.\
@@ -114,19 +120,9 @@ class TargetGroup(DBObjectsGroup):
 		self,
 		dbconn: psycopg.AsyncConnection[Any],
 		context_id: int,
-		target: commands.Greedy[Union[
-			discord.TextChannel,
-			discord.Member,
-			discord.CategoryChannel,
-			'SearchExpression'
-		]],
-		act: Union['ShortSearchExpression', str],
-		d_in: commands.Greedy[Union[
-			discord.TextChannel,
-			discord.Member,
-			'SearchExpression',
-			'SpecialExpression'
-		]],
+		target: List[IDSupportObjects],
+		act: Union[IDSupportObjects, str],
+		d_in: List[IDSupportObjects],
 		name: Union[str, None] = None,
 		output: Union[str, None] = None,
 		priority: Union[int, None] = None,

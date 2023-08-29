@@ -17,6 +17,7 @@ from .converters import (
 from .data import ActGroup, TargetGroup
 from .exceptions import ExpressionNotFound, UnhandlePartMessageSignal
 from .flags import UserLogFlags
+from .main import BotConstructor
 from .utils import ContextProvider
 
 
@@ -218,6 +219,6 @@ class UserLog(commands.Cog):
 		return False
 
 async def setup(
-	bot: commands.Bot,
+	bot: BotConstructor, # type: ignore [name-defined]
 ) -> None:
 	await bot.add_cog(UserLog(bot, bot.dbconn, bot.context_provider))
