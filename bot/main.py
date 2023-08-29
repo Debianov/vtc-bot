@@ -32,7 +32,7 @@ class DBConnector:
 		matched_args = []
 		for (key, value) in args.items():
 			if value:
-				matched_args.append(key + "=" + value)
+			matched_args.append(key + "=" + value)
 		self.conninfo = " ".join(matched_args)
 
 	async def initConnection(self) -> None:

@@ -7,7 +7,6 @@ from typing import Any, List, Optional, Sequence, Type, Union
 import discord
 import psycopg
 from discord.ext import commands
-import discord
 
 
 class DataGroupAnalyzator:
@@ -112,19 +111,29 @@ class TargetGroup(DBObjectsGroup):
 	def __init__(
 		self,
 		dbconn: psycopg.AsyncConnection[Any],
-		guild_id: int,
-		target: commands.Greedy[discord.TextChannel | discord.Member | discord.CategoryChannel | 'SearchExpression'],
-		act: 'ShortSearchExpression' | str,
-		d_in: commands.Greedy[discord.TextChannel | discord.Member | 'SearchExpression' | 'SpecialExpression'],
+		context_id: int,
+		target: commands.Greedy[Union[
+			discord.TextChannel,
+			discord.Member,
+			discord.CategoryChannel,
+			'SearchExpression'
+		]],
+		act: Union['ShortSearchExpression', str],
+		d_in: commands.Greedy[Union[
+			discord.TextChannel,
+			discord.Member,
+			'SearchExpression',
+			'SpecialExpression'
+		]],
 		name: Union[str, None] = None,
 		output: Union[str, None] = None,
 		priority: Union[int, None] = None,
 		other: Union[str, None] = None,
-		id: Union[int, None] = None
+		dbrecord_id: Union[int, None] = None
 	) -> None:
 		self.dbconn = dbconn
-		self.guild_id = guild_id
-		self.id = id or self.generateID()
+		self.context_id = context_id
+		self.dbrecord_id = dbrecord_id or self.generateID()
 		self.target = target
 		self.act = act
 		self.d_in = d_in
@@ -157,7 +166,7 @@ class TargetGroup(DBObjectsGroup):
 		async with self.dbconn.cursor() as acur:
 			await acur.execute("""
 					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-					[self.id, self.guild_id, self.target, self.act, self.d_in,
+					[self.dbrecord_id, self.context_id, self.target, self.act, self.d_in,
 					self.name, self.output, self.priority, self.other])
 
 	async def extractData(
@@ -173,7 +182,7 @@ class TargetGroup(DBObjectsGroup):
 		values_for_parameters: List[Any] = []
 		query = [psycopg.sql.SQL(
 			f"SELECT {placeholder} FROM target WHERE context_id = %s")]
-		values_for_parameters.append(self.guild_id)
+		values_for_parameters.append(self.context_id)
 		if object_parameters:
 			parameters_query_part: List[str] = []
 			for (parameter, value) in object_parameters.items():
@@ -189,10 +198,11 @@ class TargetGroup(DBObjectsGroup):
 			)
 			result: List[TargetGroup] = []
 			for row in await acur.fetchall():
-				d_id, context_id, target, act, d_in, name, priority, output, other =\
-				row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
+				dbrecord_id, context_id, target, act, d_in, name, priority, output, \
+				other = row[0], row[1], row[2], row[3], row[4], row[5], row[6], \
+				row[7], row[8]
 				result.append(TargetGroup(self.dbconn, context_id, target,
-					act, d_in, name, priority, output, other, d_id)) # якорь.
+					act, d_in, name, priority, output, other, dbrecord_id))
 		return result
 
 	def getComparableAttrs(self) -> Union[List[Any], None]:

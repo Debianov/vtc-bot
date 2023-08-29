@@ -130,7 +130,7 @@ class UserLog(commands.Cog):
 		if coincidence_targets_instance:
 			coincidence_target = coincidence_targets_instance[0]
 			await ctx.send(f"Цель с подобными параметрами уже существует: "
-			f"{coincidence_target.id} ({coincidence_target.name})"
+			f"{coincidence_target.dbrecord_id} ({coincidence_target.name})"
 			f". Совпадающие элементы: "
 			f"{target_instance.getCoincidenceTo(coincidence_target)}")
 		else:
