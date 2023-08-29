@@ -1,6 +1,7 @@
 import asyncio
 import pathlib
 import sys
+from typing import AsyncGenerator, Generator
 
 import discord
 import discord.ext.test as dpytest
@@ -19,7 +20,7 @@ from bot.main import BotConstructor  # flake8: noqa: I005
 pytest_plugins = ('pytest_asyncio',)
 
 @pytest.fixture(scope="package")
-def event_loop() -> None:
+def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 	loop = asyncio.get_event_loop()
 	yield loop
 	loop.close()
@@ -43,6 +44,6 @@ async def botInit() -> commands.Bot:
 	return VCSBot
 
 @pytest_asyncio.fixture(autouse=True)
-async def cleanUp() -> None:
+async def cleanUp() -> AsyncGenerator[None, None]:
 	yield
 	await dpytest.empty_queue()

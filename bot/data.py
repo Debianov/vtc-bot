@@ -8,7 +8,7 @@ import discord
 import psycopg
 from discord.ext import commands
 
-from .abc import IDSupportObjects
+from .abc import DiscordGuildObjects, IDSupportObjects
 
 
 class DataGroupAnalyzator:
@@ -82,10 +82,7 @@ class ChannelGroup(DiscordObjectsGroup):
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Sequence[
-		discord.VoiceChannel | discord.StageChannel | discord.ForumChannel |
-		discord.TextChannel | discord.CategoryChannel
-	] | Any:
+	) -> Sequence[discord.abc.GuildChannel]:
 		if self.ctx.guild:
 			return self.ctx.guild.channels
 		return []

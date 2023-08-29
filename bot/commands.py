@@ -113,9 +113,9 @@ class UserLog(commands.Cog):
 		target_instance = TargetGroup(
 			self.dbconn,
 			ctx.guild.id,
-			target=target,
-			act=act,
-			d_in=d_in
+			target=target, # type: ignore [arg-type]
+			act=act, # type: ignore [arg-type]
+			d_in=d_in # type: ignore [arg-type]
 		)
 
 		for key in flags.get_flags().keys():

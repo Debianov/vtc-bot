@@ -68,7 +68,7 @@ async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> commands.Bot:
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True)
-async def createTargetTable(db) -> None:
+async def createTargetTable(db) -> AsyncGenerator[None, None]:
 	async with db.cursor() as acur:
 		await acur.execute(
 			"""CREATE TABLE public.target (
@@ -92,7 +92,7 @@ async def createTargetTable(db) -> None:
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="function", autouse=True)
-async def deleteTargetTable(db) -> None:
+async def deleteTargetTable(db) -> AsyncGenerator[None, None]:
 	yield
 	async with db.cursor() as acur:
 		await acur.execute(
