@@ -10,7 +10,7 @@ import discord
 import psycopg
 from discord.ext import commands
 
-from ._types import IDSupportObjects
+from .abc import IDSupportObjects
 from .exceptions import StartupBotError
 from .help import BotHelpCommand
 from .utils import ContextProvider, getEnvIfExist

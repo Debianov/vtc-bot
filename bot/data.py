@@ -8,6 +8,8 @@ import discord
 import psycopg
 from discord.ext import commands
 
+from .abc import IDSupportObjects
+
 
 class DataGroupAnalyzator:
 	"""
