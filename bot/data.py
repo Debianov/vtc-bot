@@ -8,7 +8,7 @@ import discord
 import psycopg
 from discord.ext import commands
 
-from .abc import DiscordGuildObjects, IDSupportObjects
+from ._types import DiscordGuildObjects, IDSupportObjects
 
 
 class DataGroupAnalyzator:
