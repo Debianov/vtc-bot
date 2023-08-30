@@ -19,6 +19,21 @@ class ContextProvider:
 		return self.context
 
 
+class MockLocator:
+	"""
+	Класс для приёма и передачи мок-объектов в виде объектов Discord для dpytest.
+	"""
+
+	def __init__(
+		self,
+		guild: discord.Guild,
+		channel: discord.abc.GuildChannel,
+		members: List[discord.Member]
+	) -> None:
+		self.guild = guild
+		self.channel = channel
+		self.members = members
+
 def getEnvIfExist(*env_names: str) -> Union[List[str], None]:
 	"""
 	Функция предназначена для проверки переменных окружения и возврата их значени

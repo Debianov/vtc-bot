@@ -12,14 +12,14 @@ from discord.ext import commands
 from bot.exceptions import StartupBotError
 from bot.help import BotHelpCommand
 from bot.main import BotConstructor, DBConnFactory
-from bot.utils import ContextProvider, getEnvIfExist
+from bot.utils import ContextProvider, MockLocator, getEnvIfExist
 
 root = pathlib.Path.cwd()
 sys.path.append(str(root))
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True, name="db")
-async def setupDB() -> Optional[psycopg.AsyncConnection[Any]]:
+async def setupDB() -> psycopg.AsyncConnection[Any]:
 	if github_action_envs := getEnvIfExist(
 		"POSTGRES_HOST",
 		"POSTGRES_PORT",
@@ -59,12 +59,17 @@ async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> commands.Bot:
 	await VCSBot._async_setup_hook()
 	await VCSBot.prepare()
 	dpytest.configure(VCSBot, num_members=6)
-	config = dpytest.get_config()
-	pytest.test_guild = config.guilds[0]
-	pytest.test_channel = config.channels[0]
-	for (ind, member) in enumerate(config.members):
-		setattr(pytest, f"test_member{ind}", member)
 	return VCSBot
+
+@pytest.fixture(scope="package", autouse=True, name="mockLocator")
+async def dpytestConfigure() -> MockLocator:
+	config = dpytest.get_config()
+	locator = MockLocator(
+		guild=config.guilds[0],
+		channel=config.channels[0],
+		members=config.members
+	)
+	return locator
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True)
