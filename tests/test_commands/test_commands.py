@@ -6,7 +6,7 @@ import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import MockLocator
+from bot.utils import MockLocator, DiscordObjEvaluator
 
 
 @pytest.mark.parametrize(
@@ -40,15 +40,11 @@ async def test_good_log_create_with_flags(
 	act: str,
 	d_in: List[Optional[str]],
 	flags: Dict[str, str],
-	mockLocator: MockLocator
+	mockLocator: MockLocator,
+	discordObjectEvaluator: DiscordObjEvaluator
 ) -> None:
-	# TODO
-	# DiscordObjEvaluator
-	# .getMockLocator
-	# .extractIDAndGenerateObject(target)
-
-	target_message_part = extractIDAndGenerateObject(target)
-	d_in_message_part = extractIDAndGenerateObject(d_in)
+	target_message_part = discordObjectEvaluator.extractIDAndGenerateObject(target)
+	d_in_message_part = discordObjectEvaluator.extractIDAndGenerateObject(d_in)
 	joint_flags: Iterable[str] = filter(
 		lambda x: False if not bool(x[1]) else x, # type: ignore [arg-type]
 		flags.items())
@@ -116,10 +112,11 @@ async def test_log_without_require_params(
 	target: List[Optional[str]],
 	act: str,
 	d_in: List[Optional[str]],
-	missing_params: str
+	missing_params: str,
+	discordObjectEvaluator: DiscordObjEvaluator
 ) -> None:
-	target_message_part = extractIDAndGenerateObject(target)
-	d_in_message_part = extractIDAndGenerateObject(d_in)
+	target_message_part = discordObjectEvaluator.extractIDAndGenerateObject(target)
+	d_in_message_part = discordObjectEvaluator.extractIDAndGenerateObject(d_in)
 	with pytest.raises(commands.MissingRequiredArgument): #! dpytest почему-то
 		# принудительно поднимает исключения, хотя они могут обрабатываться в
 		# on_command_error и проч. ивентах.
@@ -146,10 +143,11 @@ async def test_log_bad_flag(
 	act: str,
 	d_in: List[Optional[str]],
 	flag: str,
-	unhandle_message_part: str
+	unhandle_message_part: str,
+	discordObjectEvaluator: DiscordObjEvaluator
 ) -> None:
-	target_message_part = extractIDAndGenerateObject(target)
-	d_in_message_part = extractIDAndGenerateObject(d_in)
+	target_message_part = discordObjectEvaluator.extractIDAndGenerateObject(target)
+	d_in_message_part = discordObjectEvaluator.extractIDAndGenerateObject(d_in)
 	with pytest.raises(commands.CommandInvokeError):
 		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} 43"
 			f" {' '.join(d_in_message_part)} {flag}")
@@ -250,10 +248,11 @@ async def test_coincidence_targets(
 	compared_target: List[Optional[str]],
 	compared_act: str,
 	compared_d_in: List[Optional[str]],
-	compared_name: str
+	compared_name: str,
+	discordObjectEvaluator: DiscordObjEvaluator
 ) -> None:
-	target_message_part = extractIDAndGenerateObject(target)
-	d_in_message_part = extractIDAndGenerateObject(d_in)
+	target_message_part = discordObjectEvaluator.extractIDAndGenerateObject(target)
+	d_in_message_part = discordObjectEvaluator.extractIDAndGenerateObject(d_in)
 	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} "
 		f"{act} {' '.join(d_in_message_part)} -name {name}")
 	dpytest.get_message() # пропускаем ненужное сообщение
@@ -265,8 +264,8 @@ async def test_coincidence_targets(
 		row = rows[0]
 		target_id = row[0]
 		target_name = row[5]
-	compared_target_message_part = extractIDAndGenerateObject(compared_target)
-	compared_d_in_message_part = extractIDAndGenerateObject(compared_d_in)
+	compared_target_message_part = discordObjectEvaluator.extractIDAndGenerateObject(compared_target)
+	compared_d_in_message_part = discordObjectEvaluator.extractIDAndGenerateObject(compared_d_in)
 	await dpytest.message(f"sudo log 1 {' '.join(compared_target_message_part)} "
 		f"{compared_act} {' '.join(compared_d_in_message_part)}"
 		f" -name {compared_name}")
@@ -320,12 +319,13 @@ async def test_log_1_good_expression(
 	exp1: str,
 	exp2: str,
 	calls_sequence: List[str],
-	mockLocator: MockLocator
+	mockLocator: MockLocator,
+	discordObjectEvaluator: DiscordObjEvaluator
 ) -> None:
 	message = await dpytest.message(f"sudo log 1 {exp1} 23"
 		f" {exp2}")
 	current_ctx = await bot.get_context(message)
-	compared_objects = extractObjects(calls_sequence, current_ctx)
+	compared_objects = discordObjectEvaluator.extractObjects(calls_sequence, current_ctx)
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
@@ -361,34 +361,34 @@ async def test_log_1_bad_expression(
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
 		f" обязательные параметры. Не найденный параметр: {missing_params}")
 
-def extractIDAndGenerateObject(
-	sequence: List[Optional[str]],
-	mockLocator: MockLocator
-) -> Iterable[str]:
-	"""
-	Существование функции обусловлено непреодолимым желанием разработчика
-	иметь в записях под декоратором parametrize человеческие извлечения
-	атрибутов. С указанием там имён всё довольно сложно, поскольку это
-	происходит на этапе инициализации кода.
-	"""
-	message_part: List[Optional[str]] = []
-	eval(f"mockLocator = {mockLocator}")
-	for (ind, string) in enumerate(sequence):
-		discord_object = eval(string)
-		sequence[ind] = discord_object
-		message_part.append(str(discord_object.id))
-	return message_part if message_part else sequence
+# def extractIDAndGenerateObject(
+# 	sequence: List[Optional[str]],
+# 	mockLocator: MockLocator
+# ) -> Iterable[str]:
+# 	"""
+# 	Существование функции обусловлено непреодолимым желанием разработчика
+# 	иметь в записях под декоратором parametrize человеческие извлечения
+# 	атрибутов. С указанием там имён всё довольно сложно, поскольку это
+# 	происходит на этапе инициализации кода.
+# 	"""
+# 	message_part: List[Optional[str]] = []
+# 	eval(f"mockLocator = {mockLocator}")
+# 	for (ind, string) in enumerate(sequence):
+# 		discord_object = eval(string)
+# 		sequence[ind] = discord_object
+# 		message_part.append(str(discord_object.id))
+# 	return message_part if message_part else sequence
 
-def extractObjects(
-	calls_sequence: List[str],
-	current_ctx: commands.Context
-) -> List[List[discord.abc.Messageable]]:
-	"""
-	Существование функции обусловлено непреодолимым желанием разработчика иметь
-	в записях под декоратором parametrize человеческие извлечения атрибутов.
-	"""
-	result: List[List[discord.abc.Messageable]] = []
-	for call in calls_sequence:
-		discord_objects = eval(call)
-		result.append(list(discord_objects))
-	return result
+# def extractObjects(
+# 	calls_sequence: List[str],
+# 	current_ctx: commands.Context
+# ) -> List[List[discord.abc.Messageable]]:
+# 	"""
+# 	Существование функции обусловлено непреодолимым желанием разработчика иметь
+# 	в записях под декоратором parametrize человеческие извлечения атрибутов.
+# 	"""
+# 	result: List[List[discord.abc.Messageable]] = []
+# 	for call in calls_sequence:
+# 		discord_objects = eval(call)
+# 		result.append(list(discord_objects))
+# 	return result

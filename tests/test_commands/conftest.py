@@ -12,7 +12,7 @@ from discord.ext import commands
 from bot.exceptions import StartupBotError
 from bot.help import BotHelpCommand
 from bot.main import BotConstructor, DBConnFactory
-from bot.utils import ContextProvider, MockLocator, getEnvIfExist
+from bot.utils import ContextProvider, MockLocator, getEnvIfExist, DiscordObjEvaluator
 
 root = pathlib.Path.cwd()
 sys.path.append(str(root))
@@ -62,7 +62,7 @@ async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> commands.Bot:
 	return VCSBot
 
 @pytest.fixture(scope="package", autouse=True, name="mockLocator")
-async def dpytestConfigure() -> MockLocator:
+def initLocator() -> MockLocator:
 	config = dpytest.get_config()
 	locator = MockLocator(
 		guild=config.guilds[0],
@@ -70,6 +70,11 @@ async def dpytestConfigure() -> MockLocator:
 		members=config.members
 	)
 	return locator
+
+@pytest.fixture(scope="package", autouse=True, name="discordObjectEvaluator")
+def initEvaluator(mockLocator: MockLocator) -> DiscordObjEvaluator:
+	instance = DiscordObjEvaluator(mockLocator)
+	return instance
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True)
