@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 
 import discord.ext.test as dpytest
 import psycopg
@@ -35,9 +35,9 @@ from bot.utils import DiscordObjEvaluator, MockLocator
 async def test_good_log_create_with_flags(
 	bot: commands.Bot,
 	db: psycopg.AsyncConnection[Any],
-	target: List[Optional[str]],
+	target: List[str],
 	act: str,
-	d_in: List[Optional[str]],
+	d_in: List[str],
 	flags: Dict[str, str],
 	mockLocator: MockLocator,
 	discordObjectEvaluator: DiscordObjEvaluator
@@ -110,9 +110,9 @@ async def test_log_without_subcommand() -> None:
 )
 @pytest.mark.asyncio
 async def test_log_without_require_params(
-	target: List[Optional[str]],
+	target: List[str],
 	act: str,
-	d_in: List[Optional[str]],
+	d_in: List[str],
 	missing_params: str,
 	discordObjectEvaluator: DiscordObjEvaluator
 ) -> None:
@@ -142,9 +142,9 @@ async def test_log_without_require_params(
 )
 @pytest.mark.asyncio
 async def test_log_bad_flag(
-	target: List[Optional[str]],
+	target: List[str],
 	act: str,
-	d_in: List[Optional[str]],
+	d_in: List[str],
 	flag: str,
 	unhandle_message_part: str,
 	discordObjectEvaluator: DiscordObjEvaluator
@@ -246,13 +246,13 @@ async def test_log_bad_parameters() -> None:
 async def test_coincidence_targets(
 	bot: commands.Bot,
 	db: psycopg.AsyncConnection[Any],
-	target: List[Optional[str]],
+	target: List[str],
 	act: str,
-	d_in: List[Optional[str]],
+	d_in: List[str],
 	name: str,
-	compared_target: List[Optional[str]],
+	compared_target: List[str],
 	compared_act: str,
-	compared_d_in: List[Optional[str]],
+	compared_d_in: List[str],
 	compared_name: str,
 	discordObjectEvaluator: DiscordObjEvaluator
 ) -> None:

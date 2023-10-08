@@ -1,11 +1,12 @@
 """
 Модуль хранит конвертеры, необходимый для парсинга команд.
 """
-from typing import List, Optional, Type
+from typing import List, Optional, Type, Union
 
 import discord
 from discord.ext import commands
 
+from ._types import DiscordGuildObjects
 from .data import DataGroupAnalyzator, DiscordObjectsGroup
 from .exceptions import (
 	SearchExpressionNotFound,
@@ -45,11 +46,11 @@ class SearchExpression(Expression):
 		self,
 		ctx: commands.Context,
 		argument: str
-	) -> List[discord.abc.Messageable]:
+	) -> List[DiscordGuildObjects]:
 		self.argument = argument
 		self.checkExpression()
 		self.string: List[str] = argument.split(":")
-		self.result: List[discord.abc.Messageable] = []
+		self.result: List[Union[discord.abc.GuildChannel, discord.abc.Member]] = []
 		self.ctx = ctx
 		self.extractDataGroup()
 		self.analyzeWildcard()
@@ -97,6 +98,10 @@ class ShortSearchExpression(Expression):
 	Examples:
 		\* — передача всех объектов.
 	"""
+
+	def __init__(self) -> None:
+		self.data_group: Type[DiscordObjectsGroup] = DiscordObjectsGroup
+
 	@classmethod
 	def __class_getitem__(
 		cls,
@@ -114,10 +119,10 @@ class ShortSearchExpression(Expression):
 		self,
 		ctx: commands.Context,
 		argument: str
-	) -> List[discord.abc.Messageable]:
+	) -> List[DiscordGuildObjects]:
 		self.checkExpression(argument)
 		self.string: str = argument # type: ignore
-		self.result: List[discord.abc.Messageable] = []
+		self.result: List[DiscordGuildObjects] = []
 		self.analyzeWildcard()
 		return self.result
 	

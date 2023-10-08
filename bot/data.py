@@ -2,7 +2,7 @@
 Модуль хранит классы для работы с БД.
 """
 
-from typing import Any, List, Optional, Sequence, Type, Union
+from typing import Any, Iterable, List, Optional, Type, Union
 
 import discord
 import psycopg
@@ -49,10 +49,10 @@ class DiscordObjectsGroup:
 	def __eq__(self, right_operand: Any) -> bool:
 		return self.USER_IDENTIFICATOR == right_operand
 
+	@staticmethod
 	def extractData(
-		self,
 		d_id: Optional[str] = None
-	) -> Sequence[DiscordGuildObjects]:
+	) -> Iterable[DiscordGuildObjects]:
 		raise NotImplementedError
 
 class UserGroup(DiscordObjectsGroup):
@@ -64,7 +64,7 @@ class UserGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "usr"
 
-	def extractData(self, d_id: Optional[str] = None) -> Sequence[discord.Member]:
+	def extractData(self, d_id: Optional[str] = None) -> Iterable[discord.Member]:
 		if self.ctx.guild:
 			return self.ctx.guild.members
 		return []
@@ -82,7 +82,7 @@ class ChannelGroup(DiscordObjectsGroup):
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Sequence[discord.abc.GuildChannel]:
+	) -> Iterable[discord.abc.GuildChannel]:
 		if self.ctx.guild:
 			return self.ctx.guild.channels
 		return []
@@ -101,7 +101,7 @@ class ActGroup(DBObjectsGroup):
 
 	DB_IDENTIFICATOR: str = "act"
 
-	def extractData(self, coord: Optional[str] = None) -> List[str]:
+	def extractData(self, coord: Optional[str] = None) -> Iterable[str]:
 		if not coord:
 			pass
 		return [""]
@@ -168,7 +168,7 @@ class TargetGroup(DBObjectsGroup):
 		self,
 		placeholder: Optional[str] = "*",
 		**object_parameters: Any
-	) -> List['TargetGroup']:
+	) -> Iterable['TargetGroup']:
 		r"""
 		Args:
 			\**object_parameters: параметры, которые будут переданы в SQL запрос. Если\
