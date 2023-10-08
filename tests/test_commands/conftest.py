@@ -12,7 +12,12 @@ from discord.ext import commands
 from bot.exceptions import StartupBotError
 from bot.help import BotHelpCommand
 from bot.main import BotConstructor, DBConnFactory
-from bot.utils import ContextProvider, MockLocator, getEnvIfExist, DiscordObjEvaluator
+from bot.utils import (
+	ContextProvider,
+	DiscordObjEvaluator,
+	MockLocator,
+	getEnvIfExist
+)
 
 root = pathlib.Path.cwd()
 sys.path.append(str(root))
