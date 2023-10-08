@@ -49,8 +49,8 @@ class DiscordObjectsGroup:
 	def __eq__(self, right_operand: Any) -> bool:
 		return self.USER_IDENTIFICATOR == right_operand
 
-	@staticmethod
 	def extractData(
+		self,
 		d_id: Optional[str] = None
 	) -> Iterable[DiscordGuildObjects]:
 		raise NotImplementedError
@@ -64,7 +64,7 @@ class UserGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "usr"
 
-	def extractData(self, d_id: Optional[str] = None) -> Iterable[discord.Member]:
+	def extractData(self, d_id: Optional[str] = None) -> Iterable[DiscordGuildObjects]:
 		if self.ctx.guild:
 			return self.ctx.guild.members
 		return []
@@ -82,7 +82,7 @@ class ChannelGroup(DiscordObjectsGroup):
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Iterable[discord.abc.GuildChannel]:
+	) -> Iterable[DiscordGuildObjects]:
 		if self.ctx.guild:
 			return self.ctx.guild.channels
 		return []

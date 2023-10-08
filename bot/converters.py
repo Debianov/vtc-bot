@@ -100,7 +100,7 @@ class ShortSearchExpression(Expression):
 	"""
 
 	def __init__(self) -> None:
-		self.data_group: Type[DiscordObjectsGroup] = DiscordObjectsGroup
+		self.data_group: Union[Type[DiscordObjectsGroup], DiscordObjectsGroup]  = DiscordObjectsGroup
 
 	@classmethod
 	def __class_getitem__(
