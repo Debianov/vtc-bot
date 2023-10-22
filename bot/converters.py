@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 
 from ._types import DiscordGuildObjects
-from .data import DataGroupAnalyzator, DiscordObjectsGroup
+from .data import DiscordObjectsGroupAnalyzator, DiscordObjectsGroup
 from .exceptions import (
 	SearchExpressionNotFound,
 	ShortSearchExpressionNotFound,
@@ -76,7 +76,7 @@ class SearchExpression(Expression):
 		Raises:
 			SearchExpressionNotFound: возбуждается при отсутствии подходящих DataGroup.
 		"""
-		self.data_groups: List[DiscordObjectsGroup] = DataGroupAnalyzator(
+		self.data_groups: List[DiscordObjectsGroup] = DiscordObjectsGroupAnalyzator(
 			self.ctx, self.string[0]).analyze()
 		if not self.data_groups:
 			raise SearchExpressionNotFound(self.argument)
@@ -124,16 +124,16 @@ class ShortSearchExpression(Expression):
 		self.checkExpression(argument)
 		self.string: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []
-		self.analyzeWildcard()
+		self.analyzeWildcard(ctx=ctx)
 		return self.result
 	
 	def checkExpression(self, argument: str) -> None:
 		if not argument == "*":
 			raise ShortSearchExpressionNotFound(argument)
 
-	def analyzeWildcard(self) -> None:
+	def analyzeWildcard(self, **args_to_extract_method) -> None:
 		if self.string == "*":
-			self.result += self.data_group.extractData()
+			self.result += self.data_group.extractData(**args_to_extract_method)
 
 class SpecialExpression(Expression):
 	"""

@@ -6,6 +6,8 @@ import discord.ext.test as dpytest
 from bot.converters import ShortSearchExpression
 from bot.data import UserGroup
 
+from bot.utils import MockLocator
+
 a = ShortSearchExpression[UserGroup]
 
 def test_data_group_assignment() -> None:
@@ -13,9 +15,9 @@ def test_data_group_assignment() -> None:
 
 @pytest.mark.asyncio
 async def test_good_convertation(
-	bot: commands.Bot
+	bot: commands.Bot,
+	mockLocator: MockLocator
 ) -> None:
-	dpytest.message("Byte")
-	current_ctx = await bot.get_context(dpytest.verify().message())
-	a.convert(current_ctx, "*")
-	print(a)
+	message = await dpytest.message("sudo help")
+	current_ctx = await bot.get_context(message)
+	assert mockLocator.members == await a.convert(current_ctx, "*")

@@ -11,9 +11,9 @@ from discord.ext import commands
 from ._types import DiscordGuildObjects, IDSupportObjects
 
 
-class DataGroupAnalyzator:
+class DiscordObjectsGroupAnalyzator:
 	"""
-	Класс реализует механизм определения :class:`DataGroup` по имени из str.
+	Класс реализует механизм определения :class:`DiscordObjectsGroup` по имени из str.
 	"""
 
 	def __init__(self, ctx: commands.Context, string: str) -> None:
@@ -23,14 +23,14 @@ class DataGroupAnalyzator:
 
 	def analyze(self) -> List['DiscordObjectsGroup']:
 		"""
-		Основной метод для определения :class:`DataGroup`.
+		Основной метод для определения :class:`DiscordObjectsGroup`.
 		"""
 		to_check: List[Type[DiscordObjectsGroup]] =\
 			DiscordObjectsGroup.__subclasses__()
 		copy_string: List[str] = self.split_string
 		for group_name in copy_string:
 			for group_type in to_check:
-				group_instance = group_type(self.ctx)
+				group_instance = group_type() #! якорь
 				if group_name == group_instance:
 					self.relevant_groups.append(group_instance)
 					break
@@ -43,14 +43,12 @@ class DiscordObjectsGroup:
 
 	USER_IDENTIFICATOR: str = ""
 
-	def __init__(self, ctx: commands.Context) -> None:
-		self.ctx = ctx
-
 	def __eq__(self, right_operand: Any) -> bool:
 		return self.USER_IDENTIFICATOR == right_operand
 
+	@staticmethod
 	def extractData(
-		self,
+		ctx: commands.Context,
 		d_id: Optional[str] = None
 	) -> Iterable[DiscordGuildObjects]:
 		raise NotImplementedError
@@ -64,9 +62,13 @@ class UserGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "usr"
 
-	def extractData(self, d_id: Optional[str] = None) -> Iterable[DiscordGuildObjects]:
-		if self.ctx.guild:
-			return self.ctx.guild.members
+	@staticmethod
+	def extractData(
+		ctx: commands.Context,
+		d_id: Optional[str] = None
+	) -> Iterable[DiscordGuildObjects]:
+		if ctx.guild:
+			return ctx.guild.members
 		return []
 
 class ChannelGroup(DiscordObjectsGroup):
@@ -79,12 +81,13 @@ class ChannelGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "ch"
 
+	@staticmethod
 	def extractData(
-		self,
+		ctx: commands.Context,
 		d_id: Optional[str] = None
 	) -> Iterable[DiscordGuildObjects]:
-		if self.ctx.guild:
-			return self.ctx.guild.channels
+		if ctx.guild:
+			return ctx.guild.channels
 		return []
 
 class DBObjectsGroup:

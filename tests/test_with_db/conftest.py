@@ -72,7 +72,7 @@ def initLocator() -> MockLocator:
 	locator = MockLocator(
 		guild=config.guilds[0],
 		channel=config.channels[0],
-		members=config.members
+		members=list(config.guilds[0].members)
 	)
 	return locator
 
