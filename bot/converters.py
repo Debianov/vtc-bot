@@ -99,8 +99,8 @@ class ShortSearchExpression(Expression):
 		\* — передача всех объектов.
 	"""
 
-	def __init__(self) -> None:
-		self.data_group: Union[Type[DiscordObjectsGroup], DiscordObjectsGroup]  = DiscordObjectsGroup
+	# def __init__(self) -> None:
+	# 	self.data_group: Union[Type[DiscordObjectsGroup], DiscordObjectsGroup]  = DiscordObjectsGroup
 
 	@classmethod
 	def __class_getitem__(
@@ -112,6 +112,7 @@ class ShortSearchExpression(Expression):
 			default_data_group (DiscordObjectsGroup): один из объектов
 			:class:`DataGroup`, который использоваться для выполнения wildcard.
 		"""
+		cls = cls()
 		cls.data_group = default_data_group
 		return cls
 
