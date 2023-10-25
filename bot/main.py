@@ -55,11 +55,13 @@ class BotConstructor(commands.Bot):
 		self,
 		dbconn: Optional[psycopg.AsyncConnection[Any]] = None,
 		context_provider: Optional[ContextProvider] = None,
+		load_cogs: bool = True,
 		*args: Any,
 		**kwargs: Any
 	) -> None:
 		self.dbconn = dbconn
 		self.context_provider = context_provider
+		self.load_cogs = load_cogs
 		super().__init__(*args, **kwargs)
 
 	def run(self, *args: Any, **kwargs: Any) -> None:
@@ -75,7 +77,8 @@ class BotConstructor(commands.Bot):
 		"""
 		if self.dbconn and self.context_provider:
 			await self._registerDBAdapters()
-		await self._initCogs()
+		if self.load_cogs:
+			await self._initCogs()
 
 	async def _registerDBAdapters(self) -> None:
 

@@ -43,12 +43,14 @@ class DiscordObjectsGroup:
 
 	USER_IDENTIFICATOR: str = ""
 
+	def __init__(self, ctx: commands.Context) -> None:
+		self.ctx = ctx
+
 	def __eq__(self, right_operand: Any) -> bool:
 		return self.USER_IDENTIFICATOR == right_operand
 
-	@staticmethod
 	def extractData(
-		ctx: commands.Context,
+		self,
 		d_id: Optional[str] = None
 	) -> Iterable[DiscordGuildObjects]:
 		raise NotImplementedError
@@ -62,13 +64,12 @@ class UserGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "usr"
 
-	@staticmethod
 	def extractData(
-		ctx: commands.Context,
+		self,
 		d_id: Optional[str] = None
 	) -> Iterable[DiscordGuildObjects]:
-		if ctx.guild:
-			return ctx.guild.members
+		if self.ctx.guild:
+			return self.ctx.guild.members
 		return []
 
 class ChannelGroup(DiscordObjectsGroup):
@@ -81,13 +82,12 @@ class ChannelGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "ch"
 
-	@staticmethod
 	def extractData(
-		ctx: commands.Context,
+		self,
 		d_id: Optional[str] = None
 	) -> Iterable[DiscordGuildObjects]:
-		if ctx.guild:
-			return ctx.guild.channels
+		if self.ctx.guild:
+			return self.ctx.guild.channels
 		return []
 
 class DBObjectsGroup:
