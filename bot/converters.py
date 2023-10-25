@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 
 from ._types import DiscordGuildObjects
-from .data import DiscordObjectsGroupAnalyzator, DiscordObjectsGroup
+from .data import DataGroupAnalyzator, DiscordObjectsGroup
 from .exceptions import (
 	SearchExpressionNotFound,
 	ShortSearchExpressionNotFound,
@@ -76,7 +76,7 @@ class SearchExpression(Expression):
 		Raises:
 			SearchExpressionNotFound: возбуждается при отсутствии подходящих DataGroup.
 		"""
-		self.data_groups: List[DiscordObjectsGroup] = DiscordObjectsGroupAnalyzator(
+		self.data_groups: List[DiscordObjectsGroup] = DataGroupAnalyzator(
 			self.ctx, self.string[0]).analyze()
 		if not self.data_groups:
 			raise SearchExpressionNotFound(self.argument)
@@ -99,8 +99,8 @@ class ShortSearchExpression(Expression):
 		\* — передача всех объектов.
 	"""
 
-	def __init__(self) -> None:
-		self.data_group: Union[Type[DiscordObjectsGroup], DiscordObjectsGroup]  = DiscordObjectsGroup
+	# def __init__(self) -> None:
+	# 	self.data_group: Union[Type[DiscordObjectsGroup], DiscordObjectsGroup]  = DiscordObjectsGroup
 
 	@classmethod
 	def __class_getitem__(
@@ -112,6 +112,7 @@ class ShortSearchExpression(Expression):
 			default_data_group (DiscordObjectsGroup): один из объектов
 			:class:`DataGroup`, который использоваться для выполнения wildcard.
 		"""
+		cls = cls()
 		cls.data_group = default_data_group
 		return cls
 
@@ -123,16 +124,16 @@ class ShortSearchExpression(Expression):
 		self.checkExpression(argument)
 		self.string: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []
-		self.analyzeWildcard(ctx=ctx)
+		self.analyzeWildcard()
 		return self.result
 	
 	def checkExpression(self, argument: str) -> None:
 		if not argument == "*":
 			raise ShortSearchExpressionNotFound(argument)
 
-	def analyzeWildcard(self, **args_to_extract_method) -> None:
+	def analyzeWildcard(self) -> None:
 		if self.string == "*":
-			self.result += self.data_group.extractData(**args_to_extract_method)
+			self.result += self.data_group.extractData()
 
 class SpecialExpression(Expression):
 	"""

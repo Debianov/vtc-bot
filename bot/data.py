@@ -11,9 +11,9 @@ from discord.ext import commands
 from ._types import DiscordGuildObjects, IDSupportObjects
 
 
-class DiscordObjectsGroupAnalyzator:
+class DataGroupAnalyzator:
 	"""
-	Класс реализует механизм определения :class:`DiscordObjectsGroup` по имени из str.
+	Класс реализует механизм определения :class:`DataGroup` по имени из str.
 	"""
 
 	def __init__(self, ctx: commands.Context, string: str) -> None:
@@ -23,14 +23,14 @@ class DiscordObjectsGroupAnalyzator:
 
 	def analyze(self) -> List['DiscordObjectsGroup']:
 		"""
-		Основной метод для определения :class:`DiscordObjectsGroup`.
+		Основной метод для определения :class:`DataGroup`.
 		"""
 		to_check: List[Type[DiscordObjectsGroup]] =\
 			DiscordObjectsGroup.__subclasses__()
 		copy_string: List[str] = self.split_string
 		for group_name in copy_string:
 			for group_type in to_check:
-				group_instance = group_type() #! якорь
+				group_instance = group_type(self.ctx)
 				if group_name == group_instance:
 					self.relevant_groups.append(group_instance)
 					break
@@ -64,10 +64,7 @@ class UserGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "usr"
 
-	def extractData(
-		self,
-		d_id: Optional[str] = None
-	) -> Iterable[DiscordGuildObjects]:
+	def extractData(self, d_id: Optional[str] = None) -> Iterable[DiscordGuildObjects]:
 		if self.ctx.guild:
 			return self.ctx.guild.members
 		return []
