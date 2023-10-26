@@ -1,23 +1,14 @@
-import pathlib
-import sys
-from typing import Any, AsyncGenerator, Optional
 
 import discord
 import discord.ext.test as dpytest
-import psycopg
 import pytest
 import pytest_asyncio
 from discord.ext import commands
 
-from bot.exceptions import StartupBotError
 from bot.help import BotHelpCommand
-from bot.main import BotConstructor, DBConnFactory
-from bot.utils import (
-	ContextProvider,
-	DiscordObjEvaluator,
-	MockLocator,
-	getEnvIfExist
-)
+from bot.main import BotConstructor
+from bot.utils import ContextProvider, DiscordObjEvaluator, MockLocator
+
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
 async def botInit() -> commands.Bot:

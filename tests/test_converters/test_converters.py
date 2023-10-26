@@ -1,12 +1,11 @@
+import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
 
-import discord.ext.test as dpytest
-
 from bot.converters import ShortSearchExpression
 from bot.data import UserGroup
-
 from bot.utils import MockLocator
+
 
 def test_data_group_assignment() -> None:
 	a = ShortSearchExpression[UserGroup]

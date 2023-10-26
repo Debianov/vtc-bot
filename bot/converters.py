@@ -99,9 +99,6 @@ class ShortSearchExpression(Expression):
 		\* — передача всех объектов.
 	"""
 
-	# def __init__(self) -> None:
-	# 	self.data_group: Union[Type[DiscordObjectsGroup], DiscordObjectsGroup]  = DiscordObjectsGroup
-
 	@classmethod
 	def __class_getitem__(
 		cls,
@@ -121,6 +118,7 @@ class ShortSearchExpression(Expression):
 		ctx: commands.Context,
 		argument: str
 	) -> List[DiscordGuildObjects]:
+		self.data_group = self.data_group(ctx)
 		self.checkExpression(argument)
 		self.string: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []

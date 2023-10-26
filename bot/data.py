@@ -4,7 +4,6 @@
 
 from typing import Any, Iterable, List, Optional, Type, Union
 
-import discord
 import psycopg
 from discord.ext import commands
 
@@ -64,7 +63,10 @@ class UserGroup(DiscordObjectsGroup):
 
 	USER_IDENTIFICATOR: str = "usr"
 
-	def extractData(self, d_id: Optional[str] = None) -> Iterable[DiscordGuildObjects]:
+	def extractData(
+		self,
+		d_id: Optional[str] = None
+	) -> Iterable[DiscordGuildObjects]:
 		if self.ctx.guild:
 			return self.ctx.guild.members
 		return []
