@@ -99,6 +99,8 @@ class ShortSearchExpression(Expression):
 		\* — передача всех объектов.
 	"""
 
+	data_group: Type[DiscordObjectsGroup] = DiscordObjectsGroup
+
 	@classmethod
 	def __class_getitem__(
 		cls,
@@ -109,7 +111,6 @@ class ShortSearchExpression(Expression):
 			default_data_group (DiscordObjectsGroup): один из объектов
 			:class:`DataGroup`, который использоваться для выполнения wildcard.
 		"""
-		cls = cls()
 		cls.data_group = default_data_group
 		return cls
 
@@ -118,7 +119,7 @@ class ShortSearchExpression(Expression):
 		ctx: commands.Context,
 		argument: str
 	) -> List[DiscordGuildObjects]:
-		self.data_group = self.data_group(ctx)
+		self.data_group_instance = self.data_group(ctx)
 		self.checkExpression(argument)
 		self.string: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []
@@ -131,7 +132,7 @@ class ShortSearchExpression(Expression):
 
 	def analyzeWildcard(self) -> None:
 		if self.string == "*":
-			self.result += self.data_group.extractData()
+			self.result += self.data_group_instance.extractData()
 
 class SpecialExpression(Expression):
 	"""

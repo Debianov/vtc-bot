@@ -2,7 +2,7 @@
 Модуль хранит основную логику всех пользовательских команд.
 """
 
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 import discord
 import psycopg
@@ -26,12 +26,12 @@ class UserLog(commands.Cog):
 	def __init__(
 		self,
 		bot: commands.Bot,
-		dbconn: psycopg.AsyncConnection[Any],
-		context_provider: ContextProvider
+		dbconn: Optional[psycopg.AsyncConnection[Any]] = None,
+		context_provider: Optional[ContextProvider] = None
 	) -> None:
 		self.bot = bot
-		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
-		self.context_provider: ContextProvider = context_provider
+		self.dbconn: Optional[psycopg.AsyncConnection[Any]] = dbconn
+		self.context_provider: Optional[ContextProvider] = context_provider
 		bot.on_command_error = self._on_command_error # type: ignore [method-assign]
 
 	async def _on_command_error(
@@ -70,13 +70,13 @@ class UserLog(commands.Cog):
 		"""
 		await ctx.send("Убедитесь, что вы указали подкоманду.")
 
-	@log.command(aliases=["1", "cr"])
+	@log.command(aliases=["1", "cr"]) # type: ignore[arg-type]
 	async def create(
 		self,
 		ctx: commands.Context,
 		target: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, discord.CategoryChannel, SearchExpression]],
-		act: Union[ShortSearchExpression[ActGroup], str], #!
+		act: Union[ShortSearchExpression[ActGroup], str], # type: ignore [type-arg]
 		d_in: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, SearchExpression, SpecialExpression]],
 		*,
@@ -157,6 +157,8 @@ class UserLog(commands.Cog):
 			UnhandlePartMessageSignal: вызывается при обнаружении необработанного\
 			элемента.
 		"""
+		if not ctx.current_argument:
+			return
 		current_argument = ctx.current_argument.split(
 			" ") # discord.py останавливается на
 		# необработанном аргументе, если ни один из конвертеров не подошёл.
@@ -185,7 +187,7 @@ class UserLog(commands.Cog):
 			if argument not in ready_check_parameters:
 				raise UnhandlePartMessageSignal(ctx.current_argument)
 
-	def removeNesting(self, instance: List[Any]):
+	def removeNesting(self, instance: Any):
 		"""
 			Функция для удаления вложенностей.
 

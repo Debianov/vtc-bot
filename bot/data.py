@@ -170,7 +170,7 @@ class TargetGroup(DBObjectsGroup):
 		self,
 		placeholder: Optional[str] = "*",
 		**object_parameters: Any
-	) -> Iterable['TargetGroup']:
+	) -> List['TargetGroup']:
 		r"""
 		Args:
 			\**object_parameters: параметры, которые будут переданы в SQL запрос. Если\

@@ -19,4 +19,4 @@ async def test_good_convertation(
 	a = ShortSearchExpression[UserGroup]
 	message = await dpytest.message("sudo help")
 	current_ctx = await bot.get_context(message)
-	assert mockLocator.members == await a.convert(current_ctx, "*")
+	assert mockLocator.members == await a().convert(current_ctx, "*")
