@@ -21,6 +21,7 @@ async def botInit() -> commands.Bot:
 		command_prefix="sudo ",
 		intents=intents,
 		help_command=BotHelpCommand(),
+		cog_load=False
 	)
 	await VCSBot._async_setup_hook()
 	await VCSBot.prepare()

@@ -1,7 +1,7 @@
 """
 Модуль хранит конвертеры, необходимый для парсинга команд.
 """
-from typing import List, Optional, Type, Union
+from typing import Generic, List, Optional, Type, TypeVar, Union
 
 import discord
 from discord.ext import commands
@@ -14,6 +14,7 @@ from .exceptions import (
 	SpecialExpressionNotFound
 )
 
+T = TypeVar("T")
 
 class Expression(commands.Converter):
 	"""
@@ -89,7 +90,7 @@ class SearchExpression(Expression):
 			if self.string[1] == "*":
 				self.result += data_group.extractData()
 
-class ShortSearchExpression(Expression):
+class ShortSearchExpression(Expression, Generic[T]):
 	r"""
 	Класс представляет реализацию короткого поискового выражения —
 	аналога :class:`SearchExpression`, но без явного указания

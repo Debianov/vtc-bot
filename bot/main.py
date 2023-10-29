@@ -13,6 +13,7 @@ from discord.ext import commands
 from ._types import IDSupportObjects
 from .exceptions import StartupBotError
 from .help import BotHelpCommand
+from .mock import Mock, MockAsyncConnection
 from .utils import ContextProvider, getEnvIfExist
 
 
@@ -53,13 +54,15 @@ class BotConstructor(commands.Bot):
 
 	def __init__(
 		self,
-		dbconn: Optional[psycopg.AsyncConnection[Any]] = None,
-		context_provider: Optional[ContextProvider] = None,
+		dbconn: psycopg.AsyncConnection[Any] = MockAsyncConnection(),
+		context_provider: ContextProvider = ContextProvider(),
+		cog_load: bool = True,
 		*args: Any,
 		**kwargs: Any
 	) -> None:
 		self.dbconn = dbconn
 		self.context_provider = context_provider
+		self.cog_load = cog_load
 		super().__init__(*args, **kwargs)
 
 	def run(self, *args: Any, **kwargs: Any) -> None:
@@ -73,9 +76,10 @@ class BotConstructor(commands.Bot):
 		компонентов бота. Обязателен к запуску, если не
 		используется метод :attr:`run`.
 		"""
-		if self.dbconn and self.context_provider:
+		if not isinstance(self.dbconn, Mock) and self.context_provider:
 			await self._registerDBAdapters()
-		await self._initCogs()
+		if self.cog_load:
+			await self._initCogs()
 
 	async def _registerDBAdapters(self) -> None:
 

@@ -2,7 +2,7 @@
 Модуль хранит основную логику всех пользовательских команд.
 """
 
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Tuple, Type, Union
 
 import discord
 import psycopg
@@ -26,12 +26,12 @@ class UserLog(commands.Cog):
 	def __init__(
 		self,
 		bot: commands.Bot,
-		dbconn: Optional[psycopg.AsyncConnection[Any]] = None,
-		context_provider: Optional[ContextProvider] = None
+		dbconn: psycopg.AsyncConnection[Any],
+		context_provider: ContextProvider
 	) -> None:
 		self.bot = bot
-		self.dbconn: Optional[psycopg.AsyncConnection[Any]] = dbconn
-		self.context_provider: Optional[ContextProvider] = context_provider
+		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
+		self.context_provider: ContextProvider = context_provider
 		bot.on_command_error = self._on_command_error # type: ignore [method-assign]
 
 	async def _on_command_error(
@@ -104,7 +104,8 @@ class UserLog(commands.Cog):
 
 		if not d_in: # если пропускается последний обязательный параметр
 			# — ошибка не выводится, поэтому приходится выкручиваться.
-			raise commands.MissingRequiredArgument(ctx.command.clean_params["d_in"])
+			raise commands.MissingRequiredArgument(ctx.
+				command.clean_params["d_in"]) # type: ignore [union-attr]
 		else:
 			await self.checkForUnhandleContent(ctx, initial_target or target,
 				initial_act or act, initial_d_in or d_in, flags.name,

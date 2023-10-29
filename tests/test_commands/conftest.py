@@ -1,6 +1,6 @@
 import pathlib
 import sys
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator
 
 import discord
 import discord.ext.test as dpytest
@@ -52,7 +52,7 @@ async def setupDB() -> psycopg.AsyncConnection[Any]:
 	return future_dbconn
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
-async def botInit(db: Optional[psycopg.AsyncConnection[Any]]) -> commands.Bot:
+async def botInit(db: psycopg.AsyncConnection[Any]) -> commands.Bot:
 	intents = discord.Intents.all()
 	VCSBot = BotConstructor(
 		dbconn=db,
