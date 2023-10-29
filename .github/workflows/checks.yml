@@ -37,7 +37,7 @@ jobs:
       - name: Run flake8
         run: poetry run flake8
       - name: Run mypy
-        run: poetry run mypy
+        run: poetry run mypy .
       - name: Run tests        
         env:
           POSTGRES_HOST: localhost
