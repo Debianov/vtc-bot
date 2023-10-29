@@ -42,14 +42,15 @@ jobs:
         run: poetry install
 
       - name: Run flake8
-        run: poetry run flake8 --config ./config.flake8
-
+        run: poetry run flake8
       - name: Run mypy
-        run: poetry run mypy
-
-      - name: Run tests
+        run: poetry run mypy .
+      - name: Run tests        
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_TEST_DBNAME: postgres
+          POSTGRES_USER: postgres
         run: |
           poetry run pytest

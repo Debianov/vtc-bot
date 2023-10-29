@@ -9,21 +9,10 @@ import pytest
 import pytest_asyncio
 from discord.ext import commands
 
-root = pathlib.Path.cwd()
-
-sys.path.append(str(root))
-
 from bot.help import BotHelpCommand  # flake8: noqa: I005
 from bot.main import BotConstructor  # flake8: noqa: I005
 
 # flake8: noqa: I005
-pytest_plugins = ('pytest_asyncio',)
-
-@pytest.fixture(scope="package")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-	loop = asyncio.get_event_loop()
-	yield loop
-	loop.close()
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
 async def botInit() -> commands.Bot:
@@ -32,6 +21,7 @@ async def botInit() -> commands.Bot:
 		command_prefix="sudo ",
 		intents=intents,
 		help_command=BotHelpCommand(),
+		cog_load=False
 	)
 	await VCSBot._async_setup_hook()
 	await VCSBot.prepare()
