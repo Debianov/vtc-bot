@@ -27,13 +27,13 @@ class Expression(commands.Converter):
 		`commands.Converter <https://discordpy.readthedocs.io/en/stable/ext/\
 		commands/api.html?highlight=help#discord.ext.commands.Converter>`_.
 		"""
-		pass
+		raise NotImplementedError()
 
 	def checkExpression(self, argument: str) -> None:
 		"""
 		Проверяет выражение с точки зрения синтаксиса.
 		"""
-		pass
+		raise NotImplementedError()
 
 class SearchExpression(Expression):
 	"""
