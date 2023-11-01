@@ -26,11 +26,6 @@ async def botInit() -> commands.Bot:
 	await VCSBot._async_setup_hook()
 	await VCSBot.prepare()
 	dpytest.configure(VCSBot, num_members=6)
-	config = dpytest.get_config()
-	pytest.test_guild = config.guilds[0]
-	pytest.test_channel = config.channels[0]
-	for (ind, member) in enumerate(config.members):
-		setattr(pytest, f"test_member{ind}", member)
 	return VCSBot
 
 @pytest_asyncio.fixture(autouse=True)
