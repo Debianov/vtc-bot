@@ -139,3 +139,16 @@ def getEnvIfExist(*env_names: str) -> Union[List[str], None]:
 		else:
 			saved_data.append(result)
 	return saved_data
+
+def removeNesting(instance: Any) -> Any:
+	"""
+		Функция для удаления вложенностей.
+
+		Returns:
+			Optional[List[discord.abc.Messageable]]
+	"""
+	if len(instance) == 1 and isinstance(instance[0], list):
+		tmp = instance[0]
+		instance.remove(tmp)
+		instance.extend(tmp)
+	return instance

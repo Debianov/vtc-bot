@@ -3,7 +3,7 @@ import pytest
 from discord.ext import commands
 from typing import Any
 
-from bot.utils import DiscordObjEvaluator
+from bot.utils import DiscordObjEvaluator, removeNesting
 from bot.converters import (
 	Expression,
 	SearchExpression,
@@ -52,7 +52,7 @@ async def test_good_search_expression_class(
 	message = await dpytest.message("sudo help")
 	current_ctx = await bot.get_context(message)
 	compare_data = discordObjectEvaluator.extractObjects([compare_data], current_ctx)
-	assert compare_data == await a().convert(current_ctx, argument)
+	assert removeNesting(compare_data) == await a().convert(current_ctx, argument)
 
 def test_data_group_assignment() -> None:
 	a = ShortSearchExpression[UserGroup]
