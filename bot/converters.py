@@ -89,6 +89,8 @@ class SearchExpression(Expression):
 		for data_group in self.data_groups:
 			if self.string[1] == "*":
 				self.result += data_group.extractData()
+			else:
+				raise SearchExpressionNotFound(self.argument)
 
 class ShortSearchExpression(Expression, Generic[T]):
 	r"""
