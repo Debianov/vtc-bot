@@ -38,7 +38,7 @@ async def test_main_expression_class(
 	]
 )
 @pytest.mark.asyncio
-async def test_good_search_expression_class(
+async def test_good_search_expression_convert_and_checkExpr(
 	bot: commands.Bot,
 	mockLocator: MockLocator,
 	argument: str,
@@ -53,6 +53,7 @@ async def test_good_search_expression_class(
 		current_ctx
 	)
 	assert removeNesting(compare_data) == await a().convert(current_ctx, argument)
+	a().checkExpression(argument)
 
 @pytest.mark.parametrize(
 	"argument",
@@ -61,7 +62,7 @@ async def test_good_search_expression_class(
 	]
 )
 @pytest.mark.asyncio
-async def test_bad_search_expression_class(
+async def test_bad_search_expression_convert_and_checkExpr(
 	bot: commands.Bot,
 	mockLocator: MockLocator,
 	argument: str,
@@ -72,6 +73,7 @@ async def test_bad_search_expression_class(
 	current_ctx = await bot.get_context(message)
 	with pytest.raises(SearchExpressionNotFound):
 		await a().convert(current_ctx, argument)
+		a().checkExpression(argument)
 
 def test_data_group_assignment() -> None:
 	a = ShortSearchExpression[UserGroup]

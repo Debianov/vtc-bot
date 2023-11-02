@@ -29,7 +29,7 @@ class Expression(commands.Converter):
 		"""
 		raise NotImplementedError()
 
-	def _checkExpression(self, argument: str):
+	def checkExpression(self, argument: str):
 		"""
 		Проверяет выражение с точки зрения синтаксиса.
 		"""
@@ -49,7 +49,7 @@ class SearchExpression(Expression):
 		argument: str
 	) -> List[DiscordGuildObjects]:
 		self.argument = argument
-		self._checkExpression()
+		self.checkExpression()
 		self.string: List[str] = argument.split(":")
 		self.result: List[Union[discord.abc.GuildChannel, discord.abc.Member]] = []
 		self.ctx = ctx
@@ -57,7 +57,7 @@ class SearchExpression(Expression):
 		self._analyzeWildcard()
 		return self.result
 
-	def _checkExpression(self, argument: Optional[str] = None) -> None:
+	def checkExpression(self, argument: Optional[str] = None) -> None:
 		"""
 		Проверяет выражение с точки зрения синтаксиса. Данный метод подлежит\
 		вызову вне аннотаций команд для проверки других аргументов в обход convert.
@@ -123,13 +123,13 @@ class ShortSearchExpression(Expression, Generic[T]):
 		argument: str
 	) -> List[DiscordGuildObjects]:
 		self.data_group_instance = self.data_group(ctx)
-		self._checkExpression(argument)
+		self.checkExpression(argument)
 		self.string: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []
 		self._analyzeWildcard()
 		return self.result
 	
-	def _checkExpression(self, argument: str) -> None:
+	def checkExpression(self, argument: str) -> None:
 		if not argument == "*":
 			raise ShortSearchExpressionNotFound(argument)
 
@@ -147,9 +147,9 @@ class SpecialExpression(Expression):
 	"""
 
 	async def convert(self, ctx: commands.Context, argument: str) -> str:
-		self._checkExpression(argument)
+		self.checkExpression(argument)
 		return argument
 
-	def _checkExpression(self, argument: str) -> None:
+	def checkExpression(self, argument: str) -> None:
 		if argument not in ["df", "default"]:
 			raise SpecialExpressionNotFound(argument)
