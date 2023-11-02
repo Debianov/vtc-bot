@@ -29,7 +29,7 @@ class Expression(commands.Converter):
 		"""
 		raise NotImplementedError()
 
-	def checkExpression(self, argument: str) -> None:
+	def checkExpression(self, argument: str):
 		"""
 		Проверяет выражение с точки зрения синтаксиса.
 		"""

@@ -1,16 +1,13 @@
+from typing import Any
+
 import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
-from typing import Any
 
-from bot.utils import DiscordObjEvaluator, removeNesting
-from bot.converters import (
-	Expression,
-	SearchExpression,
-	ShortSearchExpression
-)
+from bot.converters import Expression, SearchExpression, ShortSearchExpression
 from bot.data import UserGroup
-from bot.utils import MockLocator
+from bot.exceptions import SearchExpressionNotFound
+from bot.utils import DiscordObjEvaluator, MockLocator, removeNesting
 
 
 @pytest.mark.parametrize(
@@ -51,8 +48,30 @@ async def test_good_search_expression_class(
 	a = SearchExpression
 	message = await dpytest.message("sudo help")
 	current_ctx = await bot.get_context(message)
-	compare_data = discordObjectEvaluator.extractObjects([compare_data], current_ctx)
+	compare_data = discordObjectEvaluator.extractObjects(
+		[compare_data],
+		current_ctx
+	)
 	assert removeNesting(compare_data) == await a().convert(current_ctx, argument)
+
+@pytest.mark.parametrize(
+	"argument",
+	[
+		"fdgewrwer:*", "usr:23424", "rwerwe:rtert34r", "242sdfs"
+	]
+)
+@pytest.mark.asyncio
+async def test_bad_search_expression_class(
+	bot: commands.Bot,
+	mockLocator: MockLocator,
+	argument: str,
+	discordObjectEvaluator: DiscordObjEvaluator
+) -> None:
+	a = SearchExpression
+	message = await dpytest.message("sudo help")
+	current_ctx = await bot.get_context(message)
+	with pytest.raises(SearchExpressionNotFound):
+		await a().convert(current_ctx, argument)
 
 def test_data_group_assignment() -> None:
 	a = ShortSearchExpression[UserGroup]
