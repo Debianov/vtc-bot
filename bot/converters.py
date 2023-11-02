@@ -29,7 +29,7 @@ class Expression(commands.Converter):
 		"""
 		raise NotImplementedError()
 
-	def checkExpression(self, argument: str):
+	def _checkExpression(self, argument: str):
 		"""
 		Проверяет выражение с точки зрения синтаксиса.
 		"""
@@ -49,15 +49,15 @@ class SearchExpression(Expression):
 		argument: str
 	) -> List[DiscordGuildObjects]:
 		self.argument = argument
-		self.checkExpression()
+		self._checkExpression()
 		self.string: List[str] = argument.split(":")
 		self.result: List[Union[discord.abc.GuildChannel, discord.abc.Member]] = []
 		self.ctx = ctx
-		self.extractDataGroup()
-		self.analyzeWildcard()
+		self._extractDataGroup()
+		self._analyzeWildcard()
 		return self.result
 
-	def checkExpression(self, argument: Optional[str] = None) -> None:
+	def _checkExpression(self, argument: Optional[str] = None) -> None:
 		"""
 		Проверяет выражение с точки зрения синтаксиса. Данный метод подлежит\
 		вызову вне аннотаций команд для проверки других аргументов в обход convert.
@@ -70,7 +70,7 @@ class SearchExpression(Expression):
 		if argument.find(":") == -1:
 			raise SearchExpressionNotFound(argument)
 
-	def extractDataGroup(self) -> None:
+	def _extractDataGroup(self) -> None:
 		"""
 		Метод для определения :class:`DataGroup`.
 
@@ -82,7 +82,7 @@ class SearchExpression(Expression):
 		if not self.data_groups:
 			raise SearchExpressionNotFound(self.argument)
 
-	def analyzeWildcard(self) -> None:
+	def _analyzeWildcard(self) -> None:
 		"""
 		Метод для извлечения информации из :class:`DataGroup`.
 		"""
@@ -123,17 +123,17 @@ class ShortSearchExpression(Expression, Generic[T]):
 		argument: str
 	) -> List[DiscordGuildObjects]:
 		self.data_group_instance = self.data_group(ctx)
-		self.checkExpression(argument)
+		self._checkExpression(argument)
 		self.string: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []
-		self.analyzeWildcard()
+		self._analyzeWildcard()
 		return self.result
 	
-	def checkExpression(self, argument: str) -> None:
+	def _checkExpression(self, argument: str) -> None:
 		if not argument == "*":
 			raise ShortSearchExpressionNotFound(argument)
 
-	def analyzeWildcard(self) -> None:
+	def _analyzeWildcard(self) -> None:
 		if self.string == "*":
 			self.result += self.data_group_instance.extractData()
 
@@ -147,9 +147,9 @@ class SpecialExpression(Expression):
 	"""
 
 	async def convert(self, ctx: commands.Context, argument: str) -> str:
-		self.checkExpression(argument)
+		self._checkExpression(argument)
 		return argument
 
-	def checkExpression(self, argument: str) -> None:
+	def _checkExpression(self, argument: str) -> None:
 		if argument not in ["df", "default"]:
 			raise SpecialExpressionNotFound(argument)
