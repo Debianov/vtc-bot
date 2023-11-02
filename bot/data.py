@@ -12,7 +12,7 @@ from ._types import DiscordGuildObjects, IDSupportObjects
 
 class DataGroupAnalyzator:
 	"""
-	Класс реализует механизм определения :class:`DataGroup` по имени из str.
+	Класс реализует механизм определения :class:`DiscordObjectsGroup` по имени из str.
 	"""
 
 	def __init__(self, ctx: commands.Context, string: str) -> None:
@@ -22,7 +22,7 @@ class DataGroupAnalyzator:
 
 	def analyze(self) -> List['DiscordObjectsGroup']:
 		"""
-		Основной метод для определения :class:`DataGroup`.
+		Основной метод для определения :class:`DiscordObjectsGroup`.
 		"""
 		to_check: List[Type[DiscordObjectsGroup]] =\
 			DiscordObjectsGroup.__subclasses__()
