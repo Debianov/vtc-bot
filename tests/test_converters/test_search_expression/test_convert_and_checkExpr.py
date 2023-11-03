@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from bot.converters import Expression, SearchExpression, ShortSearchExpression
 from bot.data import UserGroup
-from bot.exceptions import SearchExpressionNotFound
+from bot.exceptions import NoticeForDeveloper, SearchExpressionNotFound
 from bot.utils import DiscordObjEvaluator, MockLocator, removeNesting
 
 
@@ -63,5 +63,5 @@ async def test_good_checkExpr_without_args(
 	a = SearchExpression()
 	with pytest.raises(NoticeForDeveloper) as excp:
 		a.checkExpression()
-		assert excp.text == "self.argument doesn't exist because the convert method wasn't"
-		" called. Call convert or pass argument."
+	assert excp.value.notice == ("self.argument doesn't exist because the"
+		" convert method wasn't called. Call convert or pass argument.")

@@ -9,6 +9,7 @@ from discord.ext import commands
 from ._types import DiscordGuildObjects
 from .data import DataGroupAnalyzator, DiscordObjectsGroup
 from .exceptions import (
+	NoticeForDeveloper,
 	SearchExpressionNotFound,
 	ShortSearchExpressionNotFound,
 	SpecialExpressionNotFound
@@ -66,7 +67,11 @@ class SearchExpression(Expression):
 			argument: передаётся, если вызывается вручную не в контексте парсинга.
 		"""
 		if not argument:
-			argument = self.argument
+			try:
+				argument = self.argument
+			except AttributeError as excp:
+				raise NoticeForDeveloper("self.argument doesn't exist because the"
+				" convert method wasn't called. Call convert or pass argument.") from excp
 		if argument.find(":") == -1:
 			raise SearchExpressionNotFound(argument)
 

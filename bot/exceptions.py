@@ -55,5 +55,16 @@ class UnhandlePartMessageSignal(Exception):
 
 
 class StartupBotError(Exception):
-	
 	pass
+
+
+class NoticeForDeveloper(Exception):
+	"""
+		A class for additional explanations.
+	"""
+
+	def __init__(self, notice: str) -> None:
+		self.notice = notice
+
+	def __str__(self) -> str:
+		return self.notice
