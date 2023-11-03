@@ -39,3 +39,9 @@ def initLocator() -> MockLocator:
 def initEvaluator(mockLocator: MockLocator) -> DiscordObjEvaluator:
 	instance = DiscordObjEvaluator(mockLocator)
 	return instance
+
+@pytest_asyncio.fixture(scope="package", autouse=True, name="discordContext")
+async def createDiscordContext(bot: commands.Bot) -> commands.Context:
+	message = await dpytest.message("sudo help")
+	current_ctx = await bot.get_context(message)
+	return current_ctx

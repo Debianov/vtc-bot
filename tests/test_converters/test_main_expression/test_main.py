@@ -17,12 +17,11 @@ from bot.utils import MockLocator
 async def test_main_expression_class(
 	bot: commands.Bot,
 	mockLocator: MockLocator,
-	argument: str
+	argument: str,
+	discordContext: commands.Context
 ) -> None:
 	a = Expression
-	message = await dpytest.message("sudo help")
-	current_ctx = await bot.get_context(message)
 	with pytest.raises(NotImplementedError):
-		assert mockLocator.members == await a().convert(current_ctx, argument)
+		assert mockLocator.members == await a().convert(discordContext, argument)
 	with pytest.raises(NotImplementedError):
 		assert mockLocator.members == await a().checkExpression(argument)

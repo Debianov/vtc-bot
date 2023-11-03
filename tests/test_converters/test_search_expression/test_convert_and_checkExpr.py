@@ -23,16 +23,15 @@ async def test_good_search_expression_convert_and_checkExpr(
 	mockLocator: MockLocator,
 	argument: str,
 	compare_data: Any,
-	discordObjectEvaluator: DiscordObjEvaluator
+	discordObjectEvaluator: DiscordObjEvaluator,
+	discordContext: commands.Context
 ) -> None:
 	a = SearchExpression
-	message = await dpytest.message("sudo help")
-	current_ctx = await bot.get_context(message)
 	compare_data = discordObjectEvaluator.extractObjects(
 		[compare_data],
-		current_ctx
+		discordContext
 	)
-	assert removeNesting(compare_data) == await a().convert(current_ctx, argument)
+	assert removeNesting(compare_data) == await a().convert(discordContext, argument)
 	a().checkExpression(argument)
 
 @pytest.mark.parametrize(
@@ -46,13 +45,12 @@ async def test_bad_search_expression_convert_and_checkExpr(
 	bot: commands.Bot,
 	mockLocator: MockLocator,
 	argument: str,
-	discordObjectEvaluator: DiscordObjEvaluator
+	discordObjectEvaluator: DiscordObjEvaluator,
+	discordContext: commands.Context
 ) -> None:
 	a = SearchExpression
-	message = await dpytest.message("sudo help")
-	current_ctx = await bot.get_context(message)
 	with pytest.raises(SearchExpressionNotFound):
-		await a().convert(current_ctx, argument)
+		await a().convert(discordContext, argument)
 		a().checkExpression(argument)
 
 
