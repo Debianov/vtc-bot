@@ -1,18 +1,33 @@
-from typing import Any
+from typing import List, Type
 
-import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
 
 from bot.converters import SearchExpression
-from bot.data import UserGroup
-from bot.exceptions import SearchExpressionNotFound
-from bot.utils import DiscordObjEvaluator, MockLocator, removeNesting
+from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
 
-# @pytest.mark.asyncio
-# async def test_good_extractDataGroup(
-# 	bot: commands.Bot,
-# 	discordContext: commands.Context
-# ) -> None:
-# 	a = SearchExpression()
-# 	a._extractDataGroup()
+
+@pytest.mark.parametrize(
+	"argument, compare_data_group",
+	[
+		("usr:*", [UserGroup]),
+		("usr", [UserGroup]),
+		("ch", [ChannelGroup]),
+		("ch+usr", [ChannelGroup, UserGroup]),
+		("usr+ch:*", [UserGroup, ChannelGroup])
+	]
+)
+@pytest.mark.asyncio
+async def test_good_extractDataGroup(
+	bot: commands.Bot,
+	discordContext: commands.Context,
+	argument: str,
+	compare_data_group: List[Type[DiscordObjectsGroup]]
+) -> None:
+	a = SearchExpression()
+	a.ctx = discordContext
+	a.string = argument.split(":")
+	a._extractDataGroup()
+	for ind in range(0, len(a.data_groups)):
+		assert a.data_groups[ind].__class__ == compare_data_group[ind]
+	

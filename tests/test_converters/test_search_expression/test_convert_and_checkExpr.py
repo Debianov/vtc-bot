@@ -1,11 +1,9 @@
 from typing import Any
 
-import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
 
-from bot.converters import Expression, SearchExpression, ShortSearchExpression
-from bot.data import UserGroup
+from bot.converters import SearchExpression
 from bot.exceptions import NoticeForDeveloper, SearchExpressionNotFound
 from bot.utils import DiscordObjEvaluator, MockLocator, removeNesting
 
@@ -31,7 +29,8 @@ async def test_good_search_expression_convert_and_checkExpr(
 		[compare_data],
 		discordContext
 	)
-	assert removeNesting(compare_data) == await a().convert(discordContext, argument)
+	assert (removeNesting(compare_data) ==
+		await a().convert(discordContext, argument))
 	a().checkExpression(argument)
 
 @pytest.mark.parametrize(
