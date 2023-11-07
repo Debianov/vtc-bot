@@ -30,7 +30,7 @@ async def test_good_extractDataGroup(
 	a.string = argument.split(":")
 	a._extractDataGroup()
 	for ind in range(0, len(a.data_groups)):
-		assert a.data_groups[ind].__class__ == compare_data_group[ind]
+		assert isinstance(a.data_groups[ind], compare_data_group[ind])
 
 @pytest.mark.parametrize(
 	"argument",
