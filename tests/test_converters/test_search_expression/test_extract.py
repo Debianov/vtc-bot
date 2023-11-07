@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from bot.converters import SearchExpression
 from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
+from bot.exceptions import SearchExpressionNotFound
 
 
 @pytest.mark.parametrize(
@@ -30,4 +31,25 @@ async def test_good_extractDataGroup(
 	a._extractDataGroup()
 	for ind in range(0, len(a.data_groups)):
 		assert a.data_groups[ind].__class__ == compare_data_group[ind]
-	
+
+@pytest.mark.parametrize(
+	"argument",
+	[
+		"grp",
+		"usrg",
+		"wertch:*",
+		"werwchesdf"
+	]
+)
+@pytest.mark.asyncio
+async def test_bad_extractDataGroup(
+	bot: commands.Bot,
+	discordContext: commands.Context,
+	argument: str,
+) -> None:
+	a = SearchExpression()
+	a.ctx = discordContext
+	a.string = argument.split(":")
+	a.argument = argument
+	with pytest.raises(SearchExpressionNotFound):
+		a._extractDataGroup()
