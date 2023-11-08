@@ -36,7 +36,8 @@ async def test_good_search_expression_convert_and_checkExpr(
 @pytest.mark.parametrize(
 	"argument",
 	[
-		"fdgewrwer:*", "usr:23424", "rwerwe:rtert34r", "242sdfs"
+		"fdgewrwer:*", "usr:23424", "rwerwe:rtert34r", "242sdfs",
+		"usr: *", "ch   :*"
 	]
 )
 @pytest.mark.asyncio
