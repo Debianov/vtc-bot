@@ -51,7 +51,8 @@ class SearchExpression(Expression):
 	) -> List[DiscordGuildObjects]:
 		self.argument = argument
 		self.checkExpression()
-		self.string: List[str] = argument.split(":")
+		self.group_identif: str = self.split_argument[0]
+		self.wildcard: str = self.split_argument[1]
 		self.result: List[Union[discord.abc.GuildChannel, discord.abc.Member]] = []
 		self.ctx = ctx
 		self._extractDataGroup()
@@ -72,7 +73,8 @@ class SearchExpression(Expression):
 			except AttributeError as excp:
 				raise NoticeForDeveloper("self.argument doesn't exist because the"
 				" convert method wasn't called. Call convert or pass argument.") from excp
-		if argument.find(":") == -1:
+		self.split_argument = argument.split(":")
+		if argument.find(":") == -1 or len(self.split_argument) > 2:
 			raise SearchExpressionNotFound(argument)
 
 	def _extractDataGroup(self) -> None:
@@ -83,7 +85,7 @@ class SearchExpression(Expression):
 			SearchExpressionNotFound: возбуждается при отсутствии подходящих DataGroup.
 		"""
 		self.data_groups: List[DiscordObjectsGroup] = DataGroupAnalyzator(
-			self.ctx, self.string[0]).analyze()
+			self.ctx, self.group_identif).analyze()
 		if not self.data_groups:
 			raise SearchExpressionNotFound(self.argument)
 
@@ -92,7 +94,7 @@ class SearchExpression(Expression):
 		Метод для извлечения информации из :class:`DataGroup`.
 		"""
 		for data_group in self.data_groups:
-			if self.string[1] == "*":
+			if self.wildcard == "*":
 				self.result += data_group.extractData()
 			else:
 				raise SearchExpressionNotFound(self.argument)
