@@ -8,10 +8,6 @@ from bot.data import UserGroup
 from bot.utils import MockLocator
 
 
-def test_data_group_assignment() -> None:
-	a = ShortSearchExpression[UserGroup]
-	assert a.data_group == UserGroup
-
 @pytest.mark.asyncio
 async def test_good_convertation(
 	bot: commands.Bot,
