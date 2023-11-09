@@ -1,7 +1,7 @@
 """
 Модуль хранит конвертеры, необходимый для парсинга команд.
 """
-from typing import Generic, List, Optional, Type, TypeVar, Union
+from typing import Generic, List, Type, TypeVar, Union
 
 import discord
 from discord.ext import commands
@@ -9,7 +9,6 @@ from discord.ext import commands
 from ._types import DiscordGuildObjects
 from .data import DataGroupAnalyzator, DiscordObjectsGroup
 from .exceptions import (
-	NoticeForDeveloper,
 	SearchExpressionNotFound,
 	ShortSearchExpressionNotFound,
 	SpecialExpressionNotFound
@@ -49,8 +48,8 @@ class SearchExpression(Expression):
 		ctx: commands.Context,
 		argument: str
 	) -> List[DiscordGuildObjects]:
+		self.checkExpression(argument)
 		self.argument = argument
-		self.checkExpression()
 		self.group_identif: str = self.split_argument[0]
 		self.wildcard: str = self.split_argument[1]
 		self.result: List[Union[discord.abc.GuildChannel, discord.abc.Member]] = []
@@ -59,7 +58,7 @@ class SearchExpression(Expression):
 		self._analyzeWildcard()
 		return self.result
 
-	def checkExpression(self, argument: Optional[str] = None) -> None:
+	def checkExpression(self, argument: str) -> None:
 		"""
 		Проверяет выражение с точки зрения синтаксиса. Данный метод подлежит\
 		вызову вне аннотаций команд для проверки других аргументов в обход convert.
@@ -67,12 +66,6 @@ class SearchExpression(Expression):
 		Args:
 			argument: передаётся, если вызывается вручную не в контексте парсинга.
 		"""
-		if not argument:
-			try:
-				argument = self.argument
-			except AttributeError as excp:
-				raise NoticeForDeveloper("self.argument doesn't exist because the"
-				" convert method wasn't called. Call convert or pass argument.") from excp
 		self.split_argument = argument.split(":")
 		if argument.find(":") == -1 or len(self.split_argument) > 2:
 			raise SearchExpressionNotFound(argument)
