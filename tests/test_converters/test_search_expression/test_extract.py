@@ -49,7 +49,6 @@ async def test_bad_extractDataGroup(
 	a = SearchExpression()
 	a.ctx = discordContext
 	a.argument = group_identif
-	a.string = group_identif.split(":")
 	a.group_identif = group_identif
 	with pytest.raises(SearchExpressionNotFound):
 		a._extractDataGroup()
