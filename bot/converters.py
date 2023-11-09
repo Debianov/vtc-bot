@@ -93,11 +93,10 @@ class SearchExpression(Expression):
 		"""
 		Метод для извлечения информации из :class:`DataGroup`.
 		"""
+		if not self.wildcard == "*":
+			raise SearchExpressionNotFound(self.argument)
 		for data_group in self.data_groups:
-			if self.wildcard == "*":
-				self.result += data_group.extractData()
-			else:
-				raise SearchExpressionNotFound(self.argument)
+			self.result += data_group.extractData()
 
 class ShortSearchExpression(Expression, Generic[T]):
 	r"""

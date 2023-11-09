@@ -61,3 +61,23 @@ async def test_good_analyzeWildcard_with_one_group(
 	] = []
 	result_to_compare += compare_data_group.extractData()
 	assert a.result == result_to_compare
+
+# @pytest.mark.asyncio
+# async def test_bad_analyzeWildcard_with_all_groups(
+# 	bot: commands.Bot,
+# 	discordContext: commands.Context,
+# 	wildcard: str,
+# 	compare_data_group: DiscordObjectsGroup
+# ) -> None:
+# 	compare_data_group = compare_data_group(discordContext)
+# 	a = SearchExpression()
+# 	a.ctx = discordContext
+# 	a.wildcard = wildcard
+# 	a.result = []
+# 	a.data_groups = [compare_data_group]
+# 	a._analyzeWildcard()
+# 	result_to_compare: List[
+# 		Union[discord.abc.GuildChannel, discord.abc.Member]
+# 	] = []
+# 	result_to_compare += compare_data_group.extractData()
+# 	assert a.result == result_to_compare
