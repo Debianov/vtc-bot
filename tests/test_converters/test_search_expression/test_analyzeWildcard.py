@@ -1,4 +1,4 @@
-from typing import List, Union, Type
+from typing import List, Type, Union
 
 import discord
 import pytest

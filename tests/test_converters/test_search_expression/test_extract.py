@@ -37,6 +37,7 @@ async def test_good_extractDataGroup(
 		"grp",
 		"usrg",
 		"wertch:*",
+		"grp:*",
 		"werwchesdf"
 	]
 )
