@@ -130,7 +130,7 @@ class ShortSearchExpression(Expression, Generic[T]):
 	) -> List[DiscordGuildObjects]:
 		self.data_group_instance = self.data_group(ctx)
 		self.checkExpression(argument)
-		self.string: str = argument # type: ignore
+		self.wildcard: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []
 		self._analyzeWildcard()
 		return self.result
@@ -140,7 +140,7 @@ class ShortSearchExpression(Expression, Generic[T]):
 			raise ShortSearchExpressionNotFound(argument)
 
 	def _analyzeWildcard(self) -> None:
-		if self.string == "*":
+		if self.wildcard == "*":
 			self.result += self.data_group_instance.extractData()
 
 class SpecialExpression(Expression):
