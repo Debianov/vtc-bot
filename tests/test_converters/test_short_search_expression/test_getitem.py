@@ -4,12 +4,16 @@ import pytest
 from discord.ext import commands
 
 from bot.converters import ShortSearchExpression
-from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
+from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup, TargetGroup
 from bot.exceptions import SearchExpressionNotFound
 
-def test_good() -> None:
-	a = ShortSearchExpression[UserGroup]
-	assert a.data_group == UserGroup
+@pytest.mark.parametrize(
+	"data_group_class",
+	[UserGroup, ChannelGroup, DiscordObjectsGroup]
+)
+def test_good(data_group_class: DiscordObjectsGroup) -> None:
+	a = ShortSearchExpression[data_group_class]
+	assert a.data_group == data_group_class
 
 def test_without_group_passing() -> None:
 	a = ShortSearchExpression[ChannelGroup]
