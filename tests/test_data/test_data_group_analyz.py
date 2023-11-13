@@ -29,7 +29,8 @@ def test_main(discordContext: commands.Context, group_identif: str):
 	[
 		("usr+ch", [UserGroup, ChannelGroup]),
 		("ch", [ChannelGroup]),
-		("usr", [UserGroup])
+		("usr", [UserGroup]),
+		("usr+ch+usr", [UserGroup, ChannelGroup, UserGroup])
 	]
 )
 def test_good_analyze(
