@@ -1,9 +1,11 @@
+
+
 import pytest
 from discord.ext import commands
 
 from bot.converters import ShortSearchExpression
-from bot.exceptions import ShortSearchExpressionNotFound
-from bot.data import UserGroup, ChannelGroup, DiscordGuildObjects
+from bot.data import ChannelGroup, UserGroup
+
 
 @pytest.mark.parametrize(
 	"wildcard, compare_data_groups",
@@ -21,7 +23,7 @@ async def test_good_analyzeWildcard_with_one_group(
 ) -> None:
 	a = ShortSearchExpression[compare_data_groups]()
 	a.wildcard = wildcard
-	a.result: List[DiscordGuildObjects] = []
+	a.result = []
 	a.data_group_instance = compare_data_groups(discordContext)
 	a._analyzeWildcard()
 	assert a.result == list(compare_data_groups(discordContext).extractData())
