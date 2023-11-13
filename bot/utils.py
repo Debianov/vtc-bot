@@ -1,8 +1,10 @@
 import os
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
 import discord
 from discord.ext import commands
+
+from bot.data import DiscordObjectsGroup
 
 
 class ContextProvider:
@@ -152,3 +154,12 @@ def removeNesting(instance: Any) -> Any:
 		instance.remove(tmp)
 		instance.extend(tmp)
 	return instance
+
+def createDiscordObjectsGroupInstance(
+	instance_list: List[Type[DiscordObjectsGroup]],
+	discord_context: commands.Context
+) -> List[DiscordObjectsGroup]:
+	result: List[DiscordObjectsGroup] = []
+	for instance in instance_list:
+		result.append(instance(discord_context))
+	return result

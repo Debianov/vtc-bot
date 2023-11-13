@@ -9,6 +9,7 @@ from bot.data import (
 	DiscordObjectsGroup,
 	UserGroup
 )
+from bot.utils import createDiscordObjectsGroupInstance
 
 
 @pytest.mark.parametrize(
@@ -35,10 +36,11 @@ def test_good_analyze(
 	discordContext: commands.Context,
 	group_identif: str,
 	compare_relevant_groups: List[Type[DiscordObjectsGroup]]
-	) -> None:
+) -> None:
 	instance = DataGroupAnalyzator(discordContext, group_identif)
-	compare_relevenat_groups_instance: List[DiscordObjectsGroup] = []
-	for relevant_group in compare_relevant_groups:
-		compare_relevenat_groups_instance.append(relevant_group(discordContext))
+	compare_relevenat_groups_instance = createDiscordObjectsGroupInstance(
+		compare_relevant_groups,
+		discordContext
+	)
 	instance.analyze()
 	assert instance.relevant_groups == compare_relevenat_groups_instance

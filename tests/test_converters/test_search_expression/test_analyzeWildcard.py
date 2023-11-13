@@ -7,6 +7,7 @@ from discord.ext import commands
 from bot.converters import SearchExpression
 from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
 from bot.exceptions import SearchExpressionNotFound
+from bot.utils import createDiscordObjectsGroupInstance
 
 
 @pytest.mark.parametrize(
@@ -24,9 +25,10 @@ async def test_good_analyzeWildcard_with_one_group(
 	wildcard: str,
 	compare_data_groups: List[Type[DiscordObjectsGroup]]
 ) -> None:
-	compare_data_groups_instance: List[DiscordObjectsGroup] = []
-	for compare_data_group in compare_data_groups:
-		compare_data_groups_instance.append(compare_data_group(discordContext))
+	compare_data_groups_instance = createDiscordObjectsGroupInstance(
+		compare_data_groups,
+		discordContext
+	)
 	a = SearchExpression()
 	a.ctx = discordContext
 	a.wildcard = wildcard

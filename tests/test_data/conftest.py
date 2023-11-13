@@ -1,13 +1,12 @@
 
 import discord
 import discord.ext.test as dpytest
-import pytest
 import pytest_asyncio
 from discord.ext import commands
 
 from bot.help import BotHelpCommand
 from bot.main import BotConstructor
-from bot.utils import ContextProvider, DiscordObjEvaluator, MockLocator
+from bot.utils import ContextProvider
 
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
