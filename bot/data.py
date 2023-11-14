@@ -2,7 +2,7 @@
 Модуль хранит классы для работы с БД.
 """
 
-from typing import Any, Iterable, List, Optional, Type, Union
+from typing import Any, Iterable, List, Optional, Sequence, Type, Union
 
 import psycopg
 from discord.ext import commands
@@ -52,7 +52,7 @@ class DiscordObjectsGroup:
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Iterable[DiscordGuildObjects]:
+	) -> Sequence[DiscordGuildObjects]:
 		raise NotImplementedError
 
 class UserGroup(DiscordObjectsGroup):
@@ -67,7 +67,7 @@ class UserGroup(DiscordObjectsGroup):
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Iterable[DiscordGuildObjects]:
+	) -> Sequence[DiscordGuildObjects]:
 		if self.ctx.guild:
 			return self.ctx.guild.members
 		return []
@@ -85,7 +85,7 @@ class ChannelGroup(DiscordObjectsGroup):
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Iterable[DiscordGuildObjects]:
+	) -> Sequence[DiscordGuildObjects]:
 		if self.ctx.guild:
 			return self.ctx.guild.channels
 		return []
