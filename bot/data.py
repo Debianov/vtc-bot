@@ -151,10 +151,14 @@ class TargetGroup(DBObjectsGroup):
 		if nvalue:
 			match name:
 				case "act":
-					checking_nvalue = nvalue.replace(" ", "")
-					if not checking_nvalue.isalpha():
-						if not checking_nvalue.isdigit():
-							raise ValueError(name, nvalue)
+					try:
+						checking_nvalue = nvalue.replace(" ", "")
+					except AttributeError:
+						pass
+					else:
+						if not checking_nvalue.isalpha():
+							if not checking_nvalue.isdigit():
+								raise ValueError(name, nvalue)
 				case "name":
 					if not nvalue.isprintable():
 						raise ValueError(name, nvalue)
