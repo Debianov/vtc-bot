@@ -8,8 +8,10 @@ from discord import Member
 from discord.abc import GuildChannel
 
 
-class IDSupportObjects(Protocol):
+class IDObjects(Protocol):
 	
 	id: int
 
 DiscordGuildObjects = Union[GuildChannel, Member]
+
+

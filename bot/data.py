@@ -2,12 +2,14 @@
 Модуль хранит классы для работы с БД.
 """
 
-from typing import Any, Iterable, List, Optional, Sequence, Type, Union
+from typing import Any, Iterable, List, Optional, Sequence, Type, Union, \
+	Protocol
 
 import psycopg
 from discord.ext import commands
 
-from ._types import DiscordGuildObjects, IDSupportObjects
+from _types import IDObjects
+from ._types import DiscordGuildObjects, IDObjects
 
 
 class DataGroupAnalyzator:
@@ -120,9 +122,9 @@ class TargetGroup(DBObjectsGroup):
 		self,
 		dbconn: psycopg.AsyncConnection[Any],
 		context_id: int,
-		target: List[IDSupportObjects],
-		act: Union[IDSupportObjects, str],
-		d_in: List[IDSupportObjects],
+		target: List[IDObjects],
+		act: Union[IDObjects, str],
+		d_in: List[IDObjects],
 		name: Union[str, None] = None,
 		output: Union[str, None] = None,
 		priority: Union[int, None] = None,
@@ -245,3 +247,36 @@ class TargetGroup(DBObjectsGroup):
 				# которые появляются только при отсутствии указания флага -name.
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
+
+
+class TargetGroupAttrs(Protocol):
+
+	def __init__(
+			self,
+			dbconn: psycopg.AsyncConnection[Any],
+			context_id: int,
+			target: List[IDObjects],
+			act: Union[IDObjects, str],
+			d_in: List[IDObjects],
+			name: Union[str, None] = None,
+			output: Union[str, None] = None,
+			priority: Union[int, None] = None,
+			other: Union[str, None] = None,
+			dbrecord_id: Union[int, None] = None
+	):
+		self.dbconn = dbconn
+		self.context_id = context_id
+		self.dbrecord_id = dbrecord_id
+		self.target = target
+		self.act = act
+		self.d_in = d_in
+		self.name = name
+		self.output = output
+		self.priority = priority
+		self.other = other
+
+	def keys(self):
+		return list(self.__dict__.keys())
+
+	def __getitem__(self, item):
+		return self.__dict__[item]

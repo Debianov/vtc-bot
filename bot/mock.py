@@ -1,7 +1,7 @@
 
 import psycopg
 
-from ._types import IDSupportObjects
+from ._types import IDObjects
 
 
 class Mock:
@@ -15,7 +15,7 @@ class MockAsyncConnection(psycopg.AsyncConnection, Mock):
 	def __init__(self):
 		pass
 
-class IDHolder(Mock, IDSupportObjects):
+class IDHolder(Mock, IDObjects):
 
 	def __init__(self, id):
 		self.id = id

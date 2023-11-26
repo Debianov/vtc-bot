@@ -1,5 +1,5 @@
 import os
-from typing import Any, Iterable, List, Optional, Tuple, Type, Union
+from typing import Any, Iterable, List, Optional, Tuple, Type, Union, TypeVar, Generic
 
 import discord
 from discord.ext import commands
@@ -163,3 +163,10 @@ def createDiscordObjectsGroupInstance(
 	for instance in instance_list:
 		result.append(instance(discord_context))
 	return result
+
+T = TypeVar("T")
+class DelayedExpression(Generic[T]):
+
+	def __init__(self, expression):
+		self.expression = expression
+		self.is_done = False
