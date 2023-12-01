@@ -6,16 +6,27 @@ from bot.mock import IDHolder
 
 from psycopg import AsyncConnection
 from bot.data import TargetGroupAttrs
+from bot.utils import Case
+
+case_without_none = Case(
+	dbconn=DelayedExpression("db"),
+	context_id=1,
+	target=IDHolder(1),
+	act=IDHolder(1),
+	d_in=[IDHolder(3), IDHolder(2)],
+	name="sudo",
+	output="deb",
+	priority=2,
+	other=2,
+	dbrecord_id=3
+)
 
 
-class CaseForTargetGroup(TargetGroupAttrs):
-	pass
 
-
-class GoodCasesForTargetGroup:
+class GoodCasesForTargetGroup(Case):
 
 	def getCaseWithoutNone(self) \
-			-> Tuple[CaseForTargetGroup, CaseForTargetGroup]:
+			-> Tuple[TargetGroupAttrs, TargetGroupAttrs]:
 		without_none = {
 			"dbconn": DelayedExpression("db"),
 			"context_id": 1,
@@ -42,10 +53,10 @@ class GoodCasesForTargetGroup:
 			"dbrecord_id": 3
 		}
 
-		return (CaseForTargetGroup(**without_none),
-				CaseForTargetGroup(**expect_result))
+		return (TargetGroupAttrs(**without_none),
+				  TargetGroupAttrs(**expect_result))
 
-	def getCaseWithNone(self) -> Tuple[CaseForTargetGroup, CaseForTargetGroup]:
+	def getCaseWithNone(self) -> Tuple[TargetGroupAttrs, TargetGroupAttrs]:
 		with_none = {
 			"dbconn": DelayedExpression("db"),
 			"context_id": 1,
@@ -72,11 +83,11 @@ class GoodCasesForTargetGroup:
 			"dbrecord_id": 0
 		}
 
-		return (CaseForTargetGroup(**with_none),
-				CaseForTargetGroup(**expect_result))
+		return (TargetGroupAttrs(**with_none),
+				  TargetGroupAttrs(**expect_result))
 
 	def getCaseWithNoneExceptDBRecordID(self) \
-			-> Tuple[CaseForTargetGroup, CaseForTargetGroup]:
+			-> Tuple[TargetGroupAttrs, TargetGroupAttrs]:
 		with_none_except_id = {
 			"dbconn": DelayedExpression("db"),
 			"context_id": 1,
@@ -104,6 +115,6 @@ class GoodCasesForTargetGroup:
 		}
 
 		return (
-			CaseForTargetGroup(**with_none_except_id),
-			CaseForTargetGroup(**expect_result)
+			TargetGroupAttrs(**with_none_except_id),
+			TargetGroupAttrs(**expect_result)
 		)

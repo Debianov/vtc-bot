@@ -1,8 +1,8 @@
 import asyncio
 import pathlib
 import sys
-from typing import AsyncGenerator, Generator
-
+from typing import AsyncGenerator, Generator, Tuple, Dict, Any
+from bot.utils import Case
 import discord
 import discord.ext.test as dpytest
 import pytest
@@ -15,6 +15,7 @@ sys.path.append(str(root))
 
 from bot.help import BotHelpCommand  # flake8: noqa: I005
 from bot.main import BotConstructor  # flake8: noqa: I005
+from bot.utils import DelayedExpressionEvaluator
 
 # flake8: noqa: I005
 pytest_plugins = ('pytest_asyncio',)
@@ -29,3 +30,16 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 async def cleanUp() -> AsyncGenerator[None, None]:
 	yield
 	await dpytest.empty_queue()
+
+def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
+	if pyfuncitem.get_closest_marker("doDelayedExpression"):
+		params_from_func = pyfuncitem.callspec.params
+		params_and_fixtures = pyfuncitem.funcargs
+		params_with_case, fixtures = (DelayedExpressionEvaluator.
+			preparePytestFuncAttrsToDelayExprEval(
+				params_from_func,
+				params_and_fixtures
+			))
+		evaluated_params_from_func = DelayedExpressionEvaluator(params_with_case,
+																				  fixtures).eval()
+		print(evaluated_params_from_func)

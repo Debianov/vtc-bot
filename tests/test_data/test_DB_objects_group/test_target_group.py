@@ -4,9 +4,9 @@ import psycopg
 
 from bot.data import TargetGroup
 from bot.mock import IDHolder
+from good_cases import GoodCasesForTargetGroup, TargetGroupAttrs
 
-from good_cases import GoodCasesForTargetGroup, CaseForTargetGroup
-
+@pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
 	"pass_args, expect_args",
 	[
@@ -17,8 +17,8 @@ from good_cases import GoodCasesForTargetGroup, CaseForTargetGroup
 )
 def test_init_target_group(
 		db: psycopg.AsyncConnection[Any],
-		pass_args: CaseForTargetGroup,
-		expect_args: CaseForTargetGroup
+		pass_args: TargetGroupAttrs,
+		expect_args: TargetGroupAttrs
 ):
 	instance = TargetGroup(**pass_args)  # type: ignore [arg-type]
 	assert instance.dbconn == expect_args["dbconn"]
