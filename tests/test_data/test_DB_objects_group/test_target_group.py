@@ -4,14 +4,14 @@ import psycopg
 
 from bot.data import TargetGroup
 from bot.mock import IDHolder
-from good_cases import GoodCasesForTargetGroup, TargetGroupAttrs
+from good_cases import case_without_none
 
 @pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
 	"pass_args, expect_args",
 	[
-		GoodCasesForTargetGroup().getCaseWithoutNone(),
-		GoodCasesForTargetGroup().getCaseWithNone(),
+		(case_without_none, case_without_none),
+		(case_with_none, case_without_none
 		GoodCasesForTargetGroup().getCaseWithNoneExceptDBRecordID()
 	]
 )

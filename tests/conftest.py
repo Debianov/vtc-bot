@@ -32,14 +32,18 @@ async def cleanUp() -> AsyncGenerator[None, None]:
 	await dpytest.empty_queue()
 
 def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
+	pytest.mark.doDelayedExpression = "is code below"
 	if pyfuncitem.get_closest_marker("doDelayedExpression"):
 		params_from_func = pyfuncitem.callspec.params
 		params_and_fixtures = pyfuncitem.funcargs
-		params_with_case, fixtures = (DelayedExpressionEvaluator.
-			preparePytestFuncAttrsToDelayExprEval(
-				params_from_func,
-				params_and_fixtures
-			))
-		evaluated_params_from_func = DelayedExpressionEvaluator(params_with_case,
-																				  fixtures).eval()
-		print(evaluated_params_from_func)
+		params_with_case = filterParametersWithCase(params_from_func)
+		fixtures = filterFixtures(params_and_fixtures)
+		for case in params_with_case.values():
+			params_with_delayed_expr = case.getDelayedExprs()
+			params_with_undelayed_expr: Dict[str, Any] = {}
+			for (param, its_delay_exp) in params_with_delayed_expr:
+				eval_results = DelayedExpressionEvaluator(
+					list(its_delay_exp),
+					fixtures).eval()
+				params_with_undelayed_expr[param] = eval_results
+			case.setUndelayedExprs(params_with_undelayed_expr)
