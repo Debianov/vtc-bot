@@ -1,9 +1,17 @@
 import os
-from typing import (Any, Iterable, List, Optional, Tuple, Type, Union, TypeVar,
-						  Generic, Dict)
+from typing import (
+	Any,
+	Dict,
+	Iterable,
+	List,
+	Optional,
+	Tuple,
+	Type,
+	TypeVar,
+	Union
+)
 
 import discord
-import pytest
 from discord.ext import commands
 
 from bot.data import DiscordObjectsGroup
@@ -168,36 +176,71 @@ def createDiscordObjectsGroupInstance(
 
 T = TypeVar("T")
 
-class Case:
+class DelayedExpression:
 
+	def __init__(self, expression: str):
+		self.expression = expression
+
+	@staticmethod
+	def isMine(check_instance: Any) -> bool:
+		"""
+		The load == implement for a purpose that isinstance for an instance check
+		don't work due a python `features <https://bugs.python.org/issue7555>`.
+		"""
+		return hasattr(check_instance, "expression")
+
+
+class Case:
+	"""
+	The class for storing and passing args to test funcs. Also implement
+	special storage for a args that are `DelayedExpressions`.
+	"""
 	def __init__(self, **kwargs: Any):
 		self.params_with_exprs_to_eval: Dict[str, DelayedExpression] = {}
+		self.simple_params: Dict[str, Any] = {}
 		for key, value in kwargs.items():
-			if isinstance(value, DelayedExpression):
-				self.exprs_to_eval[key] = value
+			if DelayedExpression.isMine(value):
+				self.params_with_exprs_to_eval[key] = value
 			else:
-				self.__dict__[key] = value
+				self.simple_params[key] = value
+
+	def keys(self):
+		"""
+		The load func for a map object implementation.
+		:return:
+		"""
+		return list(self.simple_params.keys())
+
+	def __getitem__(self, param) -> Any:
+		return self.simple_params[param]
+
+	def __setitem__(self, param: str, value: Any) -> None:
+		self.simple_params[param] = value
 
 	def getDelayedExprs(self) -> Dict[str, DelayedExpression]:
 		return self.params_with_exprs_to_eval
 
 	def setUndelayedExprs(self, undelayed_exprs: Dict[str, Any]) -> None:
-		self.params_with_evaled_exprs = undelayed_exprs
-
-	def getUndelayedExprs(self) -> None:
-		return self.params_with_evaled_exprs
-
-
+		"""
+		Args:
+			undelayed_exprs Dict[str, Any]: any params with a undelayed (evaled)
+			expressions.
+		"""
+		self.simple_params.update(undelayed_exprs)
+		for param in undelayed_exprs.keys():
+			self.params_with_exprs_to_eval.pop(param)
+		
 class DelayedExpressionEvaluator:
 
 	"""
 	Class made with a `DelayedExpression` handle purpose.
 	"""
 
-	def __init__(self,
-					 delayed_expressions: List[DelayedExpression],
-					 global_vars: Dict[str, Any]
-					 ) -> None:
+	def __init__(
+		self,
+		delayed_expressions: List[DelayedExpression],
+		global_vars: Dict[str, Any]
+	) -> None:
 		"""
 		Args:
 			global_vars (Dict[str, Any]): any vars, that can be used for
@@ -210,30 +253,49 @@ class DelayedExpressionEvaluator:
 		self._setGlobalVarsInLocals(locals())
 		result = []
 		for delay_expression in self.delayed_expressions:
-			result.append(eval(delay_expression))
+			result.append(eval(delay_expression.expression))
 		return result
 
 	def _setGlobalVarsInLocals(self, locals: Dict[str, Any]):
-		for (key, value) in self.global_vars:
+		for (key, value) in self.global_vars.items():
 			locals[key] = value
 		return locals
 
 def filterParametersWithCase(
-		params_from_func: Dict[str, Case]) -> Dict[str, Case]:
+	params_from_func: Dict[str, object]
+) -> Dict[str, Case]:
 	params_with_case: Dict[str, Case] = {}
 	for (param, object) in params_from_func.items():
 		if isinstance(object, Case):
 			params_with_case[param] = object
 	return params_with_case
 
-def filterFixtures(params_and_fixtures: Dict[str, Any]) -> Dict[str, Any]:
+def filterFixtures(
+	params_and_fixtures: Dict[str, Any],
+	params_with_case: Dict[str, Case]
+) -> Dict[str, Any]:
+	fixtures: Dict[str, Case] = params_and_fixtures.copy()
 	for param_key in params_with_case.keys():
-		params_and_fixtures.pop(param_key)
-	fixtures = params_and_fixtures
+		fixtures.pop(param_key)
 	return fixtures
 
-class DelayedExpression(Generic[T]):
-
-	def __init__(self, expression: str):
-		self.expression = expression
-		self.is_done = False
+def evalAndWriteDelayedExprInParams(
+	cases: List[Case],
+	fixtures: Dict[str, Any]
+) -> None:
+	"""
+	The func acts on Case directly via a reference.
+	Args:
+		cases(List[Case]): any `Case` instances that located in Dict with params
+		as value (e.x `pytest.Function.callspec.params <https://docs.pytest.org/
+		en/7.1.x/reference/reference.html#pytest.Function>`).
+	"""
+	for case in cases:
+		params_with_delayed_expr = case.getDelayedExprs()
+		params_with_undelayed_expr: Dict[str, Any] = {}
+		for (param, its_delay_exp) in params_with_delayed_expr.items():
+			eval_results = DelayedExpressionEvaluator(
+				[its_delay_exp],
+				fixtures).eval()
+			params_with_undelayed_expr[param] = eval_results
+		case.setUndelayedExprs(params_with_undelayed_expr)

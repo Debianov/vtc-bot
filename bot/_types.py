@@ -13,5 +13,3 @@ class IDObjects(Protocol):
 	id: int
 
 DiscordGuildObjects = Union[GuildChannel, Member]
-
-
