@@ -1,3 +1,7 @@
+"""
+The module contains Attr objects.
+"""
+
 from typing import Any, List, Union
 
 import psycopg
