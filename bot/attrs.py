@@ -1,4 +1,4 @@
-from typing import Any, List, Protocol, Union
+from typing import Any, List, Union
 
 import psycopg
 
