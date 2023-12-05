@@ -1,33 +1,24 @@
 from typing import Any
-
-import psycopg
 import pytest
-from .good_cases import (
-	case_with_none,
-	case_with_none_except_db_record_id,
-	case_without_none,
-	expect_case_for_case_with_none
-)
-# import test_data.test_DB_objects_group.good_cases
+import psycopg
 
 from bot.data import TargetGroup
-from bot.utils import Case
-
+from bot.mock import IDHolder
+from good_cases import case_without_none
 
 @pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
 	"pass_args, expect_args",
 	[
 		(case_without_none, case_without_none),
-		(case_with_none, expect_case_for_case_with_none),
-		(case_with_none_except_db_record_id,
-		 case_with_none_except_db_record_id)
+		(case_with_none, case_without_none
+		GoodCasesForTargetGroup().getCaseWithNoneExceptDBRecordID()
 	]
 )
 def test_init_target_group(
-	db: psycopg.AsyncConnection[Any],
-	pass_args: Case,
-	expect_args: Case
+		db: psycopg.AsyncConnection[Any],
+		pass_args: TargetGroupAttrs,
+		expect_args: TargetGroupAttrs
 ):
 	instance = TargetGroup(**pass_args)  # type: ignore [arg-type]
 	assert instance.dbconn == expect_args["dbconn"]
