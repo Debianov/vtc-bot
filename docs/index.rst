@@ -18,12 +18,6 @@
    :members:
    :undoc-members:
 
-Модуль bot.config
-==================
-.. automodule:: bot.config
-   :members:
-   :undoc-members:
-
 Модуль bot.converters
 ======================
 .. automodule:: bot.converters
@@ -41,6 +35,21 @@
 .. automodule:: bot.flags
    :members:
    :undoc-members:
+
+Модуль bot.attrs
+======================
+.. automodule:: bot.attrs
+   :members:
+   :undoc-members:
+
+Модуль bot.utils
+======================
+.. automodule:: bot.utils
+   :members:
+   :undoc-members:
+
+.. include::
+   FAQ.rst
 
 Indices and tables
 ==================
