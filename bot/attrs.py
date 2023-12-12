@@ -1,11 +1,14 @@
 from typing import Any, List, Union
 
 import psycopg
-
+from abc import ABCMeta
 from bot._types import IDObjects
 
 
-class TargetGroupAttrs:
+class Attrs(metaclass=ABCMeta):
+	pass
+
+class TargetGroupAttrs(Attrs):
 
 	def __init__(
 		self,

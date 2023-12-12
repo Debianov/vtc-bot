@@ -8,7 +8,7 @@ import psycopg
 from discord.ext import commands
 
 from ._types import DiscordGuildObjects, IDObjects
-
+from .attrs import TargetGroupAttrs
 
 class DataGroupAnalyzator:
 	"""
@@ -118,16 +118,7 @@ class TargetGroup(DBObjectsGroup):
 
 	def __init__(
 		self,
-		dbconn: psycopg.AsyncConnection[Any],
-		context_id: int,
-		target: List[IDObjects],
-		act: Union[IDObjects, str],
-		d_in: List[IDObjects],
-		name: Union[str, None] = None,
-		output: Union[str, None] = None,
-		priority: Union[int, None] = None,
-		other: Union[str, None] = None,
-		dbrecord_id: Union[int, None] = None
+		**attrs: TargetGroupAttrs
 	) -> None:
 		self.dbconn = dbconn
 		self.context_id = context_id
