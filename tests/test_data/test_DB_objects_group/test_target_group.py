@@ -5,6 +5,7 @@ import pytest
 
 from bot.data import TargetGroup
 from bot.utils import Case
+from bot.attrs import TargetGroupAttrs
 
 from .good_cases import (
 	case_with_none,
@@ -28,7 +29,7 @@ def test_init_target_group(
 	pass_args: Case,
 	expect_args: Case
 ):
-	instance = TargetGroup(**pass_args)  # type: ignore [arg-type]
+	instance = TargetGroup(TargetGroupAttrs(**pass_args))  # type: ignore [arg-type]
 	assert instance.dbconn == expect_args["dbconn"]
 	assert instance.context_id == expect_args["context_id"]
 	assert instance.target == expect_args["target"]

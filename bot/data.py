@@ -118,18 +118,18 @@ class TargetGroup(DBObjectsGroup):
 
 	def __init__(
 		self,
-		**attrs: TargetGroupAttrs
+		attrs: TargetGroupAttrs
 	) -> None:
-		self.dbconn = dbconn
-		self.context_id = context_id
-		self.dbrecord_id = dbrecord_id or self.generateID()
-		self.target = target
-		self.act = act
-		self.d_in = d_in
-		self.name = name
-		self.output = output
-		self.priority = priority
-		self.other = other
+		self.dbconn = attrs["dbconn"]
+		self.context_id = attrs["context_id"]
+		self.dbrecord_id = attrs["dbrecord_id"] or self.generateID()
+		self.target = attrs["target"]
+		self.act = attrs["act"]
+		self.d_in = attrs["d_in"]
+		self.name = attrs["name"]
+		self.output = attrs["output"]
+		self.priority = attrs["priority"]
+		self.other = attrs["other"]
 
 	def generateID(self) -> int:
 		return 0
@@ -194,8 +194,8 @@ class TargetGroup(DBObjectsGroup):
 				dbrecord_id, context_id, target, act, d_in, name, priority, output, \
 				other = row[0], row[1], row[2], row[3], row[4], row[5], row[6], \
 				row[7], row[8]
-				result.append(TargetGroup(self.dbconn, context_id, target,
-					act, d_in, name, priority, output, other, dbrecord_id))
+				result.append(TargetGroup(TargetGroupAttrs(self.dbconn, context_id, target,
+					act, d_in, name, priority, output, other, dbrecord_id)))
 		return result
 
 	def getComparableAttrs(self) -> Union[List[Any], None]:

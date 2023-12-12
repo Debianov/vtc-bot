@@ -19,6 +19,7 @@ from .exceptions import ExpressionNotFound, UnhandlePartMessageSignal
 from .flags import UserLogFlags
 from .main import BotConstructor
 from .utils import ContextProvider, removeNesting
+from .attrs import TargetGroupAttrs
 
 
 class UserLog(commands.Cog):
@@ -111,7 +112,7 @@ class UserLog(commands.Cog):
 				initial_act or act, initial_d_in or d_in, flags.name,
 				flags.output, flags.priority, flags.other)
 
-		target_instance = TargetGroup(**TargetGroupAttrs(
+		target_instance = TargetGroup(TargetGroupAttrs(
 			self.dbconn,
 			ctx.guild.id,
 			target=target,  # type: ignore [arg-type]
