@@ -78,7 +78,7 @@ def evalAndWriteDelayedExprInParams(
 		params_with_undelayed_expr: Dict[str, Any] = {}
 		for (param, its_delay_exp) in params_with_delayed_expr.items():
 			eval_results = DelayedExpressionEvaluator(
-				[its_delay_exp],
+				its_delay_exp,
 				fixtures).eval()
 			params_with_undelayed_expr[param] = eval_results
 		case.setUndelayedExprs(params_with_undelayed_expr)

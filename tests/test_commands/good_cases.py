@@ -8,9 +8,11 @@ default_case = Case(
 )
 
 default_case_with_several_users = Case(
-    target=[DelayedExpression('mockLocator.members[0]'), DelayedExpression('mockLocator.members[1]')],
+    target=[DelayedExpression('mockLocator.members[0]'),
+            DelayedExpression('mockLocator.members[1]')],
     act="23",
-    d_in=[DelayedExpression('mockLocator.members[2]'), DelayedExpression('mockLocator.members[3]')],
+    d_in=[DelayedExpression('mockLocator.members[2]'),
+          DelayedExpression('mockLocator.members[3]')],
     flags={"-name": "Test", "-output": "", "-priority": "-1", "other": ""}
 )
 

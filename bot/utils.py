@@ -38,17 +38,17 @@ class MockLocator:
 	"""
 
 	def __init__(
-		self,
-		guild: discord.Guild,
-		channel: discord.abc.GuildChannel,
-		members: List[discord.Member]
+			self,
+			guild: discord.Guild,
+			channel: discord.abc.GuildChannel,
+			members: List[discord.Member]
 	) -> None:
 		self.guild = guild
 		self.channel = channel
 		self.members = members
 
-class DiscordObjEvaluator:
 
+class DiscordObjEvaluator:
 	"""
 	Существование класса обусловлено непреодолимым желанием разработчика
 	иметь в записях под декоратором parametrize (в тестах) человеческие извлечения
@@ -68,8 +68,8 @@ class DiscordObjEvaluator:
 		return self.mock_locator
 
 	def extractIDAndGenerateObject(
-		self,
-		sequence: List[str],
+			self,
+			sequence: List[str],
 	) -> Iterable[str]:
 		if sequence == [""]:
 			return sequence
@@ -81,9 +81,9 @@ class DiscordObjEvaluator:
 		return message_part if message_part else sequence
 
 	def extractObjects(
-		self,
-		calls_sequence: List[str],
-		current_ctx: commands.Context
+			self,
+			calls_sequence: List[str],
+			current_ctx: commands.Context
 	) -> List[List[discord.abc.Messageable]]:
 		result: List[List[discord.abc.Messageable]] = []
 		for call in calls_sequence:
@@ -92,8 +92,8 @@ class DiscordObjEvaluator:
 		return result
 
 	def evalForMockLocator(
-		self,
-		expression: str
+			self,
+			expression: str
 	) -> Any:
 		split_expr = expression.split(".")
 		obj_name = split_expr[0]
@@ -101,21 +101,23 @@ class DiscordObjEvaluator:
 			return None
 		attr_part = split_expr[1:]
 		(attributes, indices) = self.evalAttributePart(attr_part)
-		intermediate_eval_result: Any =\
+		intermediate_eval_result: Any = \
 			(self.mock_locator.__dict__[attributes[0]][indices[0]]
-			if indices[0] is not None else
-			self.mock_locator.__dict__[attributes[0]])
+			 if indices[0] is not None else
+			 self.mock_locator.__dict__[attributes[0]])
 		if len(attributes) > 1 and len(indices) > 1:
 			for (attr, index) in zip(attributes[1:], indices[1:]):
 				if index is not None:
-					intermediate_eval_result = getattr(intermediate_eval_result, attr)[index]
+					intermediate_eval_result = \
+						getattr(intermediate_eval_result, attr)[index]
 				else:
-					intermediate_eval_result = getattr(intermediate_eval_result, attr)
-		return (total_eval_result := intermediate_eval_result) # noqa: F841
+					intermediate_eval_result = getattr(
+						intermediate_eval_result, attr)
+		return (total_eval_result := intermediate_eval_result)  # noqa: F841
 
 	def evalAttributePart(
-		self,
-		attrs: List[str]
+			self,
+			attrs: List[str]
 	) -> Tuple[List[str], List[Union[int, None]]]:
 		attributes: List[str] = []
 		indices: List[Union[int, None]] = []
@@ -127,7 +129,9 @@ class DiscordObjEvaluator:
 
 	def extractIndex(self, attr: str) -> Tuple[str, Union[int, None]]:
 		if (((left_bracket_ind := attr.find("[")) == -1) and
-			((right_bracket_ind := attr.find("]")) == -1)): # noqa: F841
+				((
+						 right_bracket_ind := attr.find(
+							 "]")) == -1)):  # noqa: F841
 			return (attr, None)
 		cycle_cursor = left_bracket_ind + 1
 		index = ""
@@ -136,6 +140,7 @@ class DiscordObjEvaluator:
 			cycle_cursor += 1
 		attr_without_index_part = attr.removesuffix(f"[{index}]")
 		return (attr_without_index_part, int(index))
+
 
 def getEnvIfExist(*env_names: str) -> Union[List[str], None]:
 	"""
@@ -152,6 +157,7 @@ def getEnvIfExist(*env_names: str) -> Union[List[str], None]:
 			saved_data.append(result)
 	return saved_data
 
+
 def removeNesting(instance: Any) -> Any:
 	"""
 		Функция для удаления вложенностей.
@@ -165,16 +171,19 @@ def removeNesting(instance: Any) -> Any:
 		instance.extend(tmp)
 	return instance
 
+
 def createDiscordObjectsGroupInstance(
-	instance_list: List[Type[DiscordObjectsGroup]],
-	discord_context: commands.Context
+		instance_list: List[Type[DiscordObjectsGroup]],
+		discord_context: commands.Context
 ) -> List[DiscordObjectsGroup]:
 	result: List[DiscordObjectsGroup] = []
 	for instance in instance_list:
 		result.append(instance(discord_context))
 	return result
 
+
 T = TypeVar("T")
+
 
 class DelayedExpression:
 
@@ -194,15 +203,89 @@ class Case:
 	"""
 	The class for storing and passing args to test funcs. Also implement
 	special storage for a args that are `DelayedExpressions`.
+
+	Access to class attributes is any call to `__getitem__`.
 	"""
-	def __init__(self, **kwargs: Any):
-		self.params_with_exprs_to_eval: Dict[str, DelayedExpression] = {}
-		self.simple_params: Dict[str, Any] = {}
+
+	def __init__(self, **kwargs: Any) -> None:
+		self.params_with_exprs_to_eval: Dict[str, List[DelayedExpression]] \
+			= {}
+		self.params_with_values: Dict[
+			str, Optional[DelayedExpression]] = {}
 		for key, value in kwargs.items():
-			if DelayedExpression.isMine(value):
-				self.params_with_exprs_to_eval[key] = value
-			else:
-				self.simple_params[key] = value
+			self._separateEvalExprsFromValues(kwargs[key], value)
+			# if DelayedExpression.isMine(value):
+			# 	self.params_with_exprs_to_eval[key] = [value]
+			# elif isinstance(value, list) or isinstance(value, dict):
+			# 	self._separateExprsToEvalFromValues(key, value)
+			# 	delayed_exprs_from_param = (
+			# 		self._extractDelayedExprsFromParamValue(value))
+			# 	self.params_with_exprs_to_eval[key] = (
+			# 		delayed_exprs_from_param)
+			# 	self.params_with_values[key] = value
+			# else:
+			# 	self.simple_params[key] = value
+
+	def _separateEvalExprsFromValues(
+			self,
+			storage: Union[Dict[Any, Any], List[Any]],
+			value: Any
+	) -> None:
+		if isinstance(value, List):
+			for value in value:
+				self._separateEvalExprsFromValues(storage, value)
+		elif isinstance(value, Dict):
+			for key, value in value:
+				self._separateEvalExprsFromValues(storage[key], value)
+		elif isinstance(value, DelayedExpression):
+			storage[key] = value
+		else:
+			storage[key] = value
+		# 		if DelayedExpression.isMine(value):
+		# 			self.params_with_exprs_to_eval[key] = (
+		# 				self.params_with_exprs_to_eval[key].append(value)
+		# 			)
+		# 		else:
+		# 			self.params_with_values[key] = (
+		# 				self.params_with_values[key].append(value))
+		# if isinstance(complex_value, dict):
+		# 	self.params_with_exprs_to_eval[key] = {}
+		# 	self.params_with_values[key] = {}
+		# 	for complex_key, value in complex_value:
+		# 		if DelayedExpression.isMine(value):
+		# 			self.params_with_exprs_to_eval[key] = (
+		# 				self.params_with_exprs_to_eval[key].update(
+		# 					{complex_key: value}
+		# 				)
+		# 			)
+		# 		else:
+		# 			self.params_with_values[key] = (
+		# 				self.params_with_values[key].append(value))
+
+	def _isParamContainDelayedExprsAndValues(self, value: Any) -> bool:
+		"""
+		Check value for containing of at least one `DelayedExpression` and
+		other values (it that is don't delay, i.e any objects except
+		`DelayedExpression`).
+		"""
+		result = False
+		for elem in value:
+			if isinstance(elem, DelayedExpression):
+				result = True
+			elif result is True:
+				result = False
+				break
+		return result
+
+	def _extractDelayedExprsFromParamValue(
+			self,
+			value: Iterable
+	) -> List[DelayedExpression]:
+		delayed_exprs = []
+		for elem in value:
+			if isinstance(elem, DelayedExpression):
+				delayed_exprs.append(elem)
+		return delayed_exprs
 
 	def keys(self):
 		"""
@@ -217,29 +300,69 @@ class Case:
 	def __setitem__(self, param: str, value: Any) -> None:
 		self.simple_params[param] = value
 
-	def getDelayedExprs(self) -> Dict[str, DelayedExpression]:
+	def getDelayedExprs(self) -> Dict[str, List[DelayedExpression]]:
 		return self.params_with_exprs_to_eval
 
 	def setUndelayedExprs(self, undelayed_exprs: Dict[str, Any]) -> None:
 		"""
 		Args:
-			undelayed_exprs Dict[str, Any]: any params with a undelayed (evaled)
-			expressions.
+			undelayed_exprs Dict[str, Any]: any params with a undelayed
+			(evaled) expressions.
 		"""
-		self.simple_params.update(undelayed_exprs)
-		for param in undelayed_exprs.keys():
+		for param, undelayed_expr in undelayed_exprs.items():
+			new_value: Any = None
+			if param in list(self.params_with_values.keys()):
+				mixed_value = self.params_with_values[param]
+				new_value = self._merge(undelayed_expr, mixed_value)
+				self.params_with_values.pop(param)
+			self.simple_params.update({param: new_value or undelayed_expr})
 			self.params_with_exprs_to_eval.pop(param)
-		
-class DelayedExpressionEvaluator:
 
+	@staticmethod
+	def _merge(
+			only_undelayed_exprs: Any,
+			delayed_exprs_and_values: Any
+	) -> Union[Dict[Any, Any], List[Any]]:
+		"""
+		Merge dict or list objects. Use to merge an undelayed expressions
+		with other values as a comparison keys (in dict case) or index
+		(in list case).
+
+		Each argument must be of the same type.
+
+		Returns:
+			Union[Dict[Any, Any], List[Any]] - depending on the argument
+			passed
+		"""
+		if isinstance(only_undelayed_exprs, dict) and isinstance(
+				delayed_exprs_and_values, dict):
+			result: Dict[Any, Any] = {}
+			for key, value in only_undelayed_exprs():
+				if (key in list(delayed_exprs_and_values.keys()) and
+						DelayedExpression.isMine(
+							delayed_exprs_and_values[key])):
+					result[key] = value
+				else:
+					result[key] = delayed_exprs_and_values[key]
+		elif isinstance(only_undelayed_exprs, list) and isinstance(delayed_exprs_and_values, list):
+			result: List[Any] = []
+			for (ind, value) in enumerate(only_undelayed_exprs):
+				if DelayedExpression.isMine(delayed_exprs_and_values[ind]):
+					result.append(value)
+				else:
+					result.append(delayed_exprs_and_values[ind])
+		return result
+
+
+class DelayedExpressionEvaluator:
 	"""
 	Class made with a `DelayedExpression` handle purpose.
 	"""
 
 	def __init__(
-		self,
-		delayed_expressions: List[DelayedExpression],
-		global_vars: Dict[str, Any]
+			self,
+			delayed_expressions: List[DelayedExpression],
+			global_vars: Dict[str, Any]
 	) -> None:
 		"""
 		Args:
