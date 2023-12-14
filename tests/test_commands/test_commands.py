@@ -5,62 +5,41 @@ import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import DiscordObjEvaluator, MockLocator
-
+from bot.utils import DiscordObjEvaluator, MockLocator, Case, DelayedExpressionEvaluator, DelayedExpression
+from good_cases import default_case, default_case_with_several_users, default_case_with_other_target_name
 
 @pytest.mark.parametrize(
-	"target, act, d_in, flags",
-	[
-		(
-			['mockLocator.members[0]'],
-			"23",
-			['mockLocator.members[1]'],
-			{"-name": "Test", "-output": "", "-priority": "-1", "other": ""}
-		),
-		(
-			['mockLocator.members[0]', 'mockLocator.members[1]'],
-			"23",
-			['mockLocator.members[2]', 'mockLocator.members[3]'],
-			{"-name": "Test", "-output": "", "-priority": "-1", "other": ""}
-		),
-		(
-			['mockLocator.members[0]'],
-			"23",
-			['mockLocator.members[1]'],
-			{"-name": "Aboba", "-output": "", "-priority": "-1", "other": ""}
-		)
-	],
+	"case",
+	[default_case, default_case_with_several_users, default_case_with_other_target_name]
 )
+
+@pytest.mark.doDelayedExpression
 @pytest.mark.asyncio
 async def test_good_log_create_with_flags(
-	bot: commands.Bot,
 	db: psycopg.AsyncConnection[Any],
-	target: List[str],
-	act: str,
-	d_in: List[str],
-	flags: Dict[str, str],
+	# target: List[str],
+	# act: str,
+	# d_in: List[str],
+	# flags: Dict[str, str],
 	mockLocator: MockLocator,
-	discordObjectEvaluator: DiscordObjEvaluator
+	# discordObjectEvaluator: DiscordObjEvaluator
+	case: Case
 ) -> None:
-	target_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(target)
-	d_in_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(d_in)
 	joint_flags: Iterable[str] = filter(
 		lambda x: False if not bool(x[1]) else x, # type: ignore [arg-type]
-		flags.items())
+		case.flags.items())
 	joint_flags = list(map(lambda x: " ".join(list(x)), joint_flags))
-	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} "
-	f"{act} {' '.join(d_in_message_part)} {' '.join(joint_flags)}")
+	await dpytest.message(f"sudo log 1 {' '.join(case.target)} "
+	f"{case.act} {' '.join(case.d_in)} {' '.join(joint_flags)}")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
 			"SELECT * FROM target"
 		)
 		for row in await acur.fetchall():
-			flags_values = list(map(lambda x: None if not x else x, flags.values()))
+			flags_values = list(map(lambda x: None if not x else x, case.flags.values()))
 			assert row == ("0", str(mockLocator.guild.id),
-				target, act, d_in, *flags_values)
+				case.target, case.act, case.d_in, *case.flags_values)
 
 @pytest.mark.asyncio
 async def test_good_log_create_without_flags(
