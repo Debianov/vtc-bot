@@ -8,12 +8,14 @@ from typing import (
 	Tuple,
 	Type,
 	TypeVar,
-	Union
+	Union,
+	SupportsIndex
 )
 
 import discord
 from discord.ext import commands
 
+from _types import SupportItems
 from bot.data import DiscordObjectsGroup
 
 
@@ -188,7 +190,11 @@ T = TypeVar("T")
 class DelayedExpression:
 
 	def __init__(self, expression: str):
+		self.eval_expression: Any = Any
 		self.expression = expression
+
+	def setEvaledResult(self, result: Any):
+		self.eval_expression = result
 
 	@staticmethod
 	def isMine(check_instance: Any) -> bool:
@@ -196,190 +202,129 @@ class DelayedExpression:
 		The load == implement for a purpose that isinstance for an instance check
 		don't work due a python `features <https://bugs.python.org/issue7555>`.
 		"""
-		return hasattr(check_instance, "expression")
+		return hasattr(check_instance, "expression") and hasattr(check_instance, "eval_expression")
 
 
 class Case:
 	"""
 	The class for storing and passing args to test funcs. Also implement
-	special storage for a args that are `DelayedExpressions`.
+	special storage for an args that are `DelayedExpressions`.
 
 	Access to class attributes is any call to `__getitem__`.
 	"""
 
 	def __init__(self, **kwargs: Any) -> None:
-		self.params_with_exprs_to_eval: Dict[str, List[DelayedExpression]] \
-			= {}
-		self.params_with_values: Dict[
-			str, Optional[DelayedExpression]] = {}
-		for key, value in kwargs.items():
-			self._separateEvalExprsFromValues(kwargs[key], value)
-			# if DelayedExpression.isMine(value):
-			# 	self.params_with_exprs_to_eval[key] = [value]
-			# elif isinstance(value, list) or isinstance(value, dict):
-			# 	self._separateExprsToEvalFromValues(key, value)
-			# 	delayed_exprs_from_param = (
-			# 		self._extractDelayedExprsFromParamValue(value))
-			# 	self.params_with_exprs_to_eval[key] = (
-			# 		delayed_exprs_from_param)
-			# 	self.params_with_values[key] = value
-			# else:
-			# 	self.simple_params[key] = value
+		self.all_params = kwargs
+		self.storages_with_delayed_exprs: Dict[Any, Any] = {}
+		self.findDelayedExprs(kwargs)
 
-	def _separateEvalExprsFromValues(
-			self,
-			storage: Union[Dict[Any, Any], List[Any]],
-			value: Any
-	) -> None:
-		if isinstance(value, List):
-			for value in value:
-				self._separateEvalExprsFromValues(storage, value)
-		elif isinstance(value, Dict):
-			for key, value in value:
-				self._separateEvalExprsFromValues(storage[key], value)
-		elif isinstance(value, DelayedExpression):
-			storage[key] = value
-		else:
-			storage[key] = value
-		# 		if DelayedExpression.isMine(value):
-		# 			self.params_with_exprs_to_eval[key] = (
-		# 				self.params_with_exprs_to_eval[key].append(value)
-		# 			)
-		# 		else:
-		# 			self.params_with_values[key] = (
-		# 				self.params_with_values[key].append(value))
-		# if isinstance(complex_value, dict):
-		# 	self.params_with_exprs_to_eval[key] = {}
-		# 	self.params_with_values[key] = {}
-		# 	for complex_key, value in complex_value:
-		# 		if DelayedExpression.isMine(value):
-		# 			self.params_with_exprs_to_eval[key] = (
-		# 				self.params_with_exprs_to_eval[key].update(
-		# 					{complex_key: value}
-		# 				)
-		# 			)
-		# 		else:
-		# 			self.params_with_values[key] = (
-		# 				self.params_with_values[key].append(value))
-
-	def _isParamContainDelayedExprsAndValues(self, value: Any) -> bool:
-		"""
-		Check value for containing of at least one `DelayedExpression` and
-		other values (it that is don't delay, i.e any objects except
-		`DelayedExpression`).
-		"""
-		result = False
-		for elem in value:
-			if isinstance(elem, DelayedExpression):
-				result = True
-			elif result is True:
-				result = False
-				break
-		return result
-
-	def _extractDelayedExprsFromParamValue(
-			self,
-			value: Iterable
-	) -> List[DelayedExpression]:
-		delayed_exprs = []
-		for elem in value:
-			if isinstance(elem, DelayedExpression):
-				delayed_exprs.append(elem)
-		return delayed_exprs
-
-	def keys(self):
+	def keys(self) -> List[Any]:
 		"""
 		The load func for a map object implementation.
 		:return:
 		"""
-		return list(self.simple_params.keys())
+		return list(self.all_params.keys())
 
 	def __getitem__(self, param) -> Any:
-		return self.simple_params[param]
+		return self.all_params[param]
 
 	def __setitem__(self, param: str, value: Any) -> None:
-		self.simple_params[param] = value
+		self.all_params[param] = value
 
-	def getDelayedExprs(self) -> Dict[str, List[DelayedExpression]]:
-		return self.params_with_exprs_to_eval
-
-	def setUndelayedExprs(self, undelayed_exprs: Dict[str, Any]) -> None:
-		"""
-		Args:
-			undelayed_exprs Dict[str, Any]: any params with a undelayed
-			(evaled) expressions.
-		"""
-		for param, undelayed_expr in undelayed_exprs.items():
-			new_value: Any = None
-			if param in list(self.params_with_values.keys()):
-				mixed_value = self.params_with_values[param]
-				new_value = self._merge(undelayed_expr, mixed_value)
-				self.params_with_values.pop(param)
-			self.simple_params.update({param: new_value or undelayed_expr})
-			self.params_with_exprs_to_eval.pop(param)
-
-	@staticmethod
-	def _merge(
-			only_undelayed_exprs: Any,
-			delayed_exprs_and_values: Any
-	) -> Union[Dict[Any, Any], List[Any]]:
-		"""
-		Merge dict or list objects. Use to merge an undelayed expressions
-		with other values as a comparison keys (in dict case) or index
-		(in list case).
-
-		Each argument must be of the same type.
-
-		Returns:
-			Union[Dict[Any, Any], List[Any]] - depending on the argument
-			passed
-		"""
-		if isinstance(only_undelayed_exprs, dict) and isinstance(
-				delayed_exprs_and_values, dict):
-			result: Dict[Any, Any] = {}
-			for key, value in only_undelayed_exprs():
-				if (key in list(delayed_exprs_and_values.keys()) and
-						DelayedExpression.isMine(
-							delayed_exprs_and_values[key])):
-					result[key] = value
-				else:
-					result[key] = delayed_exprs_and_values[key]
-		elif isinstance(only_undelayed_exprs, list) and isinstance(delayed_exprs_and_values, list):
-			result: List[Any] = []
-			for (ind, value) in enumerate(only_undelayed_exprs):
-				if DelayedExpression.isMine(delayed_exprs_and_values[ind]):
-					result.append(value)
-				else:
-					result.append(delayed_exprs_and_values[ind])
-		return result
+	def getDelayedExprs(self) -> List[DelayedExpression]:
+		return list(self.storages_with_delayed_exprs.values())
 
 
-class DelayedExpressionEvaluator:
+class CaseEvaluator:
 	"""
-	Class made with a `DelayedExpression` handle purpose.
+	Class made in order to process the `Case` that stores the
+	`DelayedExpression`.
 	"""
 
 	def __init__(
 			self,
-			delayed_expressions: List[DelayedExpression],
-			global_vars: Dict[str, Any]
+			global_vars: Dict[str, Any],
+			param: str,
+			value: Any
 	) -> None:
 		"""
 		Args:
 			global_vars (Dict[str, Any]): any vars, that can be used for
 			an expression eval.
 		"""
-		self.delayed_expressions = delayed_expressions
+		self.param = param
+		self.value = value
 		self.global_vars = global_vars
 
 	def eval(self) -> List[Any]:
 		self._setGlobalVarsInLocals(locals())
-		result = []
-		for delay_expression in self.delayed_expressions:
-			result.append(eval(delay_expression.expression))
+		searcher = NestedSearcher(self.value, DelayedExpression)
+		searcher.go()
+		# result = []
+		# result = self._walkInDelayedExprSearch(self.value, [])
+		for (storage_obj, item, delayed_expr) in nested_walker:
+			storage_obj[item] = self._evalDelayedExpr(delayed_expr)
 		return result
 
 	def _setGlobalVarsInLocals(self, locals: Dict[str, Any]):
+		"""
+		Func set a local variable in a func that called it. It needs an eval
+		DelayedExpr because it func loads the built-in eval(), which needs context
+		as a global_vars.
+		"""
 		for (key, value) in self.global_vars.items():
 			locals[key] = value
 		return locals
+
+class NestedSearcher:
+
+	def __init__(self,
+				 current_obj: Any,
+				 search_target: Any
+		):
+		self.current_obj = current_obj
+		self.search_target: Any = search_target
+		self.value = None
+		self.ind = None
+		self.previous_obj = None
+		self.result: List[NestedSearcherResult] = []
+
+	def go(self) -> None:
+		if isinstance(self.current_obj, dict):
+			for (ind, (key, value)) in enumerate(self.current_obj):
+				self._isJumpToNextNestedState(self.previous_obj,
+											  self.current_obj, ind, value)
+		elif isinstance(self.current_obj, list):
+			for ind, value in enumerate(self.current_obj):
+				self._isJumpToNextNestedState(self.previous_obj,
+											  self.current_obj, ind, value)
+		elif isinstance(self.current_obj, tuple):
+			for ind, value in enumerate(self.current_obj):
+				self._isJumpToNextNestedState(self.previous_obj,
+											  self.current_obj, ind, value)
+		elif isinstance(self.current_obj, self.search_target):
+			self.result.append(NestedSearcherResult(None,
+													None,
+													"value",
+													self.current_obj))
+		return result
+
+	def _isJumpToNextNestedState(self, previous_obj, current_obj, ind, value):
+		if isinstance(value, self.search_target):
+			self.result.append(NestedSearcherResult(previous_obj, current_obj,
+													ind, value))
+		elif isinstance(value, dict) or isinstance(value, list):
+			self.current_obj = current_obj
+			self.go()
+		elif isinstance(value, tuple):
+			self.current_obj = current_obj
+			self.previous_obj = previous_obj
+			self.go()
+
+class NestedSearcherResult:
+
+	def __init__(self, previous_obj: Any, current_obj: Any, item: Any, value: Any):
+		self.previous_obj = previous_obj
+		self.current_obj = current_obj
+		self.item = ind
+		self.value = value

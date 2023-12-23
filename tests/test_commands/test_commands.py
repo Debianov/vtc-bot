@@ -5,7 +5,7 @@ import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import DiscordObjEvaluator, MockLocator, Case, DelayedExpressionEvaluator, DelayedExpression
+from bot.utils import DiscordObjEvaluator, MockLocator, Case, CaseEvaluator, DelayedExpression
 from .good_cases import default_case, default_case_with_several_users, default_case_with_other_target_name
 
 @pytest.mark.parametrize(

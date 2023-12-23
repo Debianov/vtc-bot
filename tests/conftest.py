@@ -17,7 +17,7 @@ sys.path.append(str(root))
 
 from bot.help import BotHelpCommand  # flake8: noqa: I005
 from bot.main import BotConstructor  # flake8: noqa: I005
-from bot.utils import Case, DelayedExpressionEvaluator
+from bot.utils import Case, CaseEvaluator
 
 # flake8: noqa: I005
 pytest_plugins = ('pytest_asyncio',)
@@ -74,11 +74,5 @@ def evalAndWriteDelayedExprInParams(
 		en/7.1.x/reference/reference.html#pytest.Function>`).
 	"""
 	for case in cases:
-		params_with_delayed_expr = case.getDelayedExprs()
-		params_with_undelayed_expr: Dict[str, Any] = {}
-		for (param, its_delay_exp) in params_with_delayed_expr.items():
-			eval_results = DelayedExpressionEvaluator(
-				its_delay_exp,
-				fixtures).eval()
-			params_with_undelayed_expr[param] = eval_results
-		case.setUndelayedExprs(params_with_undelayed_expr)
+		param_with_values = case.getNextParam()
+		CaseEvaluator(fixtures, **param_with_values).eval()
