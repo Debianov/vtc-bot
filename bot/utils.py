@@ -221,7 +221,6 @@ class Case:
 	def keys(self) -> List[Any]:
 		"""
 		The load func for a map object implementation.
-		:return:
 		"""
 		return list(self.all_params.keys())
 
@@ -260,10 +259,21 @@ class CaseEvaluator:
 		self._setGlobalVarsInLocals(locals())
 		searcher = NestedSearcher(self.value, DelayedExpression)
 		searcher.go()
-		# result = []
-		# result = self._walkInDelayedExprSearch(self.value, [])
-		for (storage_obj, item, delayed_expr) in nested_walker:
-			storage_obj[item] = self._evalDelayedExpr(delayed_expr)
+		for search_result in searcher.getResults():
+			storage_stack =  search_result.storage_stack
+			current_storage: Union[List[Any], Dict[str, Any], Tupple[Any]] = \
+				None
+			stack_cursor = len(storage_stack) - 1
+			while stack_cursor != 0:
+				first_mutable_storage = storage_stack[stack_cursor]
+				if (isinstance(first_mutable_storage, dict) or
+					isinstance(first_mutable_storage, list)):
+					mutable_storage = first_mutable_storage
+					value = storage_stack[stack_cursor + 1]
+					break
+				else:
+					stack_cursor -= 1
+			mutable_storage[item] = mutable_storage
 		return result
 
 	def _setGlobalVarsInLocals(self, locals: Dict[str, Any]):
@@ -282,49 +292,54 @@ class NestedSearcher:
 				 current_obj: Any,
 				 search_target: Any
 		):
-		self.current_obj = current_obj
+		self.maybe_target = current_obj
 		self.search_target: Any = search_target
 		self.value = None
-		self.ind = None
-		self.previous_obj = None
+		self.item: Union[str, int] = ""
+		self.storage_stack = []
 		self.result: List[NestedSearcherResult] = []
 
 	def go(self) -> None:
-		if isinstance(self.current_obj, dict):
-			for (ind, (key, value)) in enumerate(self.current_obj):
-				self._isJumpToNextNestedState(self.previous_obj,
-											  self.current_obj, ind, value)
-		elif isinstance(self.current_obj, list):
-			for ind, value in enumerate(self.current_obj):
-				self._isJumpToNextNestedState(self.previous_obj,
-											  self.current_obj, ind, value)
-		elif isinstance(self.current_obj, tuple):
-			for ind, value in enumerate(self.current_obj):
-				self._isJumpToNextNestedState(self.previous_obj,
-											  self.current_obj, ind, value)
-		elif isinstance(self.current_obj, self.search_target):
-			self.result.append(NestedSearcherResult(None,
-													None,
-													"value",
-													self.current_obj))
-		return result
+		if isinstance(self.maybe_target, dict):
+			self.storage_stack.append(self.maybe_target)
+			for key, value in self.maybe_target.items():
+				self.maybe_target = value
+				self.item = key
+				self.go()
+		elif (isinstance(self.maybe_target, list) or
+			  isinstance(self.maybe_target, tuple)):
+			self.storage_stack.append(self.maybe_target)
+			for ind, value in enumerate(self.maybe_target):
+				self.maybe_target = value
+				self.item = ind
+				self.go()
+		elif isinstance(self.maybe_target, self.search_target):
+			self.result.append(
+				NestedSearcherResult(
+					self.storage_stack, self.maybe_target, self.item
+				)
+			)
 
-	def _isJumpToNextNestedState(self, previous_obj, current_obj, ind, value):
-		if isinstance(value, self.search_target):
-			self.result.append(NestedSearcherResult(previous_obj, current_obj,
-													ind, value))
-		elif isinstance(value, dict) or isinstance(value, list):
-			self.current_obj = current_obj
-			self.go()
-		elif isinstance(value, tuple):
-			self.current_obj = current_obj
-			self.previous_obj = previous_obj
-			self.go()
+	def getResults(self) -> List['NestedSearcherResult']:
+		return self.result
 
 class NestedSearcherResult:
 
-	def __init__(self, previous_obj: Any, current_obj: Any, item: Any, value: Any):
-		self.previous_obj = previous_obj
+	def __init__(
+		self,
+		storage_stack: List[Union[List[Any], Dict[str, Any], Tuple[Any]]],
+		current_obj: Any,
+		item: Union[int, str]
+	):
+		self.stack_storage = storage_stack
 		self.current_obj = current_obj
-		self.item = ind
-		self.value = value
+		self.item = item
+
+	def keys(self) -> List[str]:
+		"""
+		The load func for a map object implementation.
+		"""
+		return ["previous_obj", "current_obj", "item", "value"]
+
+	def __getitem__(self, item) -> Any:
+		return self.__dict__[item]
