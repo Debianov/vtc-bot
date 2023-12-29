@@ -260,8 +260,8 @@ class CaseEvaluator:
 		searcher = NestedSearcher(self.value, DelayedExpression)
 		searcher.go()
 		for search_result in searcher.getResults():
-			storage_stack =  search_result.storage_stack
-			current_storage: Union[List[Any], Dict[str, Any], Tupple[Any]] = \
+			storage_stack = search_result.storage_stack
+			current_storage: Union[List[Any], Dict[str, Any], Tuple[Any]] = \
 				None
 			stack_cursor = len(storage_stack) - 1
 			while stack_cursor != 0:
@@ -273,7 +273,7 @@ class CaseEvaluator:
 					break
 				else:
 					stack_cursor -= 1
-			mutable_storage[item] = mutable_storage
+			# mutable_storage[item] = mutable_storage
 		return result
 
 	def _setGlobalVarsInLocals(self, locals: Dict[str, Any]):
@@ -289,36 +289,45 @@ class CaseEvaluator:
 class NestedSearcher:
 
 	def __init__(self,
-				 current_obj: Any,
-				 search_target: Any
+			 current_obj: Dict[str, Any],
+			 search_target: Any
 		):
 		self.maybe_target = current_obj
 		self.search_target: Any = search_target
 		self.value = None
-		self.item: Union[str, int] = ""
+		self.item: Union[str, int] = list(current_obj.keys())[0]
 		self.storage_stack = []
 		self.result: List[NestedSearcherResult] = []
 
 	def go(self) -> None:
 		if isinstance(self.maybe_target, dict):
-			self.storage_stack.append(self.maybe_target)
+			self.storage_stack.append((self.maybe_target, self.item))
 			for key, value in self.maybe_target.items():
 				self.maybe_target = value
 				self.item = key
 				self.go()
-		elif (isinstance(self.maybe_target, list) or
-			  isinstance(self.maybe_target, tuple)):
-			self.storage_stack.append(self.maybe_target)
+		elif isinstance(self.maybe_target, list):
+			self.storage_stack.append((self.maybe_target, self.item))
+			for ind, value in enumerate(self.maybe_target):
+				self.maybe_target = value
+				self.item = ind
+				self.go()
+		elif isinstance(self.maybe_target, tuple):
+			self.storage_stack.append((self.maybe_target, self.item))
 			for ind, value in enumerate(self.maybe_target):
 				self.maybe_target = value
 				self.item = ind
 				self.go()
 		elif isinstance(self.maybe_target, self.search_target):
-			self.result.append(
-				NestedSearcherResult(
-					self.storage_stack, self.maybe_target, self.item
-				)
-			)
+			storage_stack_ind = -1
+			storage: Union[Dict[Any, Any], Tuple[Any], List[Any]] = None
+			item: Union[str, int] = None
+			while storage_stack_ind != -len(self.storage_stack) - 1:
+				storage, item = self.storage_stack[storage_stack_ind]
+				if not isinstance(storage, tuple):
+					break
+				storage_stack_ind -= 1
+			storage[item] = "ПЕРЕУЧЁТ"
 
 	def getResults(self) -> List['NestedSearcherResult']:
 		return self.result
