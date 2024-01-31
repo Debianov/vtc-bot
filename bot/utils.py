@@ -15,7 +15,6 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from _types import SupportItems
 from bot.data import DiscordObjectsGroup
 
 
@@ -190,19 +189,34 @@ T = TypeVar("T")
 class DelayedExpression:
 
 	def __init__(self, expression: str):
-		self.eval_expression: Any = Any
 		self.expression = expression
+		self.eval_expression: Any = None
 
-	def setEvaledResult(self, result: Any):
-		self.eval_expression = result
+	def eval(self, fixtures: Any) -> Any:
+		self._setGlobalVarsInLocals(locals(), fixtures)
+		return eval(self.expression)
+
+	def _setGlobalVarsInLocals(
+			self,
+			locals: Dict[str, Any],
+			fixtures: Any
+	) -> Dict[str, Any]:
+		"""
+		Func set a local variable in a func that called it.
+		"""
+		for (key, value) in fixtures.items():
+			locals[key] = value
+		return locals
 
 	@staticmethod
 	def isMine(check_instance: Any) -> bool:
 		"""
-		The load == implement for a purpose that isinstance for an instance check
-		don't work due a python `features <https://bugs.python.org/issue7555>`.
+		The load == implement for a purpose that isinstance for an
+		instance check don't work due a python
+		`features <https://bugs.python.org/issue7555>`.
 		"""
-		return hasattr(check_instance, "expression") and hasattr(check_instance, "eval_expression")
+		return (hasattr(check_instance, "expression") and
+				hasattr(check_instance, "eval_expression"))
 
 
 class Case:
@@ -215,8 +229,6 @@ class Case:
 
 	def __init__(self, **kwargs: Any) -> None:
 		self.all_params = kwargs
-		self.storages_with_delayed_exprs: Dict[Any, Any] = {}
-		self.findDelayedExprs(kwargs)
 
 	def keys(self) -> List[Any]:
 		"""
@@ -230,51 +242,33 @@ class Case:
 	def __setitem__(self, param: str, value: Any) -> None:
 		self.all_params[param] = value
 
-	def getDelayedExprs(self) -> List[DelayedExpression]:
-		return list(self.storages_with_delayed_exprs.values())
 
-
-class CaseEvaluator:
+class DelayedExprsEvaluator:
 	"""
-	Class made in order to process the `Case` that stores the
-	`DelayedExpression`.
+	Class evals every `DelayedExpression` in given list.
 	"""
 
 	def __init__(
 			self,
-			global_vars: Dict[str, Any],
-			param: str,
-			value: Any
+			delayed_exprs: List[DelayedExpression],
+			global_vars: Dict[str, Any]
 	) -> None:
 		"""
 		Args:
 			global_vars (Dict[str, Any]): any vars, that can be used for
 			an expression eval.
 		"""
-		self.param = param
-		self.value = value
 		self.global_vars = global_vars
+		self.delayed_exprs = delayed_exprs
+		self.undelayed_exprs: List[Any] = []
 
-	def eval(self) -> List[Any]:
+	def go(self) -> None:
 		self._setGlobalVarsInLocals(locals())
-		searcher = NestedSearcher(self.value, DelayedExpression)
-		searcher.go()
-		for search_result in searcher.getResults():
-			storage_stack = search_result.storage_stack
-			current_storage: Union[List[Any], Dict[str, Any], Tuple[Any]] = \
-				None
-			stack_cursor = len(storage_stack) - 1
-			while stack_cursor != 0:
-				first_mutable_storage = storage_stack[stack_cursor]
-				if (isinstance(first_mutable_storage, dict) or
-					isinstance(first_mutable_storage, list)):
-					mutable_storage = first_mutable_storage
-					value = storage_stack[stack_cursor + 1]
-					break
-				else:
-					stack_cursor -= 1
-			# mutable_storage[item] = mutable_storage
-		return result
+		for delay_expr in self.delayed_exprs:
+			self.undelayed_exprs.append(eval(delay_expr.expression))
+
+	def getUndelayedExprs(self) -> List[Any]:
+		return self.undelayed_exprs
 
 	def _setGlobalVarsInLocals(self, locals: Dict[str, Any]):
 		"""
@@ -286,69 +280,131 @@ class CaseEvaluator:
 			locals[key] = value
 		return locals
 
-class NestedSearcher:
-
+class DelayedExpressionSubstitutor:
+	"""
+	The class for substituting elements in nested storages on the
+	`self.to_substitute`.
+	"""
 	def __init__(self,
-			 current_obj: Dict[str, Any],
-			 search_target: Any
-		):
-		self.maybe_target = current_obj
-		self.search_target: Any = search_target
-		self.value = None
-		self.item: Union[str, int] = list(current_obj.keys())[0]
-		self.storage_stack = []
-		self.result: List[NestedSearcherResult] = []
+				 target: Dict[str, Any],
+				 fixtures: Any
+				 ):
+		self.target = target
+		self.current_target = target
+		self.last_storage = target
+		self.fixtures = fixtures
+		self.last_mutable_storage: Union[Dict[str, Any], Tuple[Any], None] \
+			= None
+		self.class_to_change = DelayedExpression
+		self.item: Union[str, int] = ""
+		self.immutable_storages_chain: List[Tuple[Any, Union[str, int]]] = \
+			[]
+		self.item_to_access_immutable_storage = None
 
 	def go(self) -> None:
-		if isinstance(self.maybe_target, dict):
-			self.storage_stack.append((self.maybe_target, self.item))
-			for key, value in self.maybe_target.items():
-				self.maybe_target = value
-				self.item = key
-				self.go()
-		elif isinstance(self.maybe_target, list):
-			self.storage_stack.append((self.maybe_target, self.item))
-			for ind, value in enumerate(self.maybe_target):
-				self.maybe_target = value
-				self.item = ind
-				self.go()
-		elif isinstance(self.maybe_target, tuple):
-			self.storage_stack.append((self.maybe_target, self.item))
-			for ind, value in enumerate(self.maybe_target):
-				self.maybe_target = value
-				self.item = ind
-				self.go()
-		elif isinstance(self.maybe_target, self.search_target):
-			storage_stack_ind = -1
-			storage: Union[Dict[Any, Any], Tuple[Any], List[Any]] = None
-			item: Union[str, int] = None
-			while storage_stack_ind != -len(self.storage_stack) - 1:
-				storage, item = self.storage_stack[storage_stack_ind]
-				if not isinstance(storage, tuple):
-					break
-				storage_stack_ind -= 1
-			storage[item] = "ПЕРЕУЧЁТ"
+		if not isinstance(self.current_target, self.class_to_change):
+			previous_storage = self.setLastStorage(self.current_target)
+			if (isinstance(self.current_target, dict) or
+					isinstance(self.current_target, list)):
+				self.last_mutable_storage = self.current_target
+				self.immutable_storages_chain.clear()
+				if isinstance(self.current_target, dict):
+					for key, value in self.current_target.items():
+						self.current_target = value
+						self.item = key
+						self.go()
+				else:
+					for ind, value in enumerate(self.current_target):
+						self.current_target = value
+						self.item = ind
+						self.go()
+			elif isinstance(self.current_target, tuple):
+				self.immutable_storages_chain.append((self.current_target, self.item))
+				self.addItemForAccessImmutableStorage(previous_storage)
+				for ind, value in enumerate(self.current_target):
+					self.current_target = value
+					self.item = ind
+					self.go()
+				self.immutable_storages_chain.pop() if (
+					self.immutable_storages_chain) else False
+			self.last_storage = previous_storage
+		else:
+			delayed_expr = self.current_target
+			evaled_expr = delayed_expr.eval(self.fixtures)
+			self.insert(evaled_expr)
 
-	def getResults(self) -> List['NestedSearcherResult']:
-		return self.result
-
-class NestedSearcherResult:
-
-	def __init__(
-		self,
-		storage_stack: List[Union[List[Any], Dict[str, Any], Tuple[Any]]],
-		current_obj: Any,
-		item: Union[int, str]
-	):
-		self.stack_storage = storage_stack
-		self.current_obj = current_obj
-		self.item = item
-
-	def keys(self) -> List[str]:
+	def setLastStorage(self, target: Any) -> Any:
 		"""
-		The load func for a map object implementation.
+			Set `self.last_storage` and return old attr value that is necessary to restore a `self.last_storage` attr after
+			exiting from a next recursive layer.
 		"""
-		return ["previous_obj", "current_obj", "item", "value"]
+		previous_storage = self.last_storage
+		self.last_storage = target
+		return previous_storage
 
-	def __getitem__(self, item) -> Any:
-		return self.__dict__[item]
+	def addItemForAccessImmutableStorage(self, previous_storage: Any) -> None:
+		"""
+		A func writes `self.item` to `item_to_access_immutable_storage`.
+		`self.item_to_access_immutable_storage` stores `self.item` to access immutable storage from last mutable storage.
+		If `previous_storage` is immutable storage `self.item` it doesn't save in `self.item_to_access_immutable_storage`.
+
+		The fact of the matter is if `item_to_access_immutable_storage` is sets from an item that describes a position
+		access to immutable storage (tuple) from list/or tuple consequently we can use this attr for access to tuples.
+		```
+		{'key': ("test", "test2", ["test3", "test4", ("test5", object_to_update1, (object_to_update2, "test6"))])}
+		A path to object_to_update1: item = 2 from first tuple => item = 2 from first list.
+		```
+		If `item_to_access_immutable_storage` is sets from an item that describes a position access to immutable storage
+		from other immutable storage, it's not allowed.
+		```
+		{'key': ("test", "test2", ["test3", "test4", ("test5", object_to_update1, (object_to_update2, "test6"))])}
+		A wrong path to object_to_update2: item = 2 from first tuple => item = 2 from first list => item = 2 from second
+		tuple.
+		A true path to object_to_update2: item = 2 from first tuple => item = 2 from first list because first list is last
+		mutable storage.
+		```
+		"""
+		if isinstance(previous_storage, dict) or isinstance(previous_storage, list):
+			self.item_to_access_immutable_storage = self.item
+
+	def insert(self, object_to_insert: Any):
+		if isinstance(self.last_storage, tuple):
+			self.last_storage = _insertInTuple(self.last_storage, object_to_insert, self.item)
+			self.updateImmutableChain(self.last_storage, self.immutable_storages_chain)
+			self.last_mutable_storage[self.item_to_access_immutable_storage] = self.immutable_storages_chain[0][0]
+		else:
+			mutable_storage = self.last_storage
+			mutable_storage[self.item] = object_to_insert
+
+	def updateImmutableChain(self, storage_to_update: Tuple[Any], immutable_storages_chain: List[Tuple[Any]]) -> None:
+		"""
+		An updateImmutableChain func updates the entire chain starting with zero elements.
+		"""
+		immutable_storages_chain.reverse()
+		for ind in range(0, len(immutable_storages_chain)):
+			item_to_next_storage = immutable_storages_chain[ind][1]
+			if ind == 0:
+				immutable_storages_chain[ind] = (storage_to_update, item_to_next_storage)
+			else:
+				current_storage = immutable_storages_chain[ind][0]
+				previous_storage = immutable_storages_chain[ind - 1][0]
+				item_to_current_storage = immutable_storages_chain[ind - 1][1]
+				current_storage = _insertInTuple(current_storage, previous_storage, item_to_current_storage)
+				immutable_storages_chain[ind] = (current_storage, item_to_next_storage)
+		immutable_storages_chain.reverse()
+
+	def getResults(self) -> Dict[str, Any]:
+		return self.target
+
+def _insertInTuple(old_tuple: Tuple[Any], element_to_insert: Any, ind_to_insert: int) -> Tuple[Any]:
+	new_tuple: Tuple[Any] = tuple()
+	if not isinstance(ind_to_insert, int):
+		raise Exception
+	for (ind, elem) in enumerate(old_tuple):
+		if ind == ind_to_insert:
+			new_tuple += (element_to_insert,)
+		else:
+			new_tuple += (elem,)
+	if element_to_insert not in new_tuple:
+		raise Exception
+	return new_tuple

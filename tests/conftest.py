@@ -8,6 +8,7 @@ import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
 from discord.ext import commands
+from bot.utils import DelayedExpressionSubstitutor, DelayedExpression
 
 
 
@@ -17,7 +18,7 @@ sys.path.append(str(root))
 
 from bot.help import BotHelpCommand  # flake8: noqa: I005
 from bot.main import BotConstructor  # flake8: noqa: I005
-from bot.utils import Case, CaseEvaluator
+from bot.utils import Case, DelayedExprsEvaluator
 
 # flake8: noqa: I005
 pytest_plugins = ('pytest_asyncio',)
@@ -34,13 +35,17 @@ async def cleanUp() -> AsyncGenerator[None, None]:
 	await dpytest.empty_queue()
 
 def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
-		# @pytest.mark.doDelayedExpression
-		if pyfuncitem.get_closest_marker("doDelayedExpression"):
-			params_from_func = pyfuncitem.callspec.params
-			params_and_fixtures = pyfuncitem.funcargs
-			params_with_case = filterParametersWithCase(params_from_func)
-			fixtures = filterFixtures(params_and_fixtures, params_with_case)
-			evalAndWriteDelayedExprInParams(list(params_with_case.values()), fixtures)
+	# @pytest.mark.doDelayedExpression
+	if pyfuncitem.get_closest_marker("doDelayedExpression"):
+		params_from_func = pyfuncitem.callspec.params
+		params_and_fixtures = pyfuncitem.funcargs
+		params_with_case = filterParametersWithCase(params_from_func)
+		fixtures = filterFixtures(params_and_fixtures, params_with_case)
+		for _, case in params_with_case.items():
+			DelayedExpressionSubstitutor(
+				case.all_params,
+				fixtures
+			).go()
 
 def filterParametersWithCase(
 	params_from_func: Dict[str, object]
@@ -60,19 +65,3 @@ def filterFixtures(
 	for param_key in params_with_case.keys():
 		fixtures.pop(param_key)
 	return fixtures
-
-
-def evalAndWriteDelayedExprInParams(
-	cases: List[Case],
-	fixtures: Dict[str, Any]
-) -> None:
-	"""
-	The func acts on Case directly via a reference.
-	Args:
-		cases(List[Case]): any `Case` instances that located in Dict with params
-		as value (e.x `pytest.Function.callspec.params <https://docs.pytest.org/
-		en/7.1.x/reference/reference.html#pytest.Function>`).
-	"""
-	for case in cases:
-		param_with_values = case.getNextParam()
-		CaseEvaluator(fixtures, **param_with_values).eval()

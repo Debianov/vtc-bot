@@ -5,7 +5,7 @@ import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import DiscordObjEvaluator, MockLocator, Case, CaseEvaluator, DelayedExpression
+from bot.utils import DiscordObjEvaluator, MockLocator, Case, DelayedExprsEvaluator, DelayedExpression
 from .good_cases import default_case, default_case_with_several_users, default_case_with_other_target_name
 
 @pytest.mark.parametrize(
@@ -17,12 +17,7 @@ from .good_cases import default_case, default_case_with_several_users, default_c
 @pytest.mark.asyncio
 async def test_good_log_create_with_flags(
 	db: psycopg.AsyncConnection[Any],
-	# target: List[str],
-	# act: str,
-	# d_in: List[str],
-	# flags: Dict[str, str],
 	mockLocator: MockLocator,
-	# discordObjectEvaluator: DiscordObjEvaluator
 	case: Case
 ) -> None:
 	joint_flags: Iterable[str] = filter(
