@@ -1,3 +1,4 @@
+import abc
 import os
 from typing import (
 	Any,
@@ -9,7 +10,7 @@ from typing import (
 	Type,
 	TypeVar,
 	Union,
-	SupportsIndex
+	Callable
 )
 
 import discord
@@ -408,3 +409,49 @@ def _insertInTuple(old_tuple: Tuple[Any], element_to_insert: Any, ind_to_insert:
 	if element_to_insert not in new_tuple:
 		raise Exception
 	return new_tuple
+
+
+class PartFormat:
+
+	def __init__(self, func: Callable[[Any], str]):
+		self.func = func
+
+	def getArgWithFormat(self, arg: Any) -> str:
+		return self.func(arg)
+
+def getStrObject(arg: Any) -> str:
+    return str(arg)
+
+default_format = PartFormat(getStrObject)
+
+class PartMessage(metaclass=abc.ABCMeta):
+
+	@abc.abstractmethod
+	def getMessagePart(self) -> str:
+		raise NotImplementedError
+
+class PartMessageInList(PartMessage, list):
+
+	def __init__(self, format: PartFormat, *args) -> None:
+		self.format = format
+		self.message_part: List[str] = []
+		super().__init__(args)
+
+	def getMessagePart(self) -> str:
+		for arg in self:
+			self.message_part.append(self.format.getArgWithFormat(arg))
+		return " ".join(self.message_part)
+
+class PartMessageInDict(PartMessage, dict):
+
+	def __init__(self, format: PartFormat, *args, **kwargs) -> None:
+		self.format = format
+		self.message_part: List[str] = []
+		self.update(*args, **kwargs)
+
+	def getMessagePart(self) -> str:
+		for key, value in self.items():
+			if value:
+				self.message_part.append(key)
+				self.message_part.append(self.format.getArgWithFormat(value))
+		return " ".join(self.message_part)

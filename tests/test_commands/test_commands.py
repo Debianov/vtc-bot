@@ -5,12 +5,14 @@ import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import DiscordObjEvaluator, MockLocator, Case, DelayedExprsEvaluator, DelayedExpression
-from .good_cases import default_case, default_case_with_several_users, default_case_with_other_target_name
+from bot.utils import DiscordObjEvaluator, MockLocator, Case
+from .good_cases import (default_case, default_case_with_several_users,
+						 default_case_with_other_target_name)
 
 @pytest.mark.parametrize(
 	"case",
-	[default_case, default_case_with_several_users, default_case_with_other_target_name]
+	[default_case, default_case_with_several_users,
+	 default_case_with_other_target_name]
 )
 
 @pytest.mark.doDelayedExpression
@@ -20,21 +22,39 @@ async def test_good_log_create_with_flags(
 	mockLocator: MockLocator,
 	case: Case
 ) -> None:
-	joint_flags: Iterable[str] = filter(
-		lambda x: False if not bool(x[1]) else x, # type: ignore [arg-type]
-		case["flags"].items())
-	joint_flags = list(map(lambda x: " ".join(list(x)), joint_flags))
-	await dpytest.message(f"sudo log 1 {' '.join(case["target"])} "
-	f"{case["act"]} {' '.join(case["d_in"])} {' '.join(joint_flags)}")
+	target_part = " " + case["target"].getMessagePart() + " "
+	din_part = case["d_in"].getMessagePart() + " "
+	act_part = case["act"] + " "
+	flags_part = case["flags"].getMessagePart()
+	await dpytest.message("sudo log 1" + target_part + act_part +
+						  din_part + flags_part)
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
 			"SELECT * FROM target"
 		)
 		for row in await acur.fetchall():
-			flags_values = list(map(lambda x: None if not x else x, case["flags"].values()))
+			flags_values = list(map(lambda x: None if not x else x,
+									case["flags"].values()
+									))
 			assert row == ("0", str(mockLocator.guild.id),
 				case["target"], case["act"], case["d_in"], *flags_values)
+
+	# joint_flags: Iterable[str] = filter(
+	# 	lambda x: False if not bool(x[1]) else x, # type: ignore [arg-type]
+	# 	case["flags"].items())
+	# joint_flags = list(map(lambda x: " ".join(list(x)), joint_flags))
+	# await dpytest.message(f"sudo log 1 {' '.join(case["target"])} "
+	# f"{case["act"]} {' '.join(case["d_in"])} {' '.join(joint_flags)}")
+	# assert dpytest.verify().message().content("Цель добавлена успешно.")
+	# async with db.cursor() as acur:
+	# 	await acur.execute(
+	# 		"SELECT * FROM target"
+	# 	)
+	# 	for row in await acur.fetchall():
+	# 		flags_values = list(map(lambda x: None if not x else x, case["flags"].values()))
+	# 		assert row == ("0", str(mockLocator.guild.id),
+	# 			case["target"], case["act"], case["d_in"], *flags_values)
 
 @pytest.mark.asyncio
 async def test_good_log_create_without_flags(

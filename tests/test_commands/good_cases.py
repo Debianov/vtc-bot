@@ -1,24 +1,47 @@
-from bot.utils import Case, DelayedExpression
+import discord
+
+from bot.utils import (Case, DelayedExpression, PartMessageInList,
+                       PartMessageInDict, PartFormat, default_format)
+from typing import Any, Union
+
+
+def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
+    if isinstance(arg, discord.Member):
+        return str(arg.id)
+    return arg
+
+current_format = PartFormat(getDiscordMemberObject)
 
 default_case = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=PartMessageInList(current_format,
+                             DelayedExpression('mockLocator.members[0]')),
     act="23",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
-    flags={"-name": "Test", "-output": "", "-priority": "-1", "other": ""}
+    d_in=PartMessageInList(current_format,
+                           DelayedExpression('mockLocator.members[1]')),
+    flags=PartMessageInDict(default_format, {"-name": "Test", "-output": "",
+                             "-priority": "-1", "other": ""})
 )
 
 default_case_with_several_users = Case(
-    target=[DelayedExpression('mockLocator.members[0]'),
-            DelayedExpression('mockLocator.members[1]')],
+    target=PartMessageInList(current_format,
+                             DelayedExpression('mockLocator.members[0]'),
+                             DelayedExpression('mockLocator.members[1]')),
     act="23",
-    d_in=[DelayedExpression('mockLocator.members[2]'),
-          DelayedExpression('mockLocator.members[3]')],
-    flags={"-name": "Test", "-output": "", "-priority": "-1", "other": ""}
+    d_in=PartMessageInList(current_format,
+                           DelayedExpression('mockLocator.members[2]'),
+                           DelayedExpression('mockLocator.members[3]')),
+    flags=PartMessageInDict(default_format,
+        {"-name": "Test", "-output": "", "-priority": "-1",
+         "other": ""})
 )
 
 default_case_with_other_target_name = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=PartMessageInList(current_format,
+                             DelayedExpression('mockLocator.members[0]')),
     act="23",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
-    flags={"-name": "Aboba", "-output": "", "-priority": "-1", "other": ""}
+    d_in=PartMessageInList(current_format,
+                           DelayedExpression('mockLocator.members[1]')),
+    flags=PartMessageInDict(default_format, {"-name": "Aboba", "-output": "",
+                             "-priority": "-1",
+                             "other": ""})
 )
