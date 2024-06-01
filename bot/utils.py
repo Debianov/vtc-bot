@@ -160,17 +160,15 @@ def getEnvIfExist(*env_names: str) -> Union[List[str], None]:
 	return saved_data
 
 
-def removeNesting(instance: Any) -> Any:
+def removeNesting(instance: List[Any]) -> List[Any]:
 	"""
-		Функция для удаления вложенностей.
-
-		Returns:
-			Optional[List[discord.abc.Messageable]]
+		The function for removing nesting.
 	"""
-	if len(instance) == 1 and isinstance(instance[0], list):
-		tmp = instance[0]
-		instance.remove(tmp)
-		instance.extend(tmp)
+	for elem in instance:
+		if isinstance(elem, list):
+			tmp = elem
+			instance.remove(tmp)
+			instance.extend(tmp)
 	return instance
 
 
@@ -229,20 +227,19 @@ class Case:
 	"""
 
 	def __init__(self, **kwargs: Any) -> None:
-		self.all_params = kwargs
+		self.all_elems = kwargs
 
 	def keys(self) -> List[Any]:
 		"""
 		The load func for a map object implementation.
 		"""
-		return list(self.all_params.keys())
+		return list(self.all_elems.keys())
 
 	def __getitem__(self, param) -> Any:
-		return self.all_params[param]
+		return self.all_elems[param]
 
 	def __setitem__(self, param: str, value: Any) -> None:
-		self.all_params[param] = value
-
+		self.all_elems[param] = value
 
 class DelayedExprsEvaluator:
 	"""
@@ -411,47 +408,69 @@ def _insertInTuple(old_tuple: Tuple[Any], element_to_insert: Any, ind_to_insert:
 	return new_tuple
 
 
-class PartFormat:
+class ElemFormater:
 
 	def __init__(self, func: Callable[[Any], str]):
-		self.func = func
+		self.format = func
 
-	def getArgWithFormat(self, arg: Any) -> str:
-		return self.func(arg)
+	def getElemWithFormat(self, arg: Any) -> str:
+		return self.format(arg)
 
 def getStrObject(arg: Any) -> str:
     return str(arg)
 
-default_format = PartFormat(getStrObject)
+default_format = ElemFormater(getStrObject)
 
 class PartMessage(metaclass=abc.ABCMeta):
 
 	@abc.abstractmethod
-	def getMessagePart(self) -> str:
+	def joinInStringPartMessage(self) -> str:
 		raise NotImplementedError
 
-class PartMessageInList(PartMessage, list):
+class StringPartMessage(PartMessage, str):
 
-	def __init__(self, format: PartFormat, *args) -> None:
+	def __init__(self, text: str):
+		self.text = text
+
+	def joinInStringPartMessage(self) -> str:
+		return self.text
+
+class ListPartMessage(PartMessage, list):
+
+	def __init__(self, format: ElemFormater, *args) -> None:
 		self.format = format
 		self.message_part: List[str] = []
 		super().__init__(args)
 
-	def getMessagePart(self) -> str:
-		for arg in self:
-			self.message_part.append(self.format.getArgWithFormat(arg))
-		return " ".join(self.message_part)
+	def joinInStringPartMessage(self, separator: str = " ") -> str:
+		if not self.message_part:
+			self._formMessagePart()
+		return separator.join(self.message_part)
 
-class PartMessageInDict(PartMessage, dict):
+	def _formMessagePart(self) -> None:
+		for elem in self:
+			self.message_part.append(self.format.getElemWithFormat(elem))
 
-	def __init__(self, format: PartFormat, *args, **kwargs) -> None:
+class DictPartMessage(PartMessage, dict):
+
+	def __init__(self, format: ElemFormater, *args, **kwargs) -> None:
 		self.format = format
 		self.message_part: List[str] = []
+		self.only_values: List[str] = []
 		self.update(*args, **kwargs)
 
-	def getMessagePart(self) -> str:
-		for key, value in self.items():
-			if value:
-				self.message_part.append(key)
-				self.message_part.append(self.format.getArgWithFormat(value))
+	def joinInStringPartMessage(self) -> str:
+		if not self.message_part:
+			for key, value in self.items():
+				if value:
+					self.message_part.append(key)
+					self.message_part.append(self.format.getElemWithFormat(value))
 		return " ".join(self.message_part)
+
+	def getValueAsList(self) -> str:
+		for _, value in self.items():
+			if value:
+				self.only_values.append(self.format.getElemWithFormat(value))
+			else:
+				self.only_values.append(None)
+		return self.only_values

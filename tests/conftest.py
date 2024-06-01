@@ -43,7 +43,7 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
 		fixtures = filterFixtures(params_and_fixtures, params_with_case)
 		for _, case in params_with_case.items():
 			DelayedExpressionSubstitutor(
-				case.all_params,
+				case.all_elems,
 				fixtures
 			).go()
 
