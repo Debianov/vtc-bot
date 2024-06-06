@@ -31,7 +31,7 @@ case_without_one_required_params = Case(
     d_in=ListPartMessage(default_format, "")
 )
 
-case_without_explicit_flags = Case(
+case_without_explicit_flag = Case(
     target=ListPartMessage(format_for_getting_ds_id,
                            DelayedExpression("mockLocator.members[0]")),
     act="54",

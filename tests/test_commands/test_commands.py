@@ -11,7 +11,7 @@ from .good_cases import (default_case, default_case_with_several_users,
 						 default_case_with_other_target_name)
 from .bad_cases import (case_without_two_required_params,
 						case_without_one_required_params,
-						case_without_explicit_flags)
+						case_without_explicit_flag)
 from .coincidence_cases import (case_for_coincidence,
 								case_for_coincidence_1_1,
 								case_for_coincidence_1_2,
@@ -110,13 +110,14 @@ async def test_log_without_require_params(
 		# почему-то принудительно поднимает исключения, хотя они могут
 		# обрабатываться в on_command_error и проч. ивентах.
 		await dpytest.message(" ".join(parts))
-	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все "
-		f"обязательные параметры. Не найденный параметр: {missing_params}")
+	assert dpytest.verify().message().content(f"Убедитесь, что вы указали "
+		f"все обязательные параметры. Не найденный параметр: "
+		f"{missing_params}")
 
 @pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
 	"case, unhandle_message_part",
-	[(case_without_explicit_flags, "barhatniy_tyagi")] # !!!!
+	[(case_without_explicit_flag, "barhatniy_tyagi")]
 )
 @pytest.mark.asyncio
 async def test_log_bad_flag(
@@ -138,8 +139,9 @@ async def test_log_bad_flag(
 @pytest.mark.asyncio
 async def test_log_bad_parameters() -> None:
 	with pytest.raises(commands.CommandInvokeError):
+		incorrect_id = 1107606170375565372
 		await dpytest.message("sudo log 1 336420570449051649 43 "
-		"1107606170375565372")
+		f"{incorrect_id}")
 	assert dpytest.verify().message().content("Убедитесь, что вы указали "
 		"флаги явно, либо указали корректные данные. "
 		"Необработанная часть сообщения: 1107606170375565372")
@@ -154,7 +156,7 @@ async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 @pytest.mark.parametrize(
 	"case, compared_case",
 	[
-		#(case_to_adding, case_to_compare, diff)
+		#(case_to_adding, case_to_compare, error_fragments)
 		(case_for_coincidence, case_for_coincidence),
 		(case_for_coincidence_1_1, case_for_coincidence_1_2),
 		(case_for_coincidence_2_1, case_for_coincidence_2_2),
