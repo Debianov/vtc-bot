@@ -39,10 +39,10 @@ async def test_good_log_create_with_flags(
 ) -> None:
 	parts = []
 	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringPartMessage(" "))
+	parts.append(case["target"].joinInStringMessagePart())
 	parts.append(case["act"])
-	parts.append(case["d_in"].joinInStringPartMessage())
-	parts.append(case["flags"].joinInStringPartMessage())
+	parts.append(case["d_in"].joinInStringMessagePart())
+	parts.append(case["flags"].joinInStringMessagePart())
 	await dpytest.message(" ".join(parts))
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
@@ -103,9 +103,9 @@ async def test_log_without_require_params(
 ) -> None:
 	parts = []
 	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringPartMessage())
+	parts.append(case["target"].joinInStringMessagePart())
 	parts.append(case["act"])
-	parts.append(case["d_in"].joinInStringPartMessage())
+	parts.append(case["d_in"].joinInStringMessagePart())
 	with pytest.raises(commands.MissingRequiredArgument): # TODO dpytest
 		# почему-то принудительно поднимает исключения, хотя они могут
 		# обрабатываться в on_command_error и проч. ивентах.
@@ -126,9 +126,9 @@ async def test_log_bad_flag(
 ) -> None:
 	parts = []
 	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringPartMessage())
+	parts.append(case["target"].joinInStringMessagePart())
 	parts.append(case["act"])
-	parts.append(case["d_in"].joinInStringPartMessage())
+	parts.append(case["d_in"].joinInStringMessagePart())
 	parts.append(case["flags"])
 	with pytest.raises(commands.CommandInvokeError):
 		await dpytest.message(" ".join(parts))
@@ -156,7 +156,7 @@ async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 @pytest.mark.parametrize(
 	"case, compared_case",
 	[
-		#(case_to_adding, case_to_compare, error_fragments)
+		#(case_to_adding, case_to_compare, string_part_error_fra)
 		(case_for_coincidence, case_for_coincidence),
 		(case_for_coincidence_1_1, case_for_coincidence_1_2),
 		(case_for_coincidence_2_1, case_for_coincidence_2_2),
@@ -173,10 +173,10 @@ async def test_coincidence_targets(
 ) -> None:
 	parts = []
 	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringPartMessage())
-	parts.append(case["act"].joinInStringPartMessage())
-	parts.append(case["d_in"].joinInStringPartMessage())
-	parts.append(case["flags"].joinInStringPartMessage())
+	parts.append(case["target"].joinInStringMessagePart()) # case.get("target", StringMessagePart, format=default)
+	parts.append(case["act"].joinInStringMessagePart())
+	parts.append(case["d_in"].joinInStringMessagePart())
+	parts.append(case["flags"].joinInStringMessagePart())
 	await dpytest.message(" ".join(parts))
 	dpytest.get_message()
 
@@ -192,30 +192,8 @@ async def test_coincidence_targets(
 							   joinInStringPartMessage())
 	await dpytest.message(" ".join(parts_from_compared))
 
-	coincidence_elements = []
-	for field_name in ["target", "act", "d_in"]:
-		left_operand, right_operand = (case[field_name],
-										compared_case[field_name])
-		if isinstance(left_operand, list):
-			min_len = min(len(left_operand), len(right_operand))
-			for i in range(min_len):
-				if left_operand[i] == right_operand[i]:
-					coincidence_elements.append(left_operand[i])
-		else:
-			if left_operand[i] == right_operand[i]:
-				coincidence_elements.append(left_operand)
-
-	async with db.cursor() as acur:
-		await acur.execute(
-			"SELECT * FROM target"
-		)
-		rows = await acur.fetchall()
-		first_row = rows[0]
-		target_id = first_row[0]
-		target_name = first_row[5]
-
 	assert dpytest.verify().message().content(f"Цель с подобными параметрами"
-		f" уже существует: {target_id} ({target_name}). Совпадающие "
+		f" уже существует: {error_frag} ({error_fragments[1]}). Совпадающие "
 		f"элементы: {', '.join(coincidence_elements)}")
 
 @pytest.mark.parametrize(

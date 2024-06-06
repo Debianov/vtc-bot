@@ -220,8 +220,7 @@ class DelayedExpression:
 
 class Case:
 	"""
-	The class for storing and passing args to test funcs. Also it implements
-	special storage for args that are `DelayedExpressions`.
+	The class for storing and passing args to test funcs.
 
 	Access to class attributes is any call to `__getitem__`.
 	"""
@@ -240,6 +239,9 @@ class Case:
 
 	def __setitem__(self, param: str, value: Any) -> None:
 		self.all_elems[param] = value
+
+	def getAsMessagePart(self):
+
 
 class DelayedExprsEvaluator:
 	"""
@@ -421,28 +423,28 @@ def getStrObject(arg: Any) -> str:
 
 default_format = ElemFormater(getStrObject)
 
-class PartMessage(metaclass=abc.ABCMeta):
+class MessagePart(metaclass=abc.ABCMeta):
 
 	@abc.abstractmethod
-	def joinInStringPartMessage(self) -> str:
+	def joinInStringMessagePart(self) -> str:
 		raise NotImplementedError
 
-class StringPartMessage(PartMessage, str):
+class StringMessagePart(MessagePart, str):
 
 	def __init__(self, text: str):
 		self.text = text
 
-	def joinInStringPartMessage(self) -> str:
+	def joinInStringMessagePart(self) -> str:
 		return self.text
 
-class ListPartMessage(PartMessage, list):
+class ListMessagePart(MessagePart, list):
 
 	def __init__(self, format: ElemFormater, *args) -> None:
 		self.format = format
 		self.message_part: List[str] = []
 		super().__init__(args)
 
-	def joinInStringPartMessage(self, separator: str = " ") -> str:
+	def joinInStringMessagePart(self, separator: str = " ") -> str:
 		if not self.message_part:
 			self._formMessagePart()
 		return separator.join(self.message_part)
@@ -451,7 +453,7 @@ class ListPartMessage(PartMessage, list):
 		for elem in self:
 			self.message_part.append(self.format.getElemWithFormat(elem))
 
-class DictPartMessage(PartMessage, dict):
+class DictMessagePart(MessagePart, dict):
 
 	def __init__(self, format: ElemFormater, *args, **kwargs) -> None:
 		self.format = format
@@ -459,7 +461,7 @@ class DictPartMessage(PartMessage, dict):
 		self.only_values: List[str] = []
 		self.update(*args, **kwargs)
 
-	def joinInStringPartMessage(self) -> str:
+	def joinInStringMessagePart(self) -> str:
 		if not self.message_part:
 			for key, value in self.items():
 				if value:
