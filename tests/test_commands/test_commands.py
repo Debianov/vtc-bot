@@ -13,6 +13,8 @@ from .bad_cases import (case_without_two_required_params,
 						case_without_one_required_params,
 						case_without_explicit_flags)
 from .coincidence_cases import (case_for_coincidence,
+								case_for_coincidence_1_1,
+								case_for_coincidence_1_2,
 								case_for_coincidence_2_1,
 								case_for_coincidence_2_2,
 								case_for_coincidence_3_1,
@@ -20,9 +22,7 @@ from .coincidence_cases import (case_for_coincidence,
 								case_for_coincidence_4_1,
 								case_for_coincidence_4_2,
 								case_for_coincidence_5_1,
-								case_for_coincidence_5_2,
-								case_for_coincidence_6_1,
-								case_for_coincidence_6_2)
+								case_for_coincidence_5_2)
 
 @pytest.mark.parametrize(
 	"case",
@@ -154,12 +154,13 @@ async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 @pytest.mark.parametrize(
 	"case, compared_case",
 	[
+		#(case_to_adding, case_to_compare, diff)
 		(case_for_coincidence, case_for_coincidence),
+		(case_for_coincidence_1_1, case_for_coincidence_1_2),
 		(case_for_coincidence_2_1, case_for_coincidence_2_2),
 		(case_for_coincidence_3_1, case_for_coincidence_3_2),
 		(case_for_coincidence_4_1, case_for_coincidence_4_2),
-		(case_for_coincidence_5_1, case_for_coincidence_5_2),
-		(case_for_coincidence_6_1, case_for_coincidence_6_2)
+		(case_for_coincidence_5_1, case_for_coincidence_5_2)
 	],
 )
 @pytest.mark.asyncio
@@ -170,9 +171,9 @@ async def test_coincidence_targets(
 ) -> None:
 	parts = []
 	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringPartMessage(","))
+	parts.append(case["target"].joinInStringPartMessage())
 	parts.append(case["act"].joinInStringPartMessage())
-	parts.append(case["d_in"].joinInStringPartMessage(","))
+	parts.append(case["d_in"].joinInStringPartMessage())
 	parts.append(case["flags"].joinInStringPartMessage())
 	await dpytest.message(" ".join(parts))
 	dpytest.get_message()
@@ -180,11 +181,11 @@ async def test_coincidence_targets(
 	parts_from_compared = []
 	parts_from_compared.append("sudo log 1")
 	parts_from_compared.append(compared_case["target"].
-							   joinInStringPartMessage(","))
+							   joinInStringPartMessage())
 	parts_from_compared.append(compared_case["act"].
 							   joinInStringPartMessage())
 	parts_from_compared.append(compared_case["d_in"].
-							   joinInStringPartMessage(","))
+							   joinInStringPartMessage())
 	parts_from_compared.append(compared_case["flags"].
 							   joinInStringPartMessage())
 	await dpytest.message(" ".join(parts_from_compared))
@@ -210,6 +211,7 @@ async def test_coincidence_targets(
 		first_row = rows[0]
 		target_id = first_row[0]
 		target_name = first_row[5]
+
 	assert dpytest.verify().message().content(f"Цель с подобными параметрами"
 		f" уже существует: {target_id} ({target_name}). Совпадающие "
 		f"элементы: {', '.join(coincidence_elements)}")

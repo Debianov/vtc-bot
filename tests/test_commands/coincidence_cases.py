@@ -22,7 +22,7 @@ case_for_coincidence = Case(
     flags=DictPartMessage(default_format, {"-name": "Aboba"})
 )
 
-case_for_coincidence_2_1 = Case(
+case_for_coincidence_1_1 = Case(
     target=ListPartMessage(format_for_getting_ds_id,
                            DelayedExpression('mockLocator.members[0]')),
     act=StringPartMessage("26"),
@@ -31,7 +31,7 @@ case_for_coincidence_2_1 = Case(
     flags=DictPartMessage(default_format, {"-name": "Aboba"})
 )
 
-case_for_coincidence_2_2 = Case(
+case_for_coincidence_1_2 = Case(
     target=ListPartMessage(format_for_getting_ds_id,
                            DelayedExpression('mockLocator.members[2]')),
     act=StringPartMessage("26"),
@@ -40,7 +40,7 @@ case_for_coincidence_2_2 = Case(
     flags=DictPartMessage(default_format, {"-name": "Aboba"})
 )
 
-case_for_coincidence_3_1 = Case(
+case_for_coincidence_2_1 = Case(
     target=ListPartMessage(format_for_getting_ds_id,
                            DelayedExpression('mockLocator.members[0]'),
                            DelayedExpression('mockLocator.members[1]')),
@@ -51,7 +51,7 @@ case_for_coincidence_3_1 = Case(
     flags=DictPartMessage(default_format, {"-name": "Aboba"})
 )
 
-case_for_coincidence_3_2 = Case(
+case_for_coincidence_2_2 = Case(
     target=ListPartMessage(format_for_getting_ds_id,
                            DelayedExpression('mockLocator.members[0]'),
                            DelayedExpression('mockLocator.members[1]')),
@@ -61,6 +61,24 @@ case_for_coincidence_3_2 = Case(
     flags=DictPartMessage(default_format, {"-name": "Aboba"})
 )
 
+
+case_for_coincidence_3_1 = Case(
+    target=ListPartMessage(format_for_getting_ds_id,
+                           DelayedExpression('mockLocator.members[0]')),
+    act=StringPartMessage("26"),
+    d_in=ListPartMessage(format_for_getting_ds_id,
+                         DelayedExpression('mockLocator.members[1]')),
+    flags=DictPartMessage(default_format, {"-name": "Aboba"})
+)
+
+case_for_coincidence_3_2 = Case(
+    target=ListPartMessage(format_for_getting_ds_id,
+                           DelayedExpression('mockLocator.members[2]')),
+    act=StringPartMessage("8"),
+    d_in=ListPartMessage(format_for_getting_ds_id,
+                         DelayedExpression('mockLocator.members[3]')),
+    flags=DictPartMessage(default_format, {"-name": "Aboba"})
+)
 
 case_for_coincidence_4_1 = Case(
     target=ListPartMessage(format_for_getting_ds_id,
@@ -73,11 +91,11 @@ case_for_coincidence_4_1 = Case(
 
 case_for_coincidence_4_2 = Case(
     target=ListPartMessage(format_for_getting_ds_id,
-                           DelayedExpression('mockLocator.members[2]')),
-    act=StringPartMessage("8"),
+                           DelayedExpression('mockLocator.members[0]')),
+    act=StringPartMessage("26"),
     d_in=ListPartMessage(format_for_getting_ds_id,
-                         DelayedExpression('mockLocator.members[3]')),
-    flags=DictPartMessage(default_format, {"-name": "Aboba"})
+                         DelayedExpression('mockLocator.members[1]')),
+    flags=DictPartMessage(default_format, {"-name": "aboba"})
 )
 
 case_for_coincidence_5_1 = Case(
@@ -90,24 +108,6 @@ case_for_coincidence_5_1 = Case(
 )
 
 case_for_coincidence_5_2 = Case(
-    target=ListPartMessage(format_for_getting_ds_id,
-                           DelayedExpression('mockLocator.members[0]')),
-    act=StringPartMessage("26"),
-    d_in=ListPartMessage(format_for_getting_ds_id,
-                         DelayedExpression('mockLocator.members[1]')),
-    flags=DictPartMessage(default_format, {"-name": "aboba"})
-)
-
-case_for_coincidence_6_1 = Case(
-    target=ListPartMessage(format_for_getting_ds_id,
-                           DelayedExpression('mockLocator.members[0]')),
-    act=StringPartMessage("26"),
-    d_in=ListPartMessage(format_for_getting_ds_id,
-                         DelayedExpression('mockLocator.members[1]')),
-    flags=DictPartMessage(default_format, {"-name": "Aboba"})
-)
-
-case_for_coincidence_6_2 = Case(
     target=ListPartMessage(format_for_getting_ds_id,
                            DelayedExpression('mockLocator.members[0]')),
     act=StringPartMessage("26"),

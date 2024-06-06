@@ -220,8 +220,8 @@ class DelayedExpression:
 
 class Case:
 	"""
-	The class for storing and passing args to test funcs. Also implement
-	special storage for an args that are `DelayedExpressions`.
+	The class for storing and passing args to test funcs. Also it implements
+	special storage for args that are `DelayedExpressions`.
 
 	Access to class attributes is any call to `__getitem__`.
 	"""
@@ -278,9 +278,9 @@ class DelayedExprsEvaluator:
 			locals[key] = value
 		return locals
 
-class DelayedExpressionSubstitutor:
+class DelayedExpressionReplacer:
 	"""
-	The class for substituting elements in nested storages on the
+	The class for replacing elements in nested storages on the
 	`self.to_substitute`.
 	"""
 	def __init__(self,

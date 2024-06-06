@@ -8,7 +8,7 @@ import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
 from discord.ext import commands
-from bot.utils import DelayedExpressionSubstitutor, DelayedExpression
+from bot.utils import DelayedExpressionReplacer, DelayedExpression
 
 
 
@@ -35,17 +35,18 @@ async def cleanUp() -> AsyncGenerator[None, None]:
 	await dpytest.empty_queue()
 
 def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
-	# @pytest.mark.doDelayedExpression
+	# @pytest.mark.doDelayedExpression implementation
 	if pyfuncitem.get_closest_marker("doDelayedExpression"):
 		params_from_func = pyfuncitem.callspec.params
 		params_and_fixtures = pyfuncitem.funcargs
 		params_with_case = filterParametersWithCase(params_from_func)
 		fixtures = filterFixtures(params_and_fixtures, params_with_case)
-		for _, case in params_with_case.items():
-			DelayedExpressionSubstitutor(
-				case.all_elems,
-				fixtures
-			).go()
+		for _, maybe_case in params_with_case.items():
+			if isinstance(maybe_case, Case):
+				DelayedExpressionReplacer(
+					maybe_case.all_elems,
+					fixtures
+				).go()
 
 def filterParametersWithCase(
 	params_from_func: Dict[str, object]
