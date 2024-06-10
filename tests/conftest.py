@@ -47,6 +47,9 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
 					maybe_case.all_elems,
 					fixtures
 				).go()
+			elif isinstance(maybe_case, ErrorFragments):
+				DelayedExpressionReplacer(ErrorFragments.all_elems,
+										  fixtures)
 
 def filterParametersWithCase(
 	params_from_func: Dict[str, object]

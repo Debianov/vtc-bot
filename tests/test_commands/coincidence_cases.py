@@ -9,16 +9,29 @@ from typing import Any, Union
 def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
     if isinstance(arg, discord.Member):
         return str(arg.id)
-    return arg
+    else:
+        return arg
+
 
 format_for_getting_ds_id = ElemFormater(getDiscordMemberObject)
 
-case_for_coincidence = Case(
+case_for_coincidence_0_1 = Case(
     target=[DelayedExpression('mockLocator.members[0]')],
     act="26",
     d_in=[DelayedExpression('mockLocator.members[1]')],
     flags={"-name": "Aboba"}
 )
+
+case_for_coincidence_0_2 = Case(
+    target=[DelayedExpression('mockLocator.members[0]')],
+    act="26",
+    d_in=[DelayedExpression('mockLocator.members[1]')],
+    flags={"-name": "Aboba"}
+)
+
+error_fragments = ["0", "Aboba", [
+    DelayedExpression('mockLocator.members[0].id'), "26",
+    DelayedExpression('mockLocator.members[1].id')]]
 
 case_for_coincidence_1_1 = Case(
     target=[DelayedExpression('mockLocator.members[0]')],

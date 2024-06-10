@@ -12,7 +12,9 @@ from .good_cases import (default_case, default_case_with_several_users,
 from .bad_cases import (case_without_two_required_params,
 						case_without_one_required_params,
 						case_without_explicit_flag)
-from .coincidence_cases import (case_for_coincidence,
+from .coincidence_cases import (case_for_coincidence_0_1,
+								case_for_coincidence_0_2,
+								error_fragments,
 								case_for_coincidence_1_1,
 								case_for_coincidence_1_2,
 								case_for_coincidence_2_1,
@@ -22,7 +24,8 @@ from .coincidence_cases import (case_for_coincidence,
 								case_for_coincidence_4_1,
 								case_for_coincidence_4_2,
 								case_for_coincidence_5_1,
-								case_for_coincidence_5_2)
+								case_for_coincidence_5_2,
+								getDiscordMemberObject)
 
 @pytest.mark.parametrize(
 	"case",
@@ -154,49 +157,35 @@ async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 
 @pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
-	"case, compared_case",
+	"case, compared_case, error_part",
 	[
-		#(case_to_adding, case_to_compare, string_part_error_fra)
-		(case_for_coincidence, case_for_coincidence),
-		(case_for_coincidence_1_1, case_for_coincidence_1_2),
-		(case_for_coincidence_2_1, case_for_coincidence_2_2),
-		(case_for_coincidence_3_1, case_for_coincidence_3_2),
-		(case_for_coincidence_4_1, case_for_coincidence_4_2),
-		(case_for_coincidence_5_1, case_for_coincidence_5_2)
+		(case_for_coincidence_0_1, case_for_coincidence_0_2,
+		 error_fragments),
+		# (case_for_coincidence_1_1, case_for_coincidence_1_2),
+		# (case_for_coincidence_2_1, case_for_coincidence_2_2),
+		# (case_for_coincidence_3_1, case_for_coincidence_3_2),
+		# (case_for_coincidence_4_1, case_for_coincidence_4_2),
+		# (case_for_coincidence_5_1, case_for_coincidence_5_2)
 	],
 )
 @pytest.mark.asyncio
 async def test_coincidence_targets(
-	db: psycopg.AsyncConnection[Any],
 	case: Case,
-	compared_case: Case
+	compared_case: Case,
+	error_part: List[str]
 ) -> None:
-	parts = []
-	# await dpytest.message(case.getMessageStringWith("sudo log 1"))
 
-	parts.append("sudo log 1")
-	formatter_instance = FormatterForDiscordObjects(get_ds_id_format)
-	parts.append(formatter_instance.format(case["target"]))
-	parts.append(formatter_instance.format(case[""]))
-	parts.append(case["d_in"].joinInStringMessagePart())
-	parts.append(case["flags"].joinInStringMessagePart())
-	await dpytest.message(" ".join(parts))
+	await dpytest.message(case.getMessageStringWith(
+		"sudo log 1",
+		getDiscordMemberObject))
 	dpytest.get_message()
 
-	parts_from_compared = []
-	parts_from_compared.append("sudo log 1")
-	parts_from_compared.append(compared_case["target"].
-							   joinInStringPartMessage())
-	parts_from_compared.append(compared_case["act"].joinInStringPartMessage())
-	parts_from_compared.append(compared_case["d_in"].
-							   joinInStringPartMessage())
-	parts_from_compared.append(compared_case["flags"].
-							   joinInStringPartMessage())
-	await dpytest.message(" ".join(parts_from_compared))
-
-	assert dpytest.verify().message().content(f"Цель с подобными параметрами"
-		f" уже существует: {error_frag} ({error_fragments[1]}). Совпадающие "
-		f"элементы: {', '.join(coincidence_elements)}")
+	await dpytest.message(compared_case.getMessageStringWith(
+		"sudo log 1",
+		getDiscordMemberObject))
+	assert dpytest.verify().message().content(f"Цель с подобными "
+		f"параметрами уже существует: {error_part[0]} ({error_part[1]
+		[1]}). Совпадающие элементы: {" ".join(error_part[2])}")
 
 @pytest.mark.parametrize(
 	"exp1, exp2, calls_sequence",

@@ -16,7 +16,7 @@ from typing import (
 import discord
 from discord.ext import commands
 import discord.abc
-
+import builtins
 from bot.data import DiscordObjectsGroup
 
 
@@ -228,6 +228,7 @@ class Case:
 
 	def __init__(self, **kwargs: Any) -> None:
 		self.all_elems = kwargs
+		self.message_string: List[str] = []
 
 	def keys(self) -> List[Any]:
 		"""
@@ -241,7 +242,30 @@ class Case:
 	def __setitem__(self, param: str, value: Any) -> None:
 		self.all_elems[param] = value
 
-	# def getAsMessagePart(self):
+	def getMessageStringWith(
+			self,
+			cmd: str,
+			format_func: Callable[[Any], Any]
+	) -> str:
+		self.message_string.append(cmd)
+		for elem in self.all_elems.values():
+			match type(elem):
+				case builtins.list:
+					for inner_elem in elem:
+						self.message_string.append(format_func(inner_elem))
+				case builtins.dict:
+					for key, value in elem.items():
+						self.message_string.append(key)
+						self.message_string.append(format_func(value))
+				case _:
+					self.message_string.append(elem)
+		return " ".join(self.message_string)
+
+class ErrorFragments:
+	"""
+	A class for storing parts of the error, user messages as strings.
+	"""
+	pass
 
 
 class DelayedExprsEvaluator:
@@ -505,3 +529,4 @@ class FormatterForDiscordObjects(Formatter):
 
 	def format(self, obj: discord.abc) -> List[Any]:
 		return super().format(obj)
+
