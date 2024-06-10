@@ -14,20 +14,16 @@ def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
 format_for_getting_ds_id = ElemFormater(getDiscordMemberObject)
 
 case_for_coincidence = Case(
-    target=ListMessagePart(format_for_getting_ds_id,
-                           DelayedExpression('mockLocator.members[0]')),
-    act=StringMessagePart("26"),
-    d_in=ListMessagePart(format_for_getting_ds_id,
-                         DelayedExpression('mockLocator.members[1]')),
-    flags=DictMessagePart(default_format, {"-name": "Aboba"})
+    target=[DelayedExpression('mockLocator.members[0]')],
+    act="26",
+    d_in=[DelayedExpression('mockLocator.members[1]')],
+    flags={"-name": "Aboba"}
 )
 
 case_for_coincidence_1_1 = Case(
-    target=ListMessagePart(format_for_getting_ds_id,
-                           DelayedExpression('mockLocator.members[0]')),
-    act=StringMessagePart("26"),
-    d_in=ListMessagePart(format_for_getting_ds_id,
-                         DelayedExpression('mockLocator.members[1]')),
+    target=[DelayedExpression('mockLocator.members[0]')],
+    act="26",
+    d_in=[DelayedExpression('mockLocator.members[1]')],
     flags=DictMessagePart(default_format, {"-name": "Aboba"})
 )
 

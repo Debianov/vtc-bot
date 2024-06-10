@@ -15,6 +15,7 @@ from typing import (
 
 import discord
 from discord.ext import commands
+import discord.abc
 
 from bot.data import DiscordObjectsGroup
 
@@ -476,3 +477,31 @@ class DictMessagePart(MessagePart, dict):
 			else:
 				self.only_values.append(None)
 		return self.only_values
+
+
+class Formatter(metaclass=abc.ABCMeta):
+
+	@abc.abstractmethod
+	def __init__(self, func_format: Callable[[Any], Any]) -> None:
+		self.func_format = func_format
+
+	@abc.abstractmethod
+	def format(self, obj: Any) -> List[Any]:
+		result: List[Any] = []
+		if isinstance(obj, dict):
+			for value in obj.values():
+				result.append(self.func_format(value))
+		elif isinstance(obj, list):
+			for elem in obj:
+				self.func_format(elem)
+		else:
+			return self.func_format(obj)
+		return result
+
+class FormatterForDiscordObjects(Formatter):
+
+	def __init__(self, func_format: Callable[[Any], discord.abc]) -> None:
+		super().__init__(func_format)
+
+	def format(self, obj: discord.abc) -> List[Any]:
+		return super().format(obj)

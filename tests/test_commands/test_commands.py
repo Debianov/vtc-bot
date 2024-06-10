@@ -6,7 +6,7 @@ import pytest
 from discord.ext import commands
 
 from bot.utils import (DiscordObjEvaluator, MockLocator, Case,
-					   removeNesting)
+					   removeNesting, FormatterForDiscordObjects)
 from .good_cases import (default_case, default_case_with_several_users,
 						 default_case_with_other_target_name)
 from .bad_cases import (case_without_two_required_params,
@@ -172,9 +172,12 @@ async def test_coincidence_targets(
 	compared_case: Case
 ) -> None:
 	parts = []
+	# await dpytest.message(case.getMessageStringWith("sudo log 1"))
+
 	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringMessagePart()) # case.get("target", StringMessagePart, format=default)
-	parts.append(case["act"].joinInStringMessagePart())
+	formatter_instance = FormatterForDiscordObjects(get_ds_id_format)
+	parts.append(formatter_instance.format(case["target"]))
+	parts.append(formatter_instance.format(case[""]))
 	parts.append(case["d_in"].joinInStringMessagePart())
 	parts.append(case["flags"].joinInStringMessagePart())
 	await dpytest.message(" ".join(parts))
@@ -184,8 +187,7 @@ async def test_coincidence_targets(
 	parts_from_compared.append("sudo log 1")
 	parts_from_compared.append(compared_case["target"].
 							   joinInStringPartMessage())
-	parts_from_compared.append(compared_case["act"].
-							   joinInStringPartMessage())
+	parts_from_compared.append(compared_case["act"].joinInStringPartMessage())
 	parts_from_compared.append(compared_case["d_in"].
 							   joinInStringPartMessage())
 	parts_from_compared.append(compared_case["flags"].
