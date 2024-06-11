@@ -10,6 +10,7 @@ from discord.ext import commands
 from ._types import DiscordGuildObjects, IDObjects
 from .attrs import TargetGroupAttrs
 
+
 class DataGroupAnalyzator:
 	"""
 	Класс реализует механизм определения :class:`DiscordObjectsGroup`

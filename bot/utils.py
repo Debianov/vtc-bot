@@ -1,7 +1,9 @@
 import abc
+import builtins
 import os
 from typing import (
 	Any,
+	Callable,
 	Dict,
 	Iterable,
 	List,
@@ -9,14 +11,13 @@ from typing import (
 	Tuple,
 	Type,
 	TypeVar,
-	Union,
-	Callable
+	Union
 )
 
 import discord
-from discord.ext import commands
 import discord.abc
-import builtins
+from discord.ext import commands
+
 from bot.data import DiscordObjectsGroup
 
 
@@ -219,28 +220,29 @@ class DelayedExpression:
 				hasattr(check_instance, "eval_expression"))
 
 
-class Case:
+class Case(dict):
 	"""
 	The class for storing and passing args to test funcs.
 
 	Access to class attributes is any call to `__getitem__`.
 	"""
 
-	def __init__(self, **kwargs: Any) -> None:
-		self.all_elems = kwargs
+	def __init__(self, *args, **kwargs: Any) -> None:
+		# self.all_elems: Dict[str, Any] = kwargs
 		self.message_string: List[str] = []
+		self.update(*args, **kwargs)
 
-	def keys(self) -> List[Any]:
-		"""
-		The load func for a map object implementation.
-		"""
-		return list(self.all_elems.keys())
-
-	def __getitem__(self, param) -> Any:
-		return self.all_elems[param]
-
-	def __setitem__(self, param: str, value: Any) -> None:
-		self.all_elems[param] = value
+	# def keys(self) -> List[Any]:
+	# 	"""
+	# 	The load func for a map object implementation.
+	# 	"""
+	# 	return list(self.all_elems.keys())
+	#
+	# def __getitem__(self, param) -> Any:
+	# 	return self.all_elems[param]
+	#
+	# def __setitem__(self, param: str, value: Any) -> None:
+	# 	self.all_elems[param] = value
 
 	def getMessageStringWith(
 			self,
@@ -248,7 +250,7 @@ class Case:
 			format_func: Callable[[Any], Any]
 	) -> str:
 		self.message_string.append(cmd)
-		for elem in self.all_elems.values():
+		for elem in self.values():
 			match type(elem):
 				case builtins.list:
 					for inner_elem in elem:
@@ -308,7 +310,7 @@ class DelayedExprsEvaluator:
 class DelayedExpressionReplacer:
 	"""
 	The class for replacing elements in nested storages on the
-	`self.to_substitute`.
+	the element of `fixtures` argument (respectively).
 	"""
 	def __init__(self,
 				 target: Dict[str, Any],
@@ -530,3 +532,10 @@ class FormatterForDiscordObjects(Formatter):
 	def format(self, obj: discord.abc) -> List[Any]:
 		return super().format(obj)
 
+def isIterable(obj: Any) -> bool:
+	try:
+		iter(obj)
+	except TypeError:
+		return False
+	else:
+		return True

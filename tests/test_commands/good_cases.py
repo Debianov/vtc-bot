@@ -1,8 +1,15 @@
+from typing import Any, Union
+
 import discord
 
-from bot.utils import (Case, DelayedExpression, ListMessagePart,
-                       DictMessagePart, ElemFormater, default_format)
-from typing import Any, Union
+from bot.utils import (
+	Case,
+	DelayedExpression,
+	DictMessagePart,
+	ElemFormater,
+	ListMessagePart,
+	default_format
+)
 
 
 def getDiscordMemberObject(arg: Any) -> Union[str, Any]:

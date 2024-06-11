@@ -5,27 +5,41 @@ import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import (DiscordObjEvaluator, MockLocator, Case,
-					   removeNesting, FormatterForDiscordObjects)
-from .good_cases import (default_case, default_case_with_several_users,
-						 default_case_with_other_target_name)
-from .bad_cases import (case_without_two_required_params,
-						case_without_one_required_params,
-						case_without_explicit_flag)
-from .coincidence_cases import (case_for_coincidence_0_1,
-								case_for_coincidence_0_2,
-								error_fragments,
-								case_for_coincidence_1_1,
-								case_for_coincidence_1_2,
-								case_for_coincidence_2_1,
-								case_for_coincidence_2_2,
-								case_for_coincidence_3_1,
-								case_for_coincidence_3_2,
-								case_for_coincidence_4_1,
-								case_for_coincidence_4_2,
-								case_for_coincidence_5_1,
-								case_for_coincidence_5_2,
-								getDiscordMemberObject)
+from bot.utils import (
+	Case,
+	DiscordObjEvaluator,
+	FormatterForDiscordObjects,
+	MockLocator,
+	removeNesting
+)
+
+from .bad_cases import (
+	case_without_explicit_flag,
+	case_without_one_required_params,
+	case_without_two_required_params
+)
+from .coincidence_cases import (
+	case_for_coincidence_0_1,
+	case_for_coincidence_0_2,
+	case_for_coincidence_1_1,
+	case_for_coincidence_1_2,
+	case_for_coincidence_2_1,
+	case_for_coincidence_2_2,
+	case_for_coincidence_3_1,
+	case_for_coincidence_3_2,
+	case_for_coincidence_4_1,
+	case_for_coincidence_4_2,
+	case_for_coincidence_5_1,
+	case_for_coincidence_5_2,
+	error_fragments_0,
+	getDiscordMemberObject
+)
+from .good_cases import (
+	default_case,
+	default_case_with_other_target_name,
+	default_case_with_several_users
+)
+
 
 @pytest.mark.parametrize(
 	"case",
@@ -160,7 +174,7 @@ async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 	"case, compared_case, error_part",
 	[
 		(case_for_coincidence_0_1, case_for_coincidence_0_2,
-		 error_fragments),
+		 error_fragments_0),
 		# (case_for_coincidence_1_1, case_for_coincidence_1_2),
 		# (case_for_coincidence_2_1, case_for_coincidence_2_2),
 		# (case_for_coincidence_3_1, case_for_coincidence_3_2),
@@ -184,8 +198,9 @@ async def test_coincidence_targets(
 		"sudo log 1",
 		getDiscordMemberObject))
 	assert dpytest.verify().message().content(f"Цель с подобными "
-		f"параметрами уже существует: {error_part[0]} ({error_part[1]
-		[1]}). Совпадающие элементы: {" ".join(error_part[2])}")
+		f"параметрами уже существует: {error_part["id"]} "
+		f"({error_part["name"]}). Совпадающие элементы: {", ".join(
+		map(str, error_part["coincidence_elems"]))}")
 
 @pytest.mark.parametrize(
 	"exp1, exp2, calls_sequence",

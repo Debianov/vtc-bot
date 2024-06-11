@@ -1,10 +1,17 @@
+from typing import Any, Union
+
 import discord
 
-from bot.utils import (Case, DelayedExpression, ListMessagePart,
-                       ElemFormater, StringMessagePart, DictMessagePart,
-                       default_format)
+from bot.utils import (
+	Case,
+	DelayedExpression,
+	DictMessagePart,
+	ElemFormater,
+	ListMessagePart,
+	StringMessagePart,
+	default_format
+)
 
-from typing import Any, Union
 
 def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
     if isinstance(arg, discord.Member):
@@ -29,9 +36,9 @@ case_for_coincidence_0_2 = Case(
     flags={"-name": "Aboba"}
 )
 
-error_fragments = ["0", "Aboba", [
+error_fragments_0 = {"id": "0", "name": "Aboba", "coincidence_elems": [
     DelayedExpression('mockLocator.members[0].id'), "26",
-    DelayedExpression('mockLocator.members[1].id')]]
+    DelayedExpression('mockLocator.members[1].id'), "Aboba"]}
 
 case_for_coincidence_1_1 = Case(
     target=[DelayedExpression('mockLocator.members[0]')],

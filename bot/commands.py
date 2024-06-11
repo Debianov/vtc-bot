@@ -8,6 +8,7 @@ import discord
 import psycopg
 from discord.ext import commands
 
+from .attrs import TargetGroupAttrs
 from .converters import (
 	Expression,
 	SearchExpression,
@@ -19,7 +20,6 @@ from .exceptions import ExpressionNotFound, UnhandlePartMessageSignal
 from .flags import UserLogFlags
 from .main import BotConstructor
 from .utils import ContextProvider, removeNesting
-from .attrs import TargetGroupAttrs
 
 
 class UserLog(commands.Cog):

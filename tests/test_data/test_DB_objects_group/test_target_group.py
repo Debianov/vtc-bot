@@ -3,9 +3,9 @@ from typing import Any
 import psycopg
 import pytest
 
+from bot.attrs import TargetGroupAttrs
 from bot.data import TargetGroup
 from bot.utils import Case
-from bot.attrs import TargetGroupAttrs
 
 from .good_cases import (
 	case_with_none,

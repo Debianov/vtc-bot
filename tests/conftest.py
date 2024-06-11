@@ -1,16 +1,15 @@
 import asyncio
 import pathlib
 import sys
-from typing import Any, AsyncGenerator, Dict, Generator, Tuple, List
+from typing import Any, AsyncGenerator, Dict, Generator, List, Tuple
 
 import discord
 import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
 from discord.ext import commands
-from bot.utils import DelayedExpressionReplacer, DelayedExpression
 
-
+from bot.utils import DelayedExpression, DelayedExpressionReplacer, isIterable
 
 root = pathlib.Path.cwd()
 
@@ -35,29 +34,34 @@ async def cleanUp() -> AsyncGenerator[None, None]:
 	await dpytest.empty_queue()
 
 def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
-	# @pytest.mark.doDelayedExpression implementation
+	"""
+	 The `pytest.mark.doDelayedExpression` implementation.
+	 Iter all args that passing to a test function, find and executed all
+	 `delayedExpression`s. The results of execution are writed in the same
+	 place (`DelayedExpressionReplacer` for more info).
+	 If object isn't iterable it is passed.
+	"""
 	if pyfuncitem.get_closest_marker("doDelayedExpression"):
 		params_from_func = pyfuncitem.callspec.params
 		params_and_fixtures = pyfuncitem.funcargs
-		params_with_case = filterParametersWithCase(params_from_func)
+		params_with_case = filterIterableParameters(params_from_func)
 		fixtures = filterFixtures(params_and_fixtures, params_with_case)
 		for _, maybe_case in params_with_case.items():
-			if isinstance(maybe_case, Case):
-				DelayedExpressionReplacer(
-					maybe_case.all_elems,
-					fixtures
-				).go()
-			elif isinstance(maybe_case, ErrorFragments):
-				DelayedExpressionReplacer(ErrorFragments.all_elems,
-										  fixtures)
+			DelayedExpressionReplacer(
+				maybe_case,
+				fixtures
+			).go()
 
-def filterParametersWithCase(
+def filterIterableParameters(
 	params_from_func: Dict[str, object]
 ) -> Dict[str, Case]:
 	params_with_case: Dict[str, Case] = {}
 	for (param, object) in params_from_func.items():
-		if isinstance(object, Case):
+		if isIterable(object):
 			params_with_case[param] = object
+		else:
+			print("filterIterableParameters", "The object is not iterable. "
+			"Skipped to checking by fixture.")
 	return params_with_case
 
 

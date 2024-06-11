@@ -1,7 +1,8 @@
+from abc import ABCMeta
 from typing import Any, List, Union
 
 import psycopg
-from abc import ABCMeta
+
 from bot._types import IDObjects
 
 
