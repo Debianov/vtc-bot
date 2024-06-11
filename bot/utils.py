@@ -318,7 +318,7 @@ class DelayedExpressionReplacer:
 				 ):
 		self.target = target
 		self.current_target = target
-		self.last_storage = target
+		self.last_storage: Union[Dict[Any, Any], Tuple[Any], List[Any]] = target
 		self.fixtures = fixtures
 		self.last_mutable_storage: Union[Dict[str, Any], Tuple[Any], None] \
 			= None
@@ -326,7 +326,7 @@ class DelayedExpressionReplacer:
 		self.item: Union[str, int] = ""
 		self.immutable_storages_chain: List[Tuple[Any, Union[str, int]]] = \
 			[]
-		self.item_to_access_immutable_storage = None
+		self.item_to_access_immutable_storage: Union[str, int, None] = None
 
 	def go(self) -> None:
 		if not isinstance(self.current_target, self.class_to_change):
@@ -395,7 +395,7 @@ class DelayedExpressionReplacer:
 			self.item_to_access_immutable_storage = self.item
 
 	def insert(self, object_to_insert: Any):
-		if isinstance(self.last_storage, tuple):
+		if isinstance(self.last_storage, tuple) and isinstance(self.item, int):
 			self.last_storage = _insertInTuple(self.last_storage, object_to_insert, self.item)
 			self.updateImmutableChain(self.last_storage, self.immutable_storages_chain)
 			self.last_mutable_storage[self.item_to_access_immutable_storage] = self.immutable_storages_chain[0][0]
