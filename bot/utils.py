@@ -11,7 +11,8 @@ from typing import (
 	Tuple,
 	Type,
 	TypeVar,
-	Union
+	Union,
+	SupportsIndex
 )
 
 import discord
@@ -320,12 +321,11 @@ class DelayedExpressionReplacer:
 		self.current_target = target
 		self.last_storage: Union[Dict[Any, Any], Tuple[Any], List[Any]] = target
 		self.fixtures = fixtures
-		self.last_mutable_storage: Union[Dict[str, Any], Tuple[Any], None] \
+		self.last_mutable_storage: Union[Dict[str, Any], List[Any], None] \
 			= None
 		self.class_to_change = DelayedExpression
 		self.item: Union[str, int] = ""
-		self.immutable_storages_chain: List[Tuple[Any, Union[str, int]]] = \
-			[]
+		self.immutable_storages_chain: List[Tuple[Any]] = []
 		self.item_to_access_immutable_storage: Union[str, int, None] = None
 
 	def go(self) -> None:
@@ -398,7 +398,15 @@ class DelayedExpressionReplacer:
 		if isinstance(self.last_storage, tuple) and isinstance(self.item, int):
 			self.last_storage = _insertInTuple(self.last_storage, object_to_insert, self.item)
 			self.updateImmutableChain(self.last_storage, self.immutable_storages_chain)
-			self.last_mutable_storage[self.item_to_access_immutable_storage] = self.immutable_storages_chain[0][0]
+			if ((isinstance(self.last_mutable_storage, dict) and
+			isinstance(self.item_to_access_immutable_storage, str)) or
+			(isinstance(self.last_mutable_storage, list) and
+			 isinstance(self.item_to_access_immutable_storage, int))):
+				self.last_mutable_storage[self. # type: ignore
+				item_to_access_immutable_storage] = (self.
+				immutable_storages_chain[0][0])
+			else:
+				raise TypeError("Unexpected type at assignment.")
 		else:
 			mutable_storage = self.last_storage
 			mutable_storage[self.item] = object_to_insert
