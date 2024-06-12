@@ -29,7 +29,7 @@ def test_init_target_group(
 	pass_args: Case,
 	expect_args: Case
 ):
-	instance = TargetGroup(TargetGroupAttrs(**pass_args))  # type: ignore [arg-type]
+	instance = TargetGroup(TargetGroupAttrs(**pass_args))
 	assert instance.dbconn == expect_args["dbconn"]
 	assert instance.context_id == expect_args["context_id"]
 	assert instance.target == expect_args["target"]

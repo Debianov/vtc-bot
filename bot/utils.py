@@ -11,8 +11,7 @@ from typing import (
 	Tuple,
 	Type,
 	TypeVar,
-	Union,
-	SupportsIndex
+	Union
 )
 
 import discord
@@ -43,10 +42,10 @@ class MockLocator:
 	"""
 
 	def __init__(
-			self,
-			guild: discord.Guild,
-			channel: discord.abc.GuildChannel,
-			members: List[discord.Member]
+		self,
+		guild: discord.Guild,
+		channel: discord.abc.GuildChannel,
+		members: List[discord.Member]
 	) -> None:
 		self.guild = guild
 		self.channel = channel
@@ -73,8 +72,8 @@ class DiscordObjEvaluator:
 		return self.mock_locator
 
 	def extractIDAndGenerateObject(
-			self,
-			sequence: List[str],
+		self,
+		sequence: List[str],
 	) -> Iterable[str]:
 		if sequence == [""]:
 			return sequence
@@ -86,9 +85,9 @@ class DiscordObjEvaluator:
 		return message_part if message_part else sequence
 
 	def extractObjects(
-			self,
-			calls_sequence: List[str],
-			current_ctx: commands.Context
+		self,
+		calls_sequence: List[str],
+		current_ctx: commands.Context
 	) -> List[List[discord.abc.Messageable]]:
 		result: List[List[discord.abc.Messageable]] = []
 		for call in calls_sequence:
@@ -97,8 +96,8 @@ class DiscordObjEvaluator:
 		return result
 
 	def evalForMockLocator(
-			self,
-			expression: str
+		self,
+		expression: str
 	) -> Any:
 		split_expr = expression.split(".")
 		obj_name = split_expr[0]
@@ -108,8 +107,8 @@ class DiscordObjEvaluator:
 		(attributes, indices) = self.evalAttributePart(attr_part)
 		intermediate_eval_result: Any = \
 			(self.mock_locator.__dict__[attributes[0]][indices[0]]
-			 if indices[0] is not None else
-			 self.mock_locator.__dict__[attributes[0]])
+			if indices[0] is not None else
+			self.mock_locator.__dict__[attributes[0]])
 		if len(attributes) > 1 and len(indices) > 1:
 			for (attr, index) in zip(attributes[1:], indices[1:]):
 				if index is not None:
@@ -121,22 +120,20 @@ class DiscordObjEvaluator:
 		return (total_eval_result := intermediate_eval_result)  # noqa: F841
 
 	def evalAttributePart(
-			self,
-			attrs: List[str]
+		self,
+		attrs: List[str]
 	) -> Tuple[List[str], List[Union[int, None]]]:
 		attributes: List[str] = []
 		indices: List[Union[int, None]] = []
 		for attr in attrs:
-			(attribute, index) = self.extractIndex(attr)
+			(attribute, index) = self.parseIndex(attr)
 			attributes.append(attribute)
 			indices.append(index)
 		return (attributes, indices)
 
-	def extractIndex(self, attr: str) -> Tuple[str, Union[int, None]]:
+	def parseIndex(self, attr: str) -> Tuple[str, Union[int, None]]:
 		if (((left_bracket_ind := attr.find("[")) == -1) and
-				((
-						 right_bracket_ind := attr.find(
-							 "]")) == -1)):  # noqa: F841
+				((right_bracket_ind := attr.find("]")) == -1)):  # noqa: F841
 			return (attr, None)
 		cycle_cursor = left_bracket_ind + 1
 		index = ""
@@ -176,8 +173,8 @@ def removeNesting(instance: List[Any]) -> List[Any]:
 
 
 def createDiscordObjectsGroupInstance(
-		instance_list: List[Type[DiscordObjectsGroup]],
-		discord_context: commands.Context
+	instance_list: List[Type[DiscordObjectsGroup]],
+	discord_context: commands.Context
 ) -> List[DiscordObjectsGroup]:
 	result: List[DiscordObjectsGroup] = []
 	for instance in instance_list:
@@ -199,9 +196,9 @@ class DelayedExpression:
 		return eval(self.expression)
 
 	def _setGlobalVarsInLocals(
-			self,
-			locals: Dict[str, Any],
-			fixtures: Any
+		self,
+		locals: Dict[str, Any],
+		fixtures: Any
 	) -> Dict[str, Any]:
 		"""
 		Func set a local variable in a func that called it.
@@ -246,9 +243,9 @@ class Case(dict):
 	# 	self.all_elems[param] = value
 
 	def getMessageStringWith(
-			self,
-			cmd: str,
-			format_func: Callable[[Any], Any]
+		self,
+		cmd: str,
+		format_func: Callable[[Any], Any]
 	) -> str:
 		self.message_string.append(cmd)
 		for elem in self.values():
@@ -277,9 +274,9 @@ class DelayedExprsEvaluator:
 	"""
 
 	def __init__(
-			self,
-			delayed_exprs: List[DelayedExpression],
-			global_vars: Dict[str, Any]
+		self,
+		delayed_exprs: List[DelayedExpression],
+		global_vars: Dict[str, Any]
 	) -> None:
 		"""
 		Args:
@@ -313,19 +310,20 @@ class DelayedExpressionReplacer:
 	The class for replacing elements in nested storages on the
 	the element of `fixtures` argument (respectively).
 	"""
-	def __init__(self,
-				 target: Dict[str, Any],
-				 fixtures: Any
-				 ):
+	def __init__(
+		self,
+		target: Iterable,
+		fixtures: Any
+	):
 		self.target = target
 		self.current_target = target
-		self.last_storage: Union[Dict[Any, Any], Tuple[Any], List[Any]] = target
+		self.last_storage = target
 		self.fixtures = fixtures
 		self.last_mutable_storage: Union[Dict[str, Any], List[Any], None] \
 			= None
 		self.class_to_change = DelayedExpression
 		self.item: Union[str, int] = ""
-		self.immutable_storages_chain: List[Tuple[Any]] = []
+		self.immutable_storages_chain: List[Tuple[Any, ...]] = []
 		self.item_to_access_immutable_storage: Union[str, int, None] = None
 
 	def go(self) -> None:
@@ -362,7 +360,8 @@ class DelayedExpressionReplacer:
 
 	def setLastStorage(self, target: Any) -> Any:
 		"""
-			Set `self.last_storage` and return old attr value that is necessary to restore a `self.last_storage` attr after
+			Set `self.last_storage` and return old attr value that is
+			necessary to restore a `self.last_storage` attr after
 			exiting from a next recursive layer.
 		"""
 		previous_storage = self.last_storage
@@ -372,23 +371,32 @@ class DelayedExpressionReplacer:
 	def addItemForAccessImmutableStorage(self, previous_storage: Any) -> None:
 		"""
 		A func writes `self.item` to `item_to_access_immutable_storage`.
-		`self.item_to_access_immutable_storage` stores `self.item` to access immutable storage from last mutable storage.
-		If `previous_storage` is immutable storage `self.item` it doesn't save in `self.item_to_access_immutable_storage`.
+		`self.item_to_access_immutable_storage` stores `self.item` to access
+		immutable storage from last mutable storage. If `previous_storage`
+		is immutable storage `self.item` it doesn't save in
+		`self.item_to_access_immutable_storage`.
 
-		The fact of the matter is if `item_to_access_immutable_storage` is sets from an item that describes a position
-		access to immutable storage (tuple) from list/or tuple consequently we can use this attr for access to tuples.
+		The fact of the matter is if `item_to_access_immutable_storage` is
+		sets from an item that describes a position
+		access to immutable storage (tuple) from list/or tuple consequently
+		we can use this attr for access to tuples.
 		```
-		{'key': ("test", "test2", ["test3", "test4", ("test5", object_to_update1, (object_to_update2, "test6"))])}
-		A path to object_to_update1: item = 2 from first tuple => item = 2 from first list.
+		{'key': ("test", "test2", ["test3", "test4",
+		("test5", object_to_update1, (object_to_update2, "test6"))])}
+		A path to object_to_update1: item = 2 from first tuple => item =
+		2 from first list.
 		```
-		If `item_to_access_immutable_storage` is sets from an item that describes a position access to immutable storage
-		from other immutable storage, it's not allowed.
+		If `item_to_access_immutable_storage` is sets from an item that
+		describes a position access to immutable storage
+		from other immutable storage, it's not allowed (we won't be able
+		"to write" anything in an immutable storage).
 		```
-		{'key': ("test", "test2", ["test3", "test4", ("test5", object_to_update1, (object_to_update2, "test6"))])}
-		A wrong path to object_to_update2: item = 2 from first tuple => item = 2 from first list => item = 2 from second
-		tuple.
-		A true path to object_to_update2: item = 2 from first tuple => item = 2 from first list because first list is last
-		mutable storage.
+		{'key': ("test", "test2", ["test3", "test4", ("test5",
+		object_to_update1, (object_to_update2, "test6"))])}
+		A wrong path to object_to_update2: item = 2 from first tuple =>
+		item = 2 from first list => item = 2 from second tuple.
+		A true path to object_to_update2: item = 2 from first tuple =>
+		item = 2 from first list because first list is last mutable storage.
 		```
 		"""
 		if isinstance(previous_storage, dict) or isinstance(previous_storage, list):
@@ -396,24 +404,31 @@ class DelayedExpressionReplacer:
 
 	def insert(self, object_to_insert: Any):
 		if isinstance(self.last_storage, tuple) and isinstance(self.item, int):
-			self.last_storage = _insertInTuple(self.last_storage, object_to_insert, self.item)
-			self.updateImmutableChain(self.last_storage, self.immutable_storages_chain)
+			self.last_storage = _insertInTuple(self.last_storage,
+											object_to_insert, self.item)
+			self.updateImmutableChain(self.last_storage,
+									self.immutable_storages_chain)
 			if ((isinstance(self.last_mutable_storage, dict) and
 			isinstance(self.item_to_access_immutable_storage, str)) or
 			(isinstance(self.last_mutable_storage, list) and
-			 isinstance(self.item_to_access_immutable_storage, int))):
+			isinstance(self.item_to_access_immutable_storage, int))):
 				self.last_mutable_storage[self. # type: ignore
 				item_to_access_immutable_storage] = (self.
 				immutable_storages_chain[0][0])
 			else:
 				raise TypeError("Unexpected type at assignment.")
 		else:
-			mutable_storage = self.last_storage
-			mutable_storage[self.item] = object_to_insert
+			mutable_storage = self.last_storage # type: ignore
+			mutable_storage[self.item] = object_to_insert # type: ignore
 
-	def updateImmutableChain(self, storage_to_update: Tuple[Any], immutable_storages_chain: List[Tuple[Any]]) -> None:
+	def updateImmutableChain(
+		self,
+		storage_to_update: Tuple[Any],
+		immutable_storages_chain: List[Tuple[Any, ...]]
+	) -> None:
 		"""
-		An updateImmutableChain func updates the entire chain starting with zero elements.
+		An updateImmutableChain func updates the entire chain starting with
+		zero elements.
 		"""
 		immutable_storages_chain.reverse()
 		for ind in range(0, len(immutable_storages_chain)):
@@ -424,15 +439,23 @@ class DelayedExpressionReplacer:
 				current_storage = immutable_storages_chain[ind][0]
 				previous_storage = immutable_storages_chain[ind - 1][0]
 				item_to_current_storage = immutable_storages_chain[ind - 1][1]
-				current_storage = _insertInTuple(current_storage, previous_storage, item_to_current_storage)
+				current_storage = _insertInTuple(
+					current_storage,
+					previous_storage,
+					item_to_current_storage
+				)
 				immutable_storages_chain[ind] = (current_storage, item_to_next_storage)
 		immutable_storages_chain.reverse()
 
-	def getResults(self) -> Dict[str, Any]:
+	def getResults(self) -> Iterable:
 		return self.target
 
-def _insertInTuple(old_tuple: Tuple[Any], element_to_insert: Any, ind_to_insert: int) -> Tuple[Any]:
-	new_tuple: Tuple[Any] = tuple()
+def _insertInTuple(
+	old_tuple: Tuple[Any],
+	element_to_insert: Any,
+	ind_to_insert: int
+) -> Tuple[Any]:
+	new_tuple: Tuple[Any, ...] = tuple()
 	if not isinstance(ind_to_insert, int):
 		raise Exception
 	for (ind, elem) in enumerate(old_tuple):
@@ -454,7 +477,7 @@ class ElemFormater:
 		return self.format(arg)
 
 def getStrObject(arg: Any) -> str:
-    return str(arg)
+	return str(arg)
 
 default_format = ElemFormater(getStrObject)
 
@@ -531,14 +554,6 @@ class Formatter(metaclass=abc.ABCMeta):
 		else:
 			return self.func_format(obj)
 		return result
-
-class FormatterForDiscordObjects(Formatter):
-
-	def __init__(self, func_format: Callable[[Any], discord.abc]) -> None:
-		super().__init__(func_format)
-
-	def format(self, obj: discord.abc) -> List[Any]:
-		return super().format(obj)
 
 def isIterable(obj: Any) -> bool:
 	try:

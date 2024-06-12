@@ -1,7 +1,7 @@
 import asyncio
 import pathlib
 import sys
-from typing import Any, AsyncGenerator, Dict, Generator, List, Tuple
+from typing import Any, AsyncGenerator, Dict, Generator, Iterable, List, Tuple
 
 import discord
 import discord.ext.test as dpytest
@@ -44,21 +44,21 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
 	if pyfuncitem.get_closest_marker("doDelayedExpression"):
 		params_from_func = pyfuncitem.callspec.params
 		params_and_fixtures = pyfuncitem.funcargs
-		params_with_case = filterIterableParameters(params_from_func)
-		fixtures = filterFixtures(params_and_fixtures, params_with_case)
-		for _, maybe_case in params_with_case.items():
+		params_with_iterables = filterIterableParameters(params_from_func)
+		fixtures = filterFixtures(params_and_fixtures, params_with_iterables)
+		for _, iterable in params_with_iterables.items():
 			DelayedExpressionReplacer(
-				maybe_case,
+				iterable,
 				fixtures
 			).go()
 
 def filterIterableParameters(
-	params_from_func: Dict[str, object]
-) -> Dict[str, Case]:
-	params_with_case: Dict[str, Case] = {}
-	for (param, object) in params_from_func.items():
-		if isIterable(object):
-			params_with_case[param] = object
+	params_from_func: Dict[str, Any]
+) -> Dict[str, Iterable]:
+	params_with_case: Dict[str, Iterable] = {}
+	for (param, instance) in params_from_func.items():
+		if isIterable(instance):
+			params_with_case[param] = instance
 		else:
 			print("filterIterableParameters", "The object is not iterable. "
 			"Skipped to checking by fixture.")
@@ -67,9 +67,9 @@ def filterIterableParameters(
 
 def filterFixtures(
 	params_and_fixtures: Dict[str, Any],
-	params_with_case: Dict[str, Case]
+	params_with_iterables: Dict[str, Iterable]
 ) -> Dict[str, Any]:
 	fixtures: Dict[str, Case] = params_and_fixtures.copy()
-	for param_key in params_with_case.keys():
+	for param_key in params_with_iterables.keys():
 		fixtures.pop(param_key)
 	return fixtures

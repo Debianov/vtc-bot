@@ -5,11 +5,7 @@ import discord
 from bot.utils import (
 	Case,
 	DelayedExpression,
-	DictMessagePart,
-	ElemFormater,
-	ListMessagePart,
-	StringMessagePart,
-	default_format
+	ElemFormater
 )
 
 

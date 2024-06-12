@@ -17,6 +17,7 @@ def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
         return str(arg.id)
     return arg
 
+
 format_for_getting_ds_id = ElemFormater(getDiscordMemberObject)
 
 case_without_two_required_params = Case(
@@ -26,8 +27,7 @@ case_without_two_required_params = Case(
     ),
     act=StringMessagePart(""),
     d_in=ListMessagePart(default_format, "")
-    )
-
+)
 
 case_without_one_required_params = Case(
     target=ListMessagePart(

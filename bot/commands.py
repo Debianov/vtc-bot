@@ -77,7 +77,7 @@ class UserLog(commands.Cog):
 		ctx: commands.Context,
 		target: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, discord.CategoryChannel, SearchExpression]],
-		act: Union[ShortSearchExpression[ActGroup], str], # type: ignore [type-arg]
+		act: List[Union[ShortSearchExpression[ActGroup], str]],
 		d_in: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, SearchExpression, SpecialExpression]],
 		*,
@@ -118,7 +118,7 @@ class UserLog(commands.Cog):
 			target=target,  # type: ignore [arg-type]
 			act=act,  # type: ignore [arg-type]
 			d_in=d_in  # type: ignore [arg-type]
-			)
+		)
 		)
 
 		for key in flags.get_flags().keys():

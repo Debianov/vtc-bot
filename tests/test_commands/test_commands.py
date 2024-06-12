@@ -1,17 +1,11 @@
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List
 
 import discord.ext.test as dpytest
 import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import (
-	Case,
-	DiscordObjEvaluator,
-	FormatterForDiscordObjects,
-	MockLocator,
-	removeNesting
-)
+from bot.utils import Case, DiscordObjEvaluator, MockLocator
 
 from .bad_cases import (
 	case_without_explicit_flag,
@@ -51,7 +45,6 @@ from .good_cases import (
 	[default_case, default_case_with_several_users,
 	 default_case_with_other_target_name]
 )
-
 @pytest.mark.doDelayedExpression
 @pytest.mark.asyncio
 async def test_good_log_create_with_flags(
@@ -196,7 +189,7 @@ async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 async def test_coincidence_targets(
 	case: Case,
 	compared_case: Case,
-	error_part: List[str]
+	error_part: Dict[str, Any]
 ) -> None:
 
 	await dpytest.message(case.getMessageStringWith(

@@ -7,7 +7,7 @@ from typing import Any, Iterable, List, Optional, Sequence, Type, Union
 import psycopg
 from discord.ext import commands
 
-from ._types import DiscordGuildObjects, IDObjects
+from ._types import DiscordGuildObjects
 from .attrs import TargetGroupAttrs
 
 

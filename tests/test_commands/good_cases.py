@@ -51,4 +51,3 @@ default_case_with_other_target_name = Case(
     flags=DictMessagePart(default_format, {"-name": "Aboba",
         "-output": "", "-priority": "-1", "other": ""})
 )
-
