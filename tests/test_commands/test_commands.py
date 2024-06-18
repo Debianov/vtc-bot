@@ -30,8 +30,7 @@ from .coincidence_cases import (
 	error_fragments_2,
 	error_fragments_3,
 	error_fragments_4,
-	error_fragments_5,
-	getDiscordMemberObject
+	error_fragments_5
 )
 from .good_cases import (
 	default_case,

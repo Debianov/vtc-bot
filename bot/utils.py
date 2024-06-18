@@ -10,8 +10,9 @@ from typing import (
 	Optional,
 	Tuple,
 	Type,
+	TypedDict,
 	TypeVar,
-	Union,
+	Union
 )
 
 import discord
@@ -218,6 +219,11 @@ class DelayedExpression:
 				hasattr(check_instance, "eval_expression"))
 
 
+class CaseKeyValuePair(TypedDict):
+	key: str
+	value: Any
+
+
 class Case(dict):
 	"""
 	The class for storing and passing args to test funcs.
@@ -225,22 +231,13 @@ class Case(dict):
 	Access to class attributes is any call to `__getitem__`.
 	"""
 
-	def __init__(self, *args, **kwargs: Any) -> None:
-		# self.all_elems: Dict[str, Any] = kwargs
+	def __init__(self, **kwargs: Any) -> None:
+		"""
+		Args:
+			**kwargs (dict[str, Any])
+		"""
 		self.message_string: List[str] = []
-		self.update(*args, **kwargs)
-
-	# def keys(self) -> List[Any]:
-	# 	"""
-	# 	The load func for a map object implementation.
-	# 	"""
-	# 	return list(self.all_elems.keys())
-	#
-	# def __getitem__(self, param) -> Any:
-	# 	return self.all_elems[param]
-	#
-	# def __setitem__(self, param: str, value: Any) -> None:
-	# 	self.all_elems[param] = value
+		self.update(**kwargs)
 
 	def getMessageStringWith(
 		self,
@@ -251,14 +248,26 @@ class Case(dict):
 			match type(elem):
 				case builtins.list:
 					for inner_elem in elem:
-						self.message_string.append(toStrIfInt(inner_elem))
+						self._addInMessageStringList(inner_elem)
 				case builtins.dict:
 					for key, value in elem.items():
-						self.message_string.append(key)
-						self.message_string.append(toStrIfInt(value))
+						self._addInMessageStringList(key)
+						self._addInMessageStringList(value)
 				case _:
-					self.message_string.append(toStrIfInt(elem))
+					self._addInMessageStringList(elem)
 		return " ".join(self.message_string)
+
+	def _addInMessageStringList(self, elem: Any):
+		"""
+		Check that elems of a `Case` is evaluated by `DelayedExprsEvaluator`.
+		"""
+		match type(elem):
+			case builtins.int:
+				self.message_string.append(str(elem))
+			case builtins.str:
+				self.message_string.append(elem)
+			case _:
+				raise TypeError("elem isn't str or int")
 
 class ErrorFragments:
 	"""
@@ -563,7 +572,7 @@ def isIterable(obj: Any) -> bool:
 		return True
 
 
-def toStrIfInt(elem: Any) -> Optional[str]:
+def toStrIfInt(elem: Any) -> Union[str, Any]:
 	if isinstance(elem, int):
 		return str(elem)
 	return elem
