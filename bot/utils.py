@@ -11,7 +11,7 @@ from typing import (
 	Tuple,
 	Type,
 	TypeVar,
-	Union
+	Union,
 )
 
 import discord
@@ -245,20 +245,19 @@ class Case(dict):
 	def getMessageStringWith(
 		self,
 		cmd: str,
-		format_func: Callable[[Any], Any]
 	) -> str:
 		self.message_string.append(cmd)
 		for elem in self.values():
 			match type(elem):
 				case builtins.list:
 					for inner_elem in elem:
-						self.message_string.append(format_func(inner_elem))
+						self.message_string.append(toStrIfInt(inner_elem))
 				case builtins.dict:
 					for key, value in elem.items():
 						self.message_string.append(key)
-						self.message_string.append(format_func(value))
+						self.message_string.append(toStrIfInt(value))
 				case _:
-					self.message_string.append(elem)
+					self.message_string.append(toStrIfInt(elem))
 		return " ".join(self.message_string)
 
 class ErrorFragments:
@@ -562,3 +561,9 @@ def isIterable(obj: Any) -> bool:
 		return False
 	else:
 		return True
+
+
+def toStrIfInt(elem: Any) -> Optional[str]:
+	if isinstance(elem, int):
+		return str(elem)
+	return elem

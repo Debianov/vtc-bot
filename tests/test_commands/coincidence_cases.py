@@ -15,16 +15,16 @@ def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
 format_for_getting_ds_id = ElemFormater(getDiscordMemberObject)
 
 case_for_coincidence_0_1 = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=[DelayedExpression('mockLocator.members[0].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": "Aboba"}
 )
 
 case_for_coincidence_0_2 = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=[DelayedExpression('mockLocator.members[0].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": "Aboba"}
 )
 
@@ -33,16 +33,16 @@ error_fragments_0 = {"id": "0", "name": "Aboba", "coincidence_elems": [
     DelayedExpression('mockLocator.members[1].id'), "Aboba"]}
 
 case_for_coincidence_1_1 = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=[DelayedExpression('mockLocator.members[0].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": "Aboba"}
 )
 
 case_for_coincidence_1_2 = Case(
-    target=[DelayedExpression('mockLocator.members[2]')],
+    target=[DelayedExpression('mockLocator.members[2].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": "Aboba"}
 )
 
@@ -50,19 +50,19 @@ error_fragments_1 = {"id": "0", "name": "Aboba", "coincidence_elems": ["26",
     DelayedExpression('mockLocator.members[1].id'), "Aboba"]}
 
 case_for_coincidence_2_1 = Case(
-    target=[DelayedExpression('mockLocator.members[0]'),
-            DelayedExpression('mockLocator.members[1]')],
+    target=[DelayedExpression('mockLocator.members[0].id'),
+            DelayedExpression('mockLocator.members[1].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[2]'),
-          DelayedExpression('mockLocator.members[3]')],
+    d_in=[DelayedExpression('mockLocator.members[2].id'),
+          DelayedExpression('mockLocator.members[3].id')],
     flags={"-name": "Aboba"}
 )
 
 case_for_coincidence_2_2 = Case(
-    target=[DelayedExpression('mockLocator.members[0]'),
-            DelayedExpression('mockLocator.members[1]')],
+    target=[DelayedExpression('mockLocator.members[0].id'),
+            DelayedExpression('mockLocator.members[1].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[2]')],
+    d_in=[DelayedExpression('mockLocator.members[2].id')],
     flags={"-name": "Aboba"}
 )
 
@@ -72,16 +72,16 @@ error_fragments_2 = {"id": "0", "name": "Aboba", "coincidence_elems": [
     DelayedExpression('mockLocator.members[2].id'), "Aboba"]}
 
 case_for_coincidence_3_1 = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=[DelayedExpression('mockLocator.members[0].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": "Aboba"}
 )
 
 case_for_coincidence_3_2 = Case(
-    target=[DelayedExpression('mockLocator.members[2]')],
+    target=[DelayedExpression('mockLocator.members[2].id')],
     act="8",
-    d_in=[DelayedExpression('mockLocator.members[3]')],
+    d_in=[DelayedExpression('mockLocator.members[3].id')],
     flags={"-name": "Aboba"}
 )
 
@@ -89,16 +89,16 @@ error_fragments_3 = {"id": "0", "name": "Aboba", "coincidence_elems": [
     "Aboba"]}
 
 case_for_coincidence_4_1 = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=[DelayedExpression('mockLocator.members[0].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": "Aboba"}
 )
 
 case_for_coincidence_4_2 = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=[DelayedExpression('mockLocator.members[0].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": "aboba"}
 )
 
@@ -107,16 +107,16 @@ error_fragments_4 = {"id": "0", "name": "Aboba", "coincidence_elems": [
     DelayedExpression('mockLocator.members[1].id')]}
 
 case_for_coincidence_5_1 = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=[DelayedExpression('mockLocator.members[0].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": "Aboba"}
 )
 
 case_for_coincidence_5_2 = Case(
-    target=[DelayedExpression('mockLocator.members[0]')],
+    target=[DelayedExpression('mockLocator.members[0].id')],
     act="26",
-    d_in=[DelayedExpression('mockLocator.members[1]')],
+    d_in=[DelayedExpression('mockLocator.members[1].id')],
     flags={"-name": ""}
 )
 

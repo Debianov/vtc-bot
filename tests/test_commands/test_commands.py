@@ -193,13 +193,11 @@ async def test_coincidence_targets(
 ) -> None:
 
 	await dpytest.message(case.getMessageStringWith(
-		"sudo log 1",
-		getDiscordMemberObject))
+		"sudo log 1"))
 	dpytest.get_message()
 
 	await dpytest.message(compared_case.getMessageStringWith(
-		"sudo log 1",
-		getDiscordMemberObject))
+		"sudo log 1"))
 	assert dpytest.verify().message().content(f"Цель с подобными "
 		f"параметрами уже существует: {error_part["id"]} "
 		f"({error_part["name"]}). Совпадающие элементы: {", ".join(
