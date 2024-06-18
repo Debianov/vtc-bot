@@ -2,11 +2,7 @@ from typing import Any, Union
 
 import discord
 
-from bot.utils import (
-	Case,
-	DelayedExpression,
-	ElemFormater
-)
+from bot.utils import Case, DelayedExpression, ElemFormater
 
 
 def getDiscordMemberObject(arg: Any) -> Union[str, Any]:

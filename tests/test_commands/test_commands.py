@@ -43,7 +43,7 @@ from .good_cases import (
 @pytest.mark.parametrize(
 	"case",
 	[default_case, default_case_with_several_users,
-	 default_case_with_other_target_name]
+	default_case_with_other_target_name]
 )
 @pytest.mark.doDelayedExpression
 @pytest.mark.asyncio
@@ -104,12 +104,12 @@ async def test_log_without_subcommand() -> None:
 		(case_without_two_required_params, "act"),
 		(case_without_one_required_params, "d_in"),
 	]
-	 # ( # TODO доработать
-	 # 	[""],
-	 # 	"",
-	 # 	[""],
-	 # 	"target"
-	 # ),
+	#( # TODO доработать
+	# [""],
+	# "",
+	# [""],
+	# "target"
+	# ),
 )
 @pytest.mark.asyncio
 async def test_log_without_require_params(
@@ -172,17 +172,17 @@ async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 	"case, compared_case, error_part",
 	[
 		(case_for_coincidence_0_1, case_for_coincidence_0_2,
-		 error_fragments_0),
+		error_fragments_0),
 		(case_for_coincidence_1_1, case_for_coincidence_1_2,
-		 error_fragments_1),
+		error_fragments_1),
 		(case_for_coincidence_2_1, case_for_coincidence_2_2,
-		 error_fragments_2),
+		error_fragments_2),
 		(case_for_coincidence_3_1, case_for_coincidence_3_2,
-		 error_fragments_3),
+		error_fragments_3),
 		(case_for_coincidence_4_1, case_for_coincidence_4_2,
-		 error_fragments_4),
+		error_fragments_4),
 		(case_for_coincidence_5_1, case_for_coincidence_5_2,
-		 error_fragments_5)
+		error_fragments_5)
 	],
 )
 @pytest.mark.asyncio
