@@ -77,7 +77,7 @@ class UserLog(commands.Cog):
 		ctx: commands.Context,
 		target: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, discord.CategoryChannel, SearchExpression]],
-		act: List[Union[ShortSearchExpression[ActGroup], str]],
+		act: Union[ShortSearchExpression[ActGroup], str],
 		d_in: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, SearchExpression, SpecialExpression]],
 		*,
@@ -100,7 +100,6 @@ class UserLog(commands.Cog):
 		self.context_provider.updateContext(ctx.guild)
 
 		initial_target = removeNesting(target)
-		initial_act = removeNesting(act)
 		initial_d_in = removeNesting(d_in)
 
 		if not d_in: # если пропускается последний обязательный параметр
@@ -109,7 +108,7 @@ class UserLog(commands.Cog):
 				command.clean_params["d_in"]) # type: ignore [union-attr]
 		else:
 			await self.checkForUnhandleContent(ctx, initial_target or target,
-				initial_act or act, initial_d_in or d_in, flags.name,
+				act, initial_d_in or d_in, flags.name,
 				flags.output, flags.priority, flags.other)
 
 		target_instance = TargetGroup(TargetGroupAttrs(
