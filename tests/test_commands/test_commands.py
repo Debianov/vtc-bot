@@ -51,13 +51,7 @@ async def test_good_log_create_with_flags(
 	mockLocator: MockLocator,
 	case: Case
 ) -> None:
-	parts = []
-	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringMessagePart())
-	parts.append(case["act"])
-	parts.append(case["d_in"].joinInStringMessagePart())
-	parts.append(case["flags"].joinInStringMessagePart())
-	await dpytest.message(" ".join(parts))
+	await dpytest.message(case.getMessageStringWith("sudo log 1"))
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
@@ -66,7 +60,7 @@ async def test_good_log_create_with_flags(
 		for row in await acur.fetchall():
 			assert row == ("0", str(mockLocator.guild.id),
 				case["target"], case["act"], case["d_in"],
-				*case["flags"].	getValueAsList())
+				*case["flags"].getValueAsList())
 
 @pytest.mark.asyncio
 async def test_good_log_create_without_flags(
@@ -115,15 +109,10 @@ async def test_log_without_require_params(
 	case: Case,
 	missing_params: str
 ) -> None:
-	parts = []
-	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringMessagePart())
-	parts.append(case["act"])
-	parts.append(case["d_in"].joinInStringMessagePart())
 	with pytest.raises(commands.MissingRequiredArgument): # TODO dpytest
 		# почему-то принудительно поднимает исключения, хотя они могут
 		# обрабатываться в on_command_error и проч. ивентах.
-		await dpytest.message(" ".join(parts))
+		await dpytest.message(case.getMessageStringWith("sudo log 1"))
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали "
 		f"все обязательные параметры. Не найденный параметр: "
 		f"{missing_params}")
@@ -138,14 +127,8 @@ async def test_log_bad_flag(
 	case: Case,
 	unhandle_message_part: str
 ) -> None:
-	parts = []
-	parts.append("sudo log 1")
-	parts.append(case["target"].joinInStringMessagePart())
-	parts.append(case["act"])
-	parts.append(case["d_in"].joinInStringMessagePart())
-	parts.append(case["flags"])
 	with pytest.raises(commands.CommandInvokeError):
-		await dpytest.message(" ".join(parts))
+		await dpytest.message(case.getMessageStringWith("sudo log 1"))
 	assert dpytest.verify().message().content("Убедитесь, что вы "
 		"указали флаги явно, либо указали корректные данные."
 		f" Необработанная часть сообщения: {unhandle_message_part}")

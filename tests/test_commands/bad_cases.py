@@ -21,28 +21,20 @@ def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
 format_for_getting_ds_id = ElemFormater(getDiscordMemberObject)
 
 case_without_two_required_params = Case(
-	target=ListMessagePart(
-		format_for_getting_ds_id,
-		DelayedExpression('mockLocator.members[0]')
-	),
-	act=StringMessagePart(""),
-	d_in=ListMessagePart(default_format, "")
+	target=DelayedExpression('mockLocator.members[0].id'),
+	act="",
+	d_in=""
 )
 
 case_without_one_required_params = Case(
-	target=ListMessagePart(
-		format_for_getting_ds_id,
-		DelayedExpression('mockLocator.members[0]')
-	),
+	target=DelayedExpression('mockLocator.members[0].id'),
 	act="23",
-	d_in=ListMessagePart(default_format, "")
+	d_in=""
 )
 
 case_without_explicit_flag = Case(
-	target=ListMessagePart(format_for_getting_ds_id,
-	DelayedExpression("mockLocator.members[0]")),
+	target=DelayedExpression("mockLocator.members[0].id"),
 	act="54",
-	d_in=ListMessagePart(format_for_getting_ds_id,
-	DelayedExpression("mockLocator.members[1]")),
+	d_in=DelayedExpression("mockLocator.members[1].id"),
 	flags="barhatniy_tyagi"
 )
