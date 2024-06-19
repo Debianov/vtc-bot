@@ -242,17 +242,19 @@ class Case(dict):
 	def getMessageStringWith(
 		self,
 		cmd: str,
+		format_func: Callable[[Any], str] = lambda x: x
 	) -> str:
 		self.message_string.append(cmd)
 		for elem in self.values():
 			match type(elem):
 				case builtins.list:
 					for inner_elem in elem:
-						self._addInMessageStringList(inner_elem)
+						self._addInMessageStringList(format_func(inner_elem))
 				case builtins.dict:
 					for key, value in elem.items():
-						self._addInMessageStringList(key)
-						self._addInMessageStringList(value)
+						if value != "":
+							self._addInMessageStringList(format_func(key))
+							self._addInMessageStringList(format_func(value))
 				case _:
 					self._addInMessageStringList(elem)
 		return " ".join(self.message_string)
@@ -267,7 +269,8 @@ class Case(dict):
 			case builtins.str:
 				self.message_string.append(elem)
 			case _:
-				raise TypeError("elem isn't str or int")
+				raise TypeError("elem isn't str or int. Message string formation isn't "
+								"possible.")
 
 class ErrorFragments:
 	"""
@@ -571,8 +574,9 @@ def isIterable(obj: Any) -> bool:
 	else:
 		return True
 
-
-def toStrIfInt(elem: Any) -> Union[str, Any]:
-	if isinstance(elem, int):
-		return str(elem)
-	return elem
+def getDiscordMemberID(obj: List[Any]) -> int:
+	if hasattr(obj, "id"):
+		return obj.id
+	else:
+		print("getDiscordMemberID", f"the id attr hasn't been found in {obj}. Skip.")
+		return obj
