@@ -242,8 +242,15 @@ class Case(dict):
 	def getMessageStringWith(
 		self,
 		cmd: str,
-		format_func: Callable[[Any], str] = lambda x: x
+		format_func: Callable[[Any], Any] = lambda x: x
 	) -> str:
+		"""
+		Return the string for use in user messages.
+
+		Args:
+			format_func(Callable[[Any], Any]: should check an object type and
+			get any necessary attrs.
+		"""
 		self.message_string.append(cmd)
 		for elem in self.values():
 			match type(elem):
@@ -252,7 +259,7 @@ class Case(dict):
 						self._addInMessageStringList(format_func(inner_elem))
 				case builtins.dict:
 					for key, value in elem.items():
-						if value != "":
+						if value is not None:
 							self._addInMessageStringList(format_func(key))
 							self._addInMessageStringList(format_func(value))
 				case _:
@@ -574,7 +581,7 @@ def isIterable(obj: Any) -> bool:
 	else:
 		return True
 
-def getDiscordMemberID(obj: List[Any]) -> int:
+def getDiscordMemberID(obj: Any) -> Any:
 	if hasattr(obj, "id"):
 		return obj.id
 	else:

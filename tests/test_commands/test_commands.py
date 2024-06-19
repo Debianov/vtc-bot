@@ -5,7 +5,12 @@ import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import Case, DiscordObjEvaluator, MockLocator, getDiscordMemberID
+from bot.utils import (
+	Case,
+	DiscordObjEvaluator,
+	MockLocator,
+	getDiscordMemberID
+)
 
 from .bad_cases import (
 	case_without_explicit_flag,
@@ -51,7 +56,8 @@ async def test_good_log_create_with_flags(
 	mockLocator: MockLocator,
 	case: Case
 ) -> None:
-	await dpytest.message(case.getMessageStringWith("sudo log 1", getDiscordMemberID))
+	await dpytest.message(case.getMessageStringWith("sudo log 1",
+		getDiscordMemberID))
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
@@ -59,7 +65,7 @@ async def test_good_log_create_with_flags(
 		)
 		for row in await acur.fetchall():
 			assert row == ("0", str(mockLocator.guild.id),
-				*case["target"], case["act"], *case["d_in"],
+				case["target"], case["act"], case["d_in"],
 				*list(case["flags"].values()))
 
 @pytest.mark.asyncio
