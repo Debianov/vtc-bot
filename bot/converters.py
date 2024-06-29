@@ -1,6 +1,7 @@
 """
 Модуль хранит конвертеры, необходимый для парсинга команд.
 """
+import abc
 from typing import Generic, List, Type, TypeVar, Union
 
 import discord
@@ -16,11 +17,13 @@ from .exceptions import (
 
 T = TypeVar("T")
 
-class Expression(commands.Converter):
+
+class Expression(commands.Converter, metaclass=abc.ABCMeta):
 	"""
 	Абстрактный класс объектов, реализующих выражения.
 	"""
 
+	@abc.abstractmethod
 	async def convert(self, ctx: commands.Context, argument: str):
 		"""
 		Вызывается автоматически discord.py. Переопределённный метод класса
@@ -29,6 +32,7 @@ class Expression(commands.Converter):
 		"""
 		raise NotImplementedError()
 
+	@abc.abstractmethod
 	def checkExpression(self, argument: str):
 		"""
 		Проверяет выражение с точки зрения синтаксиса.
