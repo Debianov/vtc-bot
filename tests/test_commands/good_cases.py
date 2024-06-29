@@ -35,3 +35,33 @@ default_case_with_other_target_name = Case(
 	d_in=[DelayedExpression('mockLocator.members[1]')],
 	flags={"-name": "Aboba", "-output": None, "-priority": "-1", "other": None}
 )
+
+case_with_all_users_exprs = Case(
+	target="usr:*",
+	d_in="usr:*",
+)
+
+compared_objects_for_all_users_exprs = Case(
+	target=DelayedExpression('list(mockLocator.guild.members)'),
+	d_in=DelayedExpression('list(mockLocator.guild.members)'),
+)
+
+case_with_all_channels_and_users_exprs = Case(
+	target="ch:*",
+	d_in="usr:*"
+)
+
+compared_objects_for_all_channels_and_users_exprs = Case(
+	target=DelayedExpression('list(mockLocator.guild.channels)'),
+	d_in=DelayedExpression('list(mockLocator.guild.members)')
+)
+
+case_with_all_channels_exprs = Case(
+	target="ch:*",
+	d_in="ch:*",
+)
+
+compared_objects_for_all_channels_exprs = Case(
+	target=DelayedExpression('list(mockLocator.guild.channels)'),
+	d_in=DelayedExpression('list(mockLocator.guild.channels)'),
+)

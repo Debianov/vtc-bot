@@ -1,4 +1,3 @@
-import abc
 import builtins
 import os
 from typing import (
@@ -10,7 +9,6 @@ from typing import (
 	Optional,
 	Tuple,
 	Type,
-	TypedDict,
 	TypeVar,
 	Union
 )
@@ -218,12 +216,6 @@ class DelayedExpression:
 		return (hasattr(check_instance, "expression") and
 				hasattr(check_instance, "eval_expression"))
 
-
-class CaseKeyValuePair(TypedDict):
-	key: str
-	value: Any
-
-
 class Case(dict):
 	"""
 	The class for storing and passing args to test funcs.
@@ -278,13 +270,6 @@ class Case(dict):
 			case _:
 				raise TypeError("elem isn't str or int. Message string formation isn't "
 								"possible.")
-
-class ErrorFragments:
-	"""
-	A class for storing parts of the error, user messages as strings.
-	"""
-	pass
-
 
 class DelayedExprsEvaluator:
 	"""
@@ -493,85 +478,6 @@ class ElemFormater:
 
 	def getElemWithFormat(self, arg: Any) -> str:
 		return self.format(arg)
-
-def getStrObject(arg: Any) -> str:
-	return str(arg)
-
-default_format = ElemFormater(getStrObject)
-
-class MessagePart(metaclass=abc.ABCMeta):
-
-	@abc.abstractmethod
-	def joinInStringMessagePart(self) -> str:
-		raise NotImplementedError
-
-class StringMessagePart(MessagePart, str):
-
-	def __init__(self, text: str):
-		self.text = text
-
-	def joinInStringMessagePart(self) -> str:
-		return self.text
-
-class ListMessagePart(MessagePart, list):
-
-	def __init__(self, format: ElemFormater, *args) -> None:
-		self.format = format
-		self.message_part: List[str] = []
-		super().__init__(args)
-
-	def joinInStringMessagePart(self, separator: str = " ") -> str:
-		if not self.message_part:
-			self._formMessagePart()
-		return separator.join(self.message_part)
-
-	def _formMessagePart(self) -> None:
-		for elem in self:
-			self.message_part.append(self.format.getElemWithFormat(elem))
-
-class DictMessagePart(MessagePart, dict):
-
-	def __init__(self, format: ElemFormater, *args, **kwargs) -> None:
-		self.format = format
-		self.message_part: List[str] = []
-		self.only_values: List[str] = []
-		self.update(*args, **kwargs)
-
-	def joinInStringMessagePart(self) -> str:
-		if not self.message_part:
-			for key, value in self.items():
-				if value:
-					self.message_part.append(key)
-					self.message_part.append(self.format.getElemWithFormat(value))
-		return " ".join(self.message_part)
-
-	def getValueAsList(self) -> str:
-		for _, value in self.items():
-			if value:
-				self.only_values.append(self.format.getElemWithFormat(value))
-			else:
-				self.only_values.append(None)
-		return self.only_values
-
-
-class Formatter(metaclass=abc.ABCMeta):
-
-	@abc.abstractmethod
-	def __init__(self, func_format: Callable[[Any], Any]) -> None:
-		self.func_format = func_format
-
-	@abc.abstractmethod
-	def format(self, obj: Any) -> List[Any]:
-		result: List[Any] = []
-		if isinstance(obj, dict):
-			for value in obj.values():
-				result.append(self.func_format(value))
-		elif isinstance(obj, list):
-			for elem in obj:
-				self.func_format(elem)
-		else:
-			return self.func_format(obj)
-		return result
 
 def isIterable(obj: Any) -> bool:
 	try:
