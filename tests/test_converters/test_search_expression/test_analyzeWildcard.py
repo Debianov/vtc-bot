@@ -20,7 +20,6 @@ from bot.utils import createDiscordObjectsGroupInstance
 )
 @pytest.mark.asyncio
 async def test_good_analyzeWildcard_with_one_group(
-	bot: commands.Bot,
 	discordContext: commands.Context,
 	wildcard: str,
 	compare_data_groups: List[Type[DiscordObjectsGroup]]
@@ -54,8 +53,6 @@ async def test_good_analyzeWildcard_with_one_group(
 )
 @pytest.mark.asyncio
 async def test_bad_analyzeWildcard_with_all_groups(
-	bot: commands.Bot,
-	discordContext: commands.Context,
 	wildcard: str,
 ) -> None:
 	a = SearchExpression()
