@@ -188,7 +188,6 @@ class DelayedExpression:
 
 	def __init__(self, expression: str):
 		self.expression = expression
-		self.eval_expression: Any = None
 
 	def eval(self, fixtures: Any) -> Any:
 		self._setGlobalVarsInLocals(locals(), fixtures)
