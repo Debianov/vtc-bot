@@ -188,10 +188,10 @@ async def test_coincidence_targets(
 	await dpytest.message(compared_case.getMessageStringWith(
 		"sudo log 1"))
 	assert dpytest.verify().message().content(f"Цель с подобными "
-		f"параметрами уже существует: {error_part["id"]} "
-		f"({error_part["name"]}). "
+		f"параметрами уже существует: {error_part['id']} "
+		f"({error_part['name']}). "
 		f"Совпадающие элементы: "
-		f"{', '.join(map(str, error_part["coincidence_elems"]))}")
+		f"{', '.join(map(str, error_part['coincidence_elems']))}")
 
 @pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
