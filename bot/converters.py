@@ -1,7 +1,8 @@
 """
 Модуль хранит конвертеры, необходимый для парсинга команд.
 """
-from typing import Generic, List, Optional, Type, TypeVar, Union
+import abc
+from typing import Generic, List, Type, TypeVar, Union
 
 import discord
 from discord.ext import commands
@@ -16,24 +17,27 @@ from .exceptions import (
 
 T = TypeVar("T")
 
-class Expression(commands.Converter):
+
+class Expression(commands.Converter, metaclass=abc.ABCMeta):
 	"""
 	Абстрактный класс объектов, реализующих выражения.
 	"""
 
+	@abc.abstractmethod
 	async def convert(self, ctx: commands.Context, argument: str):
 		"""
 		Вызывается автоматически discord.py. Переопределённный метод класса
 		`commands.Converter <https://discordpy.readthedocs.io/en/stable/ext/\
 		commands/api.html?highlight=help#discord.ext.commands.Converter>`_.
 		"""
-		pass
+		raise NotImplementedError()
 
-	def checkExpression(self, argument: str) -> None:
+	@abc.abstractmethod
+	def checkExpression(self, argument: str):
 		"""
 		Проверяет выражение с точки зрения синтаксиса.
 		"""
-		pass
+		raise NotImplementedError()
 
 class SearchExpression(Expression):
 	"""
@@ -48,16 +52,17 @@ class SearchExpression(Expression):
 		ctx: commands.Context,
 		argument: str
 	) -> List[DiscordGuildObjects]:
+		self.checkExpression(argument)
 		self.argument = argument
-		self.checkExpression()
-		self.string: List[str] = argument.split(":")
+		self.group_identif: str = self.split_argument[0]
+		self.wildcard: str = self.split_argument[1]
 		self.result: List[Union[discord.abc.GuildChannel, discord.abc.Member]] = []
 		self.ctx = ctx
-		self.extractDataGroup()
-		self.analyzeWildcard()
+		self._extractDataGroup()
+		self._analyzeWildcard()
 		return self.result
 
-	def checkExpression(self, argument: Optional[str] = None) -> None:
+	def checkExpression(self, argument: str) -> None:
 		"""
 		Проверяет выражение с точки зрения синтаксиса. Данный метод подлежит\
 		вызову вне аннотаций команд для проверки других аргументов в обход convert.
@@ -65,12 +70,11 @@ class SearchExpression(Expression):
 		Args:
 			argument: передаётся, если вызывается вручную не в контексте парсинга.
 		"""
-		if not argument:
-			argument = self.argument
-		if argument.find(":") == -1:
+		self.split_argument = argument.split(":")
+		if argument.find(":") == -1 or len(self.split_argument) > 2:
 			raise SearchExpressionNotFound(argument)
 
-	def extractDataGroup(self) -> None:
+	def _extractDataGroup(self) -> None:
 		"""
 		Метод для определения :class:`DataGroup`.
 
@@ -78,17 +82,18 @@ class SearchExpression(Expression):
 			SearchExpressionNotFound: возбуждается при отсутствии подходящих DataGroup.
 		"""
 		self.data_groups: List[DiscordObjectsGroup] = DataGroupAnalyzator(
-			self.ctx, self.string[0]).analyze()
+			self.ctx, self.group_identif).analyze()
 		if not self.data_groups:
 			raise SearchExpressionNotFound(self.argument)
 
-	def analyzeWildcard(self) -> None:
+	def _analyzeWildcard(self) -> None:
 		"""
 		Метод для извлечения информации из :class:`DataGroup`.
 		"""
+		if not self.wildcard == "*":
+			raise SearchExpressionNotFound(self.argument)
 		for data_group in self.data_groups:
-			if self.string[1] == "*":
-				self.result += data_group.extractData()
+			self.result += data_group.extractData()
 
 class ShortSearchExpression(Expression, Generic[T]):
 	r"""
@@ -122,17 +127,17 @@ class ShortSearchExpression(Expression, Generic[T]):
 	) -> List[DiscordGuildObjects]:
 		self.data_group_instance = self.data_group(ctx)
 		self.checkExpression(argument)
-		self.string: str = argument # type: ignore
+		self.wildcard: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []
-		self.analyzeWildcard()
+		self._analyzeWildcard()
 		return self.result
 	
 	def checkExpression(self, argument: str) -> None:
 		if not argument == "*":
 			raise ShortSearchExpressionNotFound(argument)
 
-	def analyzeWildcard(self) -> None:
-		if self.string == "*":
+	def _analyzeWildcard(self) -> None:
+		if self.wildcard == "*":
 			self.result += self.data_group_instance.extractData()
 
 class SpecialExpression(Expression):

@@ -1,74 +1,85 @@
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict
 
 import discord.ext.test as dpytest
 import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.utils import DiscordObjEvaluator, MockLocator
+from bot.utils import Case, MockLocator, getDiscordMemberID
+
+from .bad_cases import (
+	case_without_explicit_flag,
+	case_without_one_required_params,
+	case_without_two_required_params
+)
+from .coincidence_cases import (
+	case_for_coincidence_0_1,
+	case_for_coincidence_0_2,
+	case_for_coincidence_1_1,
+	case_for_coincidence_1_2,
+	case_for_coincidence_2_1,
+	case_for_coincidence_2_2,
+	case_for_coincidence_3_1,
+	case_for_coincidence_3_2,
+	case_for_coincidence_4_1,
+	case_for_coincidence_4_2,
+	case_for_coincidence_5_1,
+	case_for_coincidence_5_2,
+	error_fragments_0,
+	error_fragments_1,
+	error_fragments_2,
+	error_fragments_3,
+	error_fragments_4,
+	error_fragments_5
+)
+from .good_cases import (
+	case_with_all_channels_and_users_exprs,
+	case_with_all_channels_exprs,
+	case_with_all_users_exprs,
+	compared_objects_for_all_channels_and_users_exprs,
+	compared_objects_for_all_channels_exprs,
+	compared_objects_for_all_users_exprs,
+	default_case,
+	default_case_with_other_target_name,
+	default_case_with_several_users
+)
 
 
 @pytest.mark.parametrize(
-	"target, act, d_in, flags",
-	[
-		(
-			['mockLocator.members[0]'],
-			"23",
-			['mockLocator.members[1]'],
-			{"-name": "Test", "-output": "", "-priority": "-1", "other": ""}
-		),
-		(
-			['mockLocator.members[0]', 'mockLocator.members[1]'],
-			"23",
-			['mockLocator.members[2]', 'mockLocator.members[3]'],
-			{"-name": "Test", "-output": "", "-priority": "-1", "other": ""}
-		),
-		(
-			['mockLocator.members[0]'],
-			"23",
-			['mockLocator.members[1]'],
-			{"-name": "Aboba", "-output": "", "-priority": "-1", "other": ""}
-		)
-	],
+	"case",
+	[default_case, default_case_with_several_users,
+	default_case_with_other_target_name]
 )
+@pytest.mark.doDelayedExpression
 @pytest.mark.asyncio
 async def test_good_log_create_with_flags(
-	bot: commands.Bot,
 	db: psycopg.AsyncConnection[Any],
-	target: List[str],
-	act: str,
-	d_in: List[str],
-	flags: Dict[str, str],
 	mockLocator: MockLocator,
-	discordObjectEvaluator: DiscordObjEvaluator
+	case: Case
 ) -> None:
-	target_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(target)
-	d_in_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(d_in)
-	joint_flags: Iterable[str] = filter(
-		lambda x: False if not bool(x[1]) else x, # type: ignore [arg-type]
-		flags.items())
-	joint_flags = list(map(lambda x: " ".join(list(x)), joint_flags))
-	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} "
-	f"{act} {' '.join(d_in_message_part)} {' '.join(joint_flags)}")
+	await dpytest.message(case.getMessageStringWith("sudo log 1",
+		getDiscordMemberID))
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
 			"SELECT * FROM target"
 		)
 		for row in await acur.fetchall():
-			flags_values = list(map(lambda x: None if not x else x, flags.values()))
 			assert row == ("0", str(mockLocator.guild.id),
-				target, act, d_in, *flags_values)
+				case["target"], case["act"], case["d_in"],
+				*list(case["flags"].values()))
 
 @pytest.mark.asyncio
 async def test_good_log_create_without_flags(
 	db: psycopg.AsyncConnection[Any],
 	mockLocator: MockLocator
 ) -> None:
-	await dpytest.message(f"sudo log 1 {mockLocator.members[0].id} "
-		f"23 {mockLocator.members[1].id}")
+	parts = []
+	parts.append("sudo log 1")
+	parts.append(str(mockLocator.members[0].id))
+	parts.append("23")
+	parts.append(str(mockLocator.members[1].id))
+	await dpytest.message(" ".join(parts))
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
@@ -77,7 +88,8 @@ async def test_good_log_create_without_flags(
 		for row in await acur.fetchall():
 			flags_values = [None, None, '-1', None]
 			assert row == ("0", str(mockLocator.guild.id),
-				[mockLocator.members[0]], '23', [mockLocator.members[1]], *flags_values)
+				[mockLocator.members[0]], '23', [mockLocator.members[1]],
+				*flags_values)
 
 @pytest.mark.asyncio
 async def test_log_without_subcommand() -> None:
@@ -85,77 +97,45 @@ async def test_log_without_subcommand() -> None:
 	assert dpytest.verify().message().content(
 		"Убедитесь, что вы указали подкоманду.")
 
+@pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
-	"target, act, d_in, missing_params",
+	"case, missing_params",
 	[
-		(
-			['mockLocator.members[0]'],
-			"",
-			[""],
-			"act"
-		),
-		(
-			['mockLocator.members[0]'],
-			"23",
-			[""],
-			"d_in"
-		),
-		# ( # доработать
-		# 	[""],
-		# 	"",
-		# 	[""],
-		# 	"target"
-		# ),
+		(case_without_two_required_params, "act"),
+		(case_without_one_required_params, "d_in"),
 	]
+	#( # TODO доработать
+	# [""],
+	# "",
+	# [""],
+	# "target"
+	# ),
 )
 @pytest.mark.asyncio
 async def test_log_without_require_params(
-	target: List[str],
-	act: str,
-	d_in: List[str],
-	missing_params: str,
-	discordObjectEvaluator: DiscordObjEvaluator
+	case: Case,
+	missing_params: str
 ) -> None:
-	target_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(target)
-	d_in_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(d_in)
-	with pytest.raises(commands.MissingRequiredArgument): #! dpytest почему-то
-		# принудительно поднимает исключения, хотя они могут обрабатываться в
-		# on_command_error и проч. ивентах.
-		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} {act}"
-			f" {' '.join(d_in_message_part)}")
-	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все "
-		f"обязательные параметры. Не найденный параметр: {missing_params}")
+	with pytest.raises(commands.MissingRequiredArgument): # TODO dpytest
+		# почему-то принудительно поднимает исключения, хотя они могут
+		# обрабатываться в on_command_error и проч. ивентах.
+		await dpytest.message(case.getMessageStringWith("sudo log 1"))
+	assert dpytest.verify().message().content(f"Убедитесь, что вы указали "
+		f"все обязательные параметры. Не найденный параметр: "
+		f"{missing_params}")
 
+@pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
-	"target, act, d_in, flag, unhandle_message_part",
-	[
-		(
-			['mockLocator.members[0]'],
-			"54",
-			['mockLocator.members[1]'],
-			"barhatniy_tyagi",
-			"barhatniy_tyagi"
-		)
-	]
+	"case, unhandle_message_part",
+	[(case_without_explicit_flag, "barhatniy_tyagi")]
 )
 @pytest.mark.asyncio
 async def test_log_bad_flag(
-	target: List[str],
-	act: str,
-	d_in: List[str],
-	flag: str,
-	unhandle_message_part: str,
-	discordObjectEvaluator: DiscordObjEvaluator
+	case: Case,
+	unhandle_message_part: str
 ) -> None:
-	target_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(target)
-	d_in_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(d_in)
 	with pytest.raises(commands.CommandInvokeError):
-		await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} 43"
-			f" {' '.join(d_in_message_part)} {flag}")
+		await dpytest.message(case.getMessageStringWith("sudo log 1"))
 	assert dpytest.verify().message().content("Убедитесь, что вы "
 		"указали флаги явно, либо указали корректные данные."
 		f" Необработанная часть сообщения: {unhandle_message_part}")
@@ -163,143 +143,12 @@ async def test_log_bad_flag(
 @pytest.mark.asyncio
 async def test_log_bad_parameters() -> None:
 	with pytest.raises(commands.CommandInvokeError):
+		incorrect_id = 1107606170375565372
 		await dpytest.message("sudo log 1 336420570449051649 43 "
-		"1107606170375565372")
+		f"{incorrect_id}")
 	assert dpytest.verify().message().content("Убедитесь, что вы указали "
 		"флаги явно, либо указали корректные данные. "
 		"Необработанная часть сообщения: 1107606170375565372")
-
-@pytest.mark.parametrize(
-	"target, act, d_in, name, compared_target, compared_act, compared_d_in,"
-	"compared_name",
-	# compared — т.е те параметры, которые будем отправлять вторым сообщением.
-	[
-		(
-			['mockLocator.members[0]'],
-			"26",
-			['mockLocator.members[1]'],
-			"Aboba",
-
-			['mockLocator.members[0]'],
-			"26",
-			['mockLocator.members[1]'],
-			"Aboba"
-		),
-		(
-			['mockLocator.members[0]'],
-			"26",
-			['mockLocator.members[1]'],
-			"Aboba",
-
-			['mockLocator.members[2]'],
-			"26",
-			['mockLocator.members[1]'],
-			"Aboba"
-		),
-		(
-			['mockLocator.members[0]', 'mockLocator.members[1]'],
-			"26",
-			['mockLocator.members[2]', 'mockLocator.members[3]'],
-			"Aboba",
-
-			['mockLocator.members[0]', 'mockLocator.members[1]'],
-			"26",
-			['mockLocator.members[2]'],
-			"Aboba"
-		),
-		(
-			['mockLocator.members[0]'],
-			"26",
-			['mockLocator.members[1]'],
-			"Aboba",
-
-			['mockLocator.members[2]'],
-			"8",
-			['mockLocator.members[3]'],
-			"Aboba"
-		),
-		(
-			['mockLocator.members[0]'],
-			"26",
-			['mockLocator.members[1]'],
-			"Aboba",
-
-			['mockLocator.members[0]'],
-			"26",
-			['mockLocator.members[1]'],
-			"aboba",
-		),
-		(
-			['mockLocator.members[0]'],
-			"26",
-			['mockLocator.members[1]'],
-			"Aboba",
-
-			['mockLocator.members[0]'],
-			"26",
-			['mockLocator.members[1]'],
-			"",
-		)
-	]
-)
-@pytest.mark.asyncio
-async def test_coincidence_targets(
-	bot: commands.Bot,
-	db: psycopg.AsyncConnection[Any],
-	target: List[str],
-	act: str,
-	d_in: List[str],
-	name: str,
-	compared_target: List[str],
-	compared_act: str,
-	compared_d_in: List[str],
-	compared_name: str,
-	discordObjectEvaluator: DiscordObjEvaluator
-) -> None:
-	target_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(target)
-	d_in_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(d_in)
-	await dpytest.message(f"sudo log 1 {' '.join(target_message_part)} "
-		f"{act} {' '.join(d_in_message_part)} -name {name}")
-	dpytest.get_message() # пропускаем ненужное сообщение
-	async with db.cursor() as acur:
-		await acur.execute(
-			"SELECT * FROM target"
-		)
-		rows = await acur.fetchall()
-		row = rows[0]
-		target_id = row[0]
-		target_name = row[5]
-	compared_target_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(compared_target)
-	compared_d_in_message_part =\
-		discordObjectEvaluator.extractIDAndGenerateObject(compared_d_in)
-	await dpytest.message(f"sudo log 1 {' '.join(compared_target_message_part)} "
-		f"{compared_act} {' '.join(compared_d_in_message_part)}"
-		f" -name {compared_name}")
-	coincidence_elements = []
-	current_objects = []
-	compared_objects = []
-	# склеивание списков.
-	for check_object in [target_message_part, act, d_in_message_part, name]:
-		if isinstance(check_object, list):
-			current_objects += check_object
-		else:
-			current_objects.append(check_object)
-	# склеивание списков.
-	for check_object in [compared_target_message_part, compared_act,
-		compared_d_in_message_part, compared_name]:
-		if isinstance(check_object, list):
-			compared_objects += check_object
-		else:
-			compared_objects.append(check_object)
-	for current_object in current_objects: # поиск совпадений.
-		if current_object in compared_objects:
-			coincidence_elements.append(current_object)
-	assert dpytest.verify().message().content(f"Цель с подобными параметрами "
-		f"уже существует: {target_id} "
-		f"({target_name}). Совпадающие элементы: {', '.join(coincidence_elements)}")
 
 @pytest.mark.asyncio
 async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
@@ -307,35 +156,68 @@ async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 		f" <@{mockLocator.members[1].id}>")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 
+@pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
-	"exp1, exp2, calls_sequence",
+	"case, compared_case, error_part",
+	[
+		(case_for_coincidence_0_1, case_for_coincidence_0_2,
+		error_fragments_0),
+		(case_for_coincidence_1_1, case_for_coincidence_1_2,
+		error_fragments_1),
+		(case_for_coincidence_2_1, case_for_coincidence_2_2,
+		error_fragments_2),
+		(case_for_coincidence_3_1, case_for_coincidence_3_2,
+		error_fragments_3),
+		(case_for_coincidence_4_1, case_for_coincidence_4_2,
+		error_fragments_4),
+		(case_for_coincidence_5_1, case_for_coincidence_5_2,
+		error_fragments_5)
+	],
+)
+@pytest.mark.asyncio
+async def test_coincidence_targets(
+	case: Case,
+	compared_case: Case,
+	error_part: Dict[str, Any]
+) -> None:
+
+	await dpytest.message(case.getMessageStringWith(
+		"sudo log 1"))
+	dpytest.get_message()
+
+	await dpytest.message(compared_case.getMessageStringWith(
+		"sudo log 1"))
+	assert dpytest.verify().message().content(f"Цель с подобными "
+		f"параметрами уже существует: {error_part['id']} "
+		f"({error_part['name']}). "
+		f"Совпадающие элементы: "
+		f"{', '.join(map(str, error_part['coincidence_elems']))}")
+
+@pytest.mark.doDelayedExpression
+@pytest.mark.parametrize(
+	"case, compared_objects",
 	[
 		(
-			"usr:*", "usr:*", ['mockLocator.guild.members', 'mockLocator.guild.members']
+			case_with_all_users_exprs, compared_objects_for_all_users_exprs
 		),
 		(
-			"ch:*", "usr:*", ['mockLocator.guild.channels', 'mockLocator.guild.members']
+			case_with_all_channels_and_users_exprs,
+			compared_objects_for_all_channels_and_users_exprs
 		),
 		(
-			"ch:*", "ch:*", ['mockLocator.guild.channels', 'mockLocator.guild.channels']
+			case_with_all_channels_exprs, compared_objects_for_all_channels_exprs
 		)
 	]
 )
 @pytest.mark.asyncio
 async def test_log_1_good_expression(
-	bot: commands.Bot,
 	db: psycopg.AsyncConnection[Any],
-	exp1: str,
-	exp2: str,
-	calls_sequence: List[str],
+	case: Case,
+	compared_objects: Case,
 	mockLocator: MockLocator,
-	discordObjectEvaluator: DiscordObjEvaluator
 ) -> None:
-	message = await dpytest.message(f"sudo log 1 {exp1} 23"
-		f" {exp2}")
-	current_ctx = await bot.get_context(message)
-	compared_objects =\
-		discordObjectEvaluator.extractObjects(calls_sequence, current_ctx)
+	await dpytest.message(f"sudo log 1 {case['target']} 23"
+		f" {case['d_in']}")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
@@ -343,8 +225,8 @@ async def test_log_1_good_expression(
 		)
 		for row in await acur.fetchall():
 			flags_values = [None, None, '-1', None]
-			assert row == ("0", str(mockLocator.guild.id), compared_objects[0],
-				'23', compared_objects[1], *flags_values)
+			assert row == ("0", str(mockLocator.guild.id), compared_objects["target"],
+				'23', compared_objects["d_in"], *flags_values)
 
 @pytest.mark.parametrize(
 	"exp1, exp2, missing_params",
@@ -359,8 +241,6 @@ async def test_log_1_good_expression(
 )
 @pytest.mark.asyncio
 async def test_log_1_bad_expression(
-	bot: commands.Bot,
-	db: psycopg.AsyncConnection[Any],
 	exp1: str,
 	exp2: str,
 	missing_params: str

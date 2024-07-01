@@ -55,5 +55,4 @@ class UnhandlePartMessageSignal(Exception):
 
 
 class StartupBotError(Exception):
-	
 	pass

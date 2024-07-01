@@ -8,6 +8,7 @@ import discord
 import psycopg
 from discord.ext import commands
 
+from .attrs import TargetGroupAttrs
 from .converters import (
 	Expression,
 	SearchExpression,
@@ -18,7 +19,7 @@ from .data import ActGroup, TargetGroup
 from .exceptions import ExpressionNotFound, UnhandlePartMessageSignal
 from .flags import UserLogFlags
 from .main import BotConstructor
-from .utils import ContextProvider
+from .utils import ContextProvider, removeNesting
 
 
 class UserLog(commands.Cog):
@@ -76,7 +77,7 @@ class UserLog(commands.Cog):
 		ctx: commands.Context,
 		target: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, discord.CategoryChannel, SearchExpression]],
-		act: Union[ShortSearchExpression[ActGroup], str], # type: ignore [type-arg]
+		act: Union[ShortSearchExpression[ActGroup], str],
 		d_in: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, SearchExpression, SpecialExpression]],
 		*,
@@ -98,9 +99,8 @@ class UserLog(commands.Cog):
 
 		self.context_provider.updateContext(ctx.guild)
 
-		initial_target = self.removeNesting(target)
-		initial_act = self.removeNesting(act) #!
-		initial_d_in = self.removeNesting(d_in)
+		initial_target = removeNesting(target)
+		initial_d_in = removeNesting(d_in)
 
 		if not d_in: # если пропускается последний обязательный параметр
 			# — ошибка не выводится, поэтому приходится выкручиваться.
@@ -108,15 +108,16 @@ class UserLog(commands.Cog):
 				command.clean_params["d_in"]) # type: ignore [union-attr]
 		else:
 			await self.checkForUnhandleContent(ctx, initial_target or target,
-				initial_act or act, initial_d_in or d_in, flags.name,
+				act, initial_d_in or d_in, flags.name,
 				flags.output, flags.priority, flags.other)
 
-		target_instance = TargetGroup(
+		target_instance = TargetGroup(TargetGroupAttrs(
 			self.dbconn,
 			ctx.guild.id,
-			target=target, # type: ignore [arg-type]
-			act=act, # type: ignore [arg-type]
-			d_in=d_in # type: ignore [arg-type]
+			target=target,  # type: ignore [arg-type]
+			act=act,  # type: ignore [arg-type]
+			d_in=d_in  # type: ignore [arg-type]
+		)
 		)
 
 		for key in flags.get_flags().keys():
@@ -187,18 +188,6 @@ class UserLog(commands.Cog):
 		for argument in current_argument:
 			if argument not in ready_check_parameters:
 				raise UnhandlePartMessageSignal(ctx.current_argument)
-
-	def removeNesting(self, instance: Any):
-		"""
-			Функция для удаления вложенностей.
-
-			Returns:
-				Optional[List[discord.abc.Messageable]]
-		"""
-		if len(instance) == 1 and isinstance(instance[0], list):
-			tmp = instance[0]
-			instance.remove(tmp)
-			instance.extend(tmp)
 
 	def checkExpressions(self, maybe_expressions: List[str]) -> bool:
 		"""

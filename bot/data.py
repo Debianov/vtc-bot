@@ -2,17 +2,19 @@
 Модуль хранит классы для работы с БД.
 """
 
-from typing import Any, Iterable, List, Optional, Type, Union
+from typing import Any, Iterable, List, Optional, Sequence, Type, Union
 
 import psycopg
 from discord.ext import commands
 
-from ._types import DiscordGuildObjects, IDSupportObjects
+from ._types import DiscordGuildObjects
+from .attrs import TargetGroupAttrs
 
 
 class DataGroupAnalyzator:
 	"""
-	Класс реализует механизм определения :class:`DataGroup` по имени из str.
+	Класс реализует механизм определения :class:`DiscordObjectsGroup`
+	по имени из str.
 	"""
 
 	def __init__(self, ctx: commands.Context, string: str) -> None:
@@ -22,7 +24,7 @@ class DataGroupAnalyzator:
 
 	def analyze(self) -> List['DiscordObjectsGroup']:
 		"""
-		Основной метод для определения :class:`DataGroup`.
+		Основной метод для определения :class:`DiscordObjectsGroup`.
 		"""
 		to_check: List[Type[DiscordObjectsGroup]] =\
 			DiscordObjectsGroup.__subclasses__()
@@ -51,7 +53,7 @@ class DiscordObjectsGroup:
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Iterable[DiscordGuildObjects]:
+	) -> Sequence[DiscordGuildObjects]:
 		raise NotImplementedError
 
 class UserGroup(DiscordObjectsGroup):
@@ -66,7 +68,7 @@ class UserGroup(DiscordObjectsGroup):
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Iterable[DiscordGuildObjects]:
+	) -> Sequence[DiscordGuildObjects]:
 		if self.ctx.guild:
 			return self.ctx.guild.members
 		return []
@@ -84,7 +86,7 @@ class ChannelGroup(DiscordObjectsGroup):
 	def extractData(
 		self,
 		d_id: Optional[str] = None
-	) -> Iterable[DiscordGuildObjects]:
+	) -> Sequence[DiscordGuildObjects]:
 		if self.ctx.guild:
 			return self.ctx.guild.channels
 		return []
@@ -117,27 +119,18 @@ class TargetGroup(DBObjectsGroup):
 
 	def __init__(
 		self,
-		dbconn: psycopg.AsyncConnection[Any],
-		context_id: int,
-		target: List[IDSupportObjects],
-		act: Union[IDSupportObjects, str],
-		d_in: List[IDSupportObjects],
-		name: Union[str, None] = None,
-		output: Union[str, None] = None,
-		priority: Union[int, None] = None,
-		other: Union[str, None] = None,
-		dbrecord_id: Union[int, None] = None
+		attrs: TargetGroupAttrs
 	) -> None:
-		self.dbconn = dbconn
-		self.context_id = context_id
-		self.dbrecord_id = dbrecord_id or self.generateID()
-		self.target = target
-		self.act = act
-		self.d_in = d_in
-		self.name = name
-		self.output = output
-		self.priority = priority
-		self.other = other
+		self.dbconn = attrs["dbconn"]
+		self.context_id = attrs["context_id"]
+		self.dbrecord_id = attrs["dbrecord_id"] or self.generateID()
+		self.target = attrs["target"]
+		self.act = attrs["act"]
+		self.d_in = attrs["d_in"]
+		self.name = attrs["name"]
+		self.output = attrs["output"]
+		self.priority = attrs["priority"]
+		self.other = attrs["other"]
 
 	def generateID(self) -> int:
 		return 0
@@ -150,10 +143,14 @@ class TargetGroup(DBObjectsGroup):
 		if nvalue:
 			match name:
 				case "act":
-					checking_nvalue = nvalue.replace(" ", "")
-					if not checking_nvalue.isalpha():
-						if not checking_nvalue.isdigit():
-							raise ValueError(name, nvalue)
+					try:
+						checking_nvalue = nvalue.replace(" ", "")
+					except AttributeError:
+						pass
+					else:
+						if not checking_nvalue.isalpha():
+							if not checking_nvalue.isdigit():
+								raise ValueError(name, nvalue)
 				case "name":
 					if not nvalue.isprintable():
 						raise ValueError(name, nvalue)
@@ -198,8 +195,8 @@ class TargetGroup(DBObjectsGroup):
 				dbrecord_id, context_id, target, act, d_in, name, priority, output, \
 				other = row[0], row[1], row[2], row[3], row[4], row[5], row[6], \
 				row[7], row[8]
-				result.append(TargetGroup(self.dbconn, context_id, target,
-					act, d_in, name, priority, output, other, dbrecord_id))
+				result.append(TargetGroup(TargetGroupAttrs(self.dbconn, context_id, target,
+					act, d_in, name, priority, output, other, dbrecord_id)))
 		return result
 
 	def getComparableAttrs(self) -> Union[List[Any], None]:
@@ -237,6 +234,7 @@ class TargetGroup(DBObjectsGroup):
 		for current_attr in current_attr:
 			if current_attr in compared_attr and current_attr is not None:
 				# is not None — исключаем из проверки None-объекты,
-				# которые появляются только при отсутствии указания флага -name.
+				# которые появляются только при отсутствии указания флага
+				# -name.
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
