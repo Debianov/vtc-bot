@@ -216,8 +216,8 @@ async def test_log_1_good_expression(
 	compared_objects: Case,
 	mockLocator: MockLocator,
 ) -> None:
-	await dpytest.message(f"sudo log 1 {case["target"]} 23"
-		f" {case["d_in"]}")
+	await dpytest.message(f"sudo log 1 {case['target']} 23"
+		f" {case['d_in']}")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
