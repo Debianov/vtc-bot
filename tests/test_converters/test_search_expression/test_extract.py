@@ -19,7 +19,6 @@ from bot.exceptions import SearchExpressionNotFound
 )
 @pytest.mark.asyncio
 async def test_good_extractDataGroup(
-	bot: commands.Bot,
 	discordContext: commands.Context,
 	group_identif: str,
 	compare_data_group: List[Type[DiscordObjectsGroup]]
@@ -43,7 +42,6 @@ async def test_good_extractDataGroup(
 )
 @pytest.mark.asyncio
 async def test_bad_extractDataGroup(
-	bot: commands.Bot,
 	discordContext: commands.Context,
 	group_identif: str,
 ) -> None:

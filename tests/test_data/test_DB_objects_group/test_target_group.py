@@ -1,8 +1,8 @@
-from typing import Any
 
-import psycopg
+
 import pytest
 
+from bot.attrs import TargetGroupAttrs
 from bot.data import TargetGroup
 from bot.utils import Case
 
@@ -24,11 +24,10 @@ from .good_cases import (
 	]
 )
 def test_init_target_group(
-	db: psycopg.AsyncConnection[Any],
 	pass_args: Case,
 	expect_args: Case
 ):
-	instance = TargetGroup(**pass_args)  # type: ignore [arg-type]
+	instance = TargetGroup(TargetGroupAttrs(**pass_args))
 	assert instance.dbconn == expect_args["dbconn"]
 	assert instance.context_id == expect_args["context_id"]
 	assert instance.target == expect_args["target"]

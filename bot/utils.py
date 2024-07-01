@@ -1,6 +1,8 @@
+import builtins
 import os
 from typing import (
 	Any,
+	Callable,
 	Dict,
 	Iterable,
 	List,
@@ -12,6 +14,7 @@ from typing import (
 )
 
 import discord
+import discord.abc
 from discord.ext import commands
 
 from bot.data import DiscordObjectsGroup
@@ -47,8 +50,8 @@ class MockLocator:
 		self.channel = channel
 		self.members = members
 
-class DiscordObjEvaluator:
 
+class DiscordObjEvaluator:
 	"""
 	Существование класса обусловлено непреодолимым желанием разработчика
 	иметь в записях под декоратором parametrize (в тестах) человеческие извлечения
@@ -101,17 +104,19 @@ class DiscordObjEvaluator:
 			return None
 		attr_part = split_expr[1:]
 		(attributes, indices) = self.evalAttributePart(attr_part)
-		intermediate_eval_result: Any =\
+		intermediate_eval_result: Any = \
 			(self.mock_locator.__dict__[attributes[0]][indices[0]]
 			if indices[0] is not None else
 			self.mock_locator.__dict__[attributes[0]])
 		if len(attributes) > 1 and len(indices) > 1:
 			for (attr, index) in zip(attributes[1:], indices[1:]):
 				if index is not None:
-					intermediate_eval_result = getattr(intermediate_eval_result, attr)[index]
+					intermediate_eval_result = \
+						getattr(intermediate_eval_result, attr)[index]
 				else:
-					intermediate_eval_result = getattr(intermediate_eval_result, attr)
-		return (total_eval_result := intermediate_eval_result) # noqa: F841
+					intermediate_eval_result = getattr(
+						intermediate_eval_result, attr)
+		return (total_eval_result := intermediate_eval_result)  # noqa: F841
 
 	def evalAttributePart(
 		self,
@@ -120,14 +125,14 @@ class DiscordObjEvaluator:
 		attributes: List[str] = []
 		indices: List[Union[int, None]] = []
 		for attr in attrs:
-			(attribute, index) = self.extractIndex(attr)
+			(attribute, index) = self.parseIndex(attr)
 			attributes.append(attribute)
 			indices.append(index)
 		return (attributes, indices)
 
-	def extractIndex(self, attr: str) -> Tuple[str, Union[int, None]]:
+	def parseIndex(self, attr: str) -> Tuple[str, Union[int, None]]:
 		if (((left_bracket_ind := attr.find("[")) == -1) and
-			((right_bracket_ind := attr.find("]")) == -1)): # noqa: F841
+				((right_bracket_ind := attr.find("]")) == -1)):  # noqa: F841
 			return (attr, None)
 		cycle_cursor = left_bracket_ind + 1
 		index = ""
@@ -136,6 +141,7 @@ class DiscordObjEvaluator:
 			cycle_cursor += 1
 		attr_without_index_part = attr.removesuffix(f"[{index}]")
 		return (attr_without_index_part, int(index))
+
 
 def getEnvIfExist(*env_names: str) -> Union[List[str], None]:
 	"""
@@ -152,18 +158,18 @@ def getEnvIfExist(*env_names: str) -> Union[List[str], None]:
 			saved_data.append(result)
 	return saved_data
 
-def removeNesting(instance: Any) -> Any:
-	"""
-		Функция для удаления вложенностей.
 
-		Returns:
-			Optional[List[discord.abc.Messageable]]
+def removeNesting(instance: List[Any]) -> List[Any]:
 	"""
-	if len(instance) == 1 and isinstance(instance[0], list):
-		tmp = instance[0]
-		instance.remove(tmp)
-		instance.extend(tmp)
+		The function for removing nesting.
+	"""
+	for elem in instance:
+		if isinstance(elem, list):
+			tmp = elem
+			instance.remove(tmp)
+			instance.extend(tmp)
 	return instance
+
 
 def createDiscordObjectsGroupInstance(
 	instance_list: List[Type[DiscordObjectsGroup]],
@@ -174,71 +180,104 @@ def createDiscordObjectsGroupInstance(
 		result.append(instance(discord_context))
 	return result
 
+
 T = TypeVar("T")
+
 
 class DelayedExpression:
 
 	def __init__(self, expression: str):
 		self.expression = expression
 
+	def eval(self, fixtures: Any) -> Any:
+		self._setGlobalVarsInLocals(locals(), fixtures)
+		return eval(self.expression)
+
+	def _setGlobalVarsInLocals(
+		self,
+		locals: Dict[str, Any],
+		fixtures: Any
+	) -> Dict[str, Any]:
+		"""
+		Func set a local variable in a func that called it.
+		"""
+		for (key, value) in fixtures.items():
+			locals[key] = value
+		return locals
+
 	@staticmethod
 	def isMine(check_instance: Any) -> bool:
 		"""
-		The load == implement for a purpose that isinstance for an instance check
-		don't work due a python `features <https://bugs.python.org/issue7555>`.
+		The load == implement for a purpose that isinstance for an
+		instance check don't work due a python
+		`features <https://bugs.python.org/issue7555>`.
 		"""
-		return hasattr(check_instance, "expression")
+		return (hasattr(check_instance, "expression") and
+				hasattr(check_instance, "eval_expression"))
 
-
-class Case:
+class Case(dict):
 	"""
-	The class for storing and passing args to test funcs. Also implement
-	special storage for a args that are `DelayedExpressions`.
+	The class for storing and passing args to test funcs.
+
+	Access to class attributes is any call to `__getitem__`.
 	"""
-	def __init__(self, **kwargs: Any):
-		self.params_with_exprs_to_eval: Dict[str, DelayedExpression] = {}
-		self.simple_params: Dict[str, Any] = {}
-		for key, value in kwargs.items():
-			if DelayedExpression.isMine(value):
-				self.params_with_exprs_to_eval[key] = value
-			else:
-				self.simple_params[key] = value
 
-	def keys(self):
-		"""
-		The load func for a map object implementation.
-		:return:
-		"""
-		return list(self.simple_params.keys())
-
-	def __getitem__(self, param) -> Any:
-		return self.simple_params[param]
-
-	def __setitem__(self, param: str, value: Any) -> None:
-		self.simple_params[param] = value
-
-	def getDelayedExprs(self) -> Dict[str, DelayedExpression]:
-		return self.params_with_exprs_to_eval
-
-	def setUndelayedExprs(self, undelayed_exprs: Dict[str, Any]) -> None:
+	def __init__(self, **kwargs: Any) -> None:
 		"""
 		Args:
-			undelayed_exprs Dict[str, Any]: any params with a undelayed (evaled)
-			expressions.
+			**kwargs (dict[str, Any])
 		"""
-		self.simple_params.update(undelayed_exprs)
-		for param in undelayed_exprs.keys():
-			self.params_with_exprs_to_eval.pop(param)
-		
-class DelayedExpressionEvaluator:
+		self.message_string: List[str] = []
+		self.update(**kwargs)
 
+	def getMessageStringWith(
+		self,
+		cmd: str,
+		format_func: Callable[[Any], Any] = lambda x: x
+	) -> str:
+		"""
+		Return the string for use in user messages.
+
+		Args:
+			format_func(Callable[[Any], Any]: should check an object type and
+			get any necessary attrs.
+		"""
+		self.message_string.append(cmd)
+		for elem in self.values():
+			match type(elem):
+				case builtins.list:
+					for inner_elem in elem:
+						self._addInMessageStringList(format_func(inner_elem))
+				case builtins.dict:
+					for key, value in elem.items():
+						if value is not None:
+							self._addInMessageStringList(format_func(key))
+							self._addInMessageStringList(format_func(value))
+				case _:
+					self._addInMessageStringList(elem)
+		return " ".join(self.message_string)
+
+	def _addInMessageStringList(self, elem: Any):
+		"""
+		Check that elems of a `Case` is evaluated by `DelayedExprsEvaluator`.
+		"""
+		match type(elem):
+			case builtins.int:
+				self.message_string.append(str(elem))
+			case builtins.str:
+				self.message_string.append(elem)
+			case _:
+				raise TypeError("elem isn't str or int. Message string formation isn't "
+								"possible.")
+
+class DelayedExprsEvaluator:
 	"""
-	Class made with a `DelayedExpression` handle purpose.
+	Class evals every `DelayedExpression` in given list.
 	"""
 
 	def __init__(
 		self,
-		delayed_expressions: List[DelayedExpression],
+		delayed_exprs: List[DelayedExpression],
 		global_vars: Dict[str, Any]
 	) -> None:
 		"""
@@ -246,56 +285,210 @@ class DelayedExpressionEvaluator:
 			global_vars (Dict[str, Any]): any vars, that can be used for
 			an expression eval.
 		"""
-		self.delayed_expressions = delayed_expressions
 		self.global_vars = global_vars
+		self.delayed_exprs = delayed_exprs
+		self.undelayed_exprs: List[Any] = []
 
-	def eval(self) -> List[Any]:
+	def go(self) -> None:
 		self._setGlobalVarsInLocals(locals())
-		result = []
-		for delay_expression in self.delayed_expressions:
-			result.append(eval(delay_expression.expression))
-		return result
+		for delay_expr in self.delayed_exprs:
+			self.undelayed_exprs.append(eval(delay_expr.expression))
+
+	def getUndelayedExprs(self) -> List[Any]:
+		return self.undelayed_exprs
 
 	def _setGlobalVarsInLocals(self, locals: Dict[str, Any]):
+		"""
+		Func set a local variable in a func that called it. It needs an eval
+		DelayedExpr because it func loads the built-in eval(), which needs context
+		as a global_vars.
+		"""
 		for (key, value) in self.global_vars.items():
 			locals[key] = value
 		return locals
 
-def filterParametersWithCase(
-	params_from_func: Dict[str, object]
-) -> Dict[str, Case]:
-	params_with_case: Dict[str, Case] = {}
-	for (param, object) in params_from_func.items():
-		if isinstance(object, Case):
-			params_with_case[param] = object
-	return params_with_case
-
-def filterFixtures(
-	params_and_fixtures: Dict[str, Any],
-	params_with_case: Dict[str, Case]
-) -> Dict[str, Any]:
-	fixtures: Dict[str, Case] = params_and_fixtures.copy()
-	for param_key in params_with_case.keys():
-		fixtures.pop(param_key)
-	return fixtures
-
-def evalAndWriteDelayedExprInParams(
-	cases: List[Case],
-	fixtures: Dict[str, Any]
-) -> None:
+class DelayedExpressionReplacer:
 	"""
-	The func acts on Case directly via a reference.
-	Args:
-		cases(List[Case]): any `Case` instances that located in Dict with params
-		as value (e.x `pytest.Function.callspec.params <https://docs.pytest.org/
-		en/7.1.x/reference/reference.html#pytest.Function>`).
+	The class for replacing elements in nested storages on the
+	the element of `fixtures` argument (respectively).
 	"""
-	for case in cases:
-		params_with_delayed_expr = case.getDelayedExprs()
-		params_with_undelayed_expr: Dict[str, Any] = {}
-		for (param, its_delay_exp) in params_with_delayed_expr.items():
-			eval_results = DelayedExpressionEvaluator(
-				[its_delay_exp],
-				fixtures).eval()
-			params_with_undelayed_expr[param] = eval_results
-		case.setUndelayedExprs(params_with_undelayed_expr)
+	def __init__(
+		self,
+		target: Iterable,
+		fixtures: Any
+	):
+		self.target = target
+		self.current_target = target
+		self.last_storage = target
+		self.fixtures = fixtures
+		self.last_mutable_storage: Union[Dict[str, Any], List[Any], None] \
+			= None
+		self.class_to_change = DelayedExpression
+		self.item: Union[str, int] = ""
+		self.immutable_storages_chain: List[Tuple[Any, ...]] = []
+		self.item_to_access_immutable_storage: Union[str, int, None] = None
+
+	def go(self) -> None:
+		if not isinstance(self.current_target, self.class_to_change):
+			previous_storage = self.setLastStorage(self.current_target)
+			if (isinstance(self.current_target, dict) or
+					isinstance(self.current_target, list)):
+				self.last_mutable_storage = self.current_target
+				self.immutable_storages_chain.clear()
+				if isinstance(self.current_target, dict):
+					for key, value in self.current_target.items():
+						self.current_target = value
+						self.item = key
+						self.go()
+				else:
+					for ind, value in enumerate(self.current_target):
+						self.current_target = value
+						self.item = ind
+						self.go()
+			elif isinstance(self.current_target, tuple):
+				self.immutable_storages_chain.append((self.current_target, self.item))
+				self.addItemForAccessImmutableStorage(previous_storage)
+				for ind, value in enumerate(self.current_target):
+					self.current_target = value
+					self.item = ind
+					self.go()
+				self.immutable_storages_chain.pop() if (
+					self.immutable_storages_chain) else False
+			self.last_storage = previous_storage
+		else:
+			delayed_expr = self.current_target
+			evaled_expr = delayed_expr.eval(self.fixtures)
+			self.insert(evaled_expr)
+
+	def setLastStorage(self, target: Any) -> Any:
+		"""
+			Set `self.last_storage` and return old attr value that is
+			necessary to restore a `self.last_storage` attr after
+			exiting from a next recursive layer.
+		"""
+		previous_storage = self.last_storage
+		self.last_storage = target
+		return previous_storage
+
+	def addItemForAccessImmutableStorage(self, previous_storage: Any) -> None:
+		"""
+		A func writes `self.item` to `item_to_access_immutable_storage`.
+		`self.item_to_access_immutable_storage` stores `self.item` to access
+		immutable storage from last mutable storage. If `previous_storage`
+		is immutable storage `self.item` it doesn't save in
+		`self.item_to_access_immutable_storage`.
+
+		The fact of the matter is if `item_to_access_immutable_storage` is
+		sets from an item that describes a position
+		access to immutable storage (tuple) from list/or tuple consequently
+		we can use this attr for access to tuples.
+		```
+		{'key': ("test", "test2", ["test3", "test4",
+		("test5", object_to_update1, (object_to_update2, "test6"))])}
+		A path to object_to_update1: item = 2 from first tuple => item =
+		2 from first list.
+		```
+		If `item_to_access_immutable_storage` is sets from an item that
+		describes a position access to immutable storage
+		from other immutable storage, it's not allowed (we won't be able
+		"to write" anything in an immutable storage).
+		```
+		{'key': ("test", "test2", ["test3", "test4", ("test5",
+		object_to_update1, (object_to_update2, "test6"))])}
+		A wrong path to object_to_update2: item = 2 from first tuple =>
+		item = 2 from first list => item = 2 from second tuple.
+		A true path to object_to_update2: item = 2 from first tuple =>
+		item = 2 from first list because first list is last mutable storage.
+		```
+		"""
+		if isinstance(previous_storage, dict) or isinstance(previous_storage, list):
+			self.item_to_access_immutable_storage = self.item
+
+	def insert(self, object_to_insert: Any):
+		if isinstance(self.last_storage, tuple) and isinstance(self.item, int):
+			self.last_storage = _insertInTuple(self.last_storage,
+											object_to_insert, self.item)
+			self.updateImmutableChain(self.last_storage,
+									self.immutable_storages_chain)
+			if ((isinstance(self.last_mutable_storage, dict) and
+			isinstance(self.item_to_access_immutable_storage, str)) or
+			(isinstance(self.last_mutable_storage, list) and
+			isinstance(self.item_to_access_immutable_storage, int))):
+				self.last_mutable_storage[self. # type: ignore
+				item_to_access_immutable_storage] = (self.
+				immutable_storages_chain[0][0])
+			else:
+				raise TypeError("Unexpected type at assignment.")
+		else:
+			mutable_storage = self.last_storage # type: ignore
+			mutable_storage[self.item] = object_to_insert # type: ignore
+
+	def updateImmutableChain(
+		self,
+		storage_to_update: Tuple[Any],
+		immutable_storages_chain: List[Tuple[Any, ...]]
+	) -> None:
+		"""
+		An updateImmutableChain func updates the entire chain starting with
+		zero elements.
+		"""
+		immutable_storages_chain.reverse()
+		for ind in range(0, len(immutable_storages_chain)):
+			item_to_next_storage = immutable_storages_chain[ind][1]
+			if ind == 0:
+				immutable_storages_chain[ind] = (storage_to_update, item_to_next_storage)
+			else:
+				current_storage = immutable_storages_chain[ind][0]
+				previous_storage = immutable_storages_chain[ind - 1][0]
+				item_to_current_storage = immutable_storages_chain[ind - 1][1]
+				current_storage = _insertInTuple(
+					current_storage,
+					previous_storage,
+					item_to_current_storage
+				)
+				immutable_storages_chain[ind] = (current_storage, item_to_next_storage)
+		immutable_storages_chain.reverse()
+
+	def getResults(self) -> Iterable:
+		return self.target
+
+def _insertInTuple(
+	old_tuple: Tuple[Any],
+	element_to_insert: Any,
+	ind_to_insert: int
+) -> Tuple[Any]:
+	new_tuple: Tuple[Any, ...] = tuple()
+	if not isinstance(ind_to_insert, int):
+		raise Exception
+	for (ind, elem) in enumerate(old_tuple):
+		if ind == ind_to_insert:
+			new_tuple += (element_to_insert,)
+		else:
+			new_tuple += (elem,)
+	if element_to_insert not in new_tuple:
+		raise Exception
+	return new_tuple
+
+
+class ElemFormater:
+
+	def __init__(self, func: Callable[[Any], str]):
+		self.format = func
+
+	def getElemWithFormat(self, arg: Any) -> str:
+		return self.format(arg)
+
+def isIterable(obj: Any) -> bool:
+	try:
+		iter(obj)
+	except TypeError:
+		return False
+	else:
+		return True
+
+def getDiscordMemberID(obj: Any) -> Any:
+	if hasattr(obj, "id"):
+		return obj.id
+	else:
+		print("getDiscordMemberID", f"the id attr hasn't been found in {obj}. Skip.")
+		return obj

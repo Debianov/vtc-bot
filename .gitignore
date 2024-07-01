@@ -21,3 +21,5 @@ venv/
 
 # mypy
 .mypy_cache/
+
+.idea

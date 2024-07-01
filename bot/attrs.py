@@ -1,7 +1,4 @@
-"""
-The module contains Attr objects.
-"""
-
+from abc import ABCMeta
 from typing import Any, List, Union
 
 import psycopg
@@ -9,7 +6,10 @@ import psycopg
 from bot._types import IDObjects
 
 
-class TargetGroupAttrs:
+class Attrs(metaclass=ABCMeta):
+	pass
+
+class TargetGroupAttrs(Attrs):
 
 	def __init__(
 		self,
