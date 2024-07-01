@@ -14,7 +14,6 @@ from bot.exceptions import SpecialExpressionNotFound
 )
 @pytest.mark.asyncio
 async def test_good(
-	bot: commands.Bot,
 	discordContext: commands.Context,
 	argument: str,
 ) -> None:
@@ -28,7 +27,6 @@ async def test_good(
 )
 @pytest.mark.asyncio
 async def test_bad(
-	bot: commands.Bot,
 	discordContext: commands.Context,
 	argument: str,
 ) -> None:

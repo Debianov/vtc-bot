@@ -1,6 +1,5 @@
-from typing import Any
 
-import psycopg
+
 import pytest
 
 from bot.attrs import TargetGroupAttrs
@@ -25,7 +24,6 @@ from .good_cases import (
 	]
 )
 def test_init_target_group(
-	db: psycopg.AsyncConnection[Any],
 	pass_args: Case,
 	expect_args: Case
 ):
