@@ -16,7 +16,6 @@ from bot.data import ChannelGroup, UserGroup
 )
 @pytest.mark.asyncio
 async def test_good_analyzeWildcard_with_one_group(
-	bot: commands.Bot,
 	discordContext: commands.Context,
 	wildcard: str,
 	compare_data_groups

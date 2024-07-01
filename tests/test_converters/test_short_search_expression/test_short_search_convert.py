@@ -16,7 +16,6 @@ from bot.exceptions import ShortSearchExpressionNotFound
 )
 @pytest.mark.asyncio
 async def test_good(
-	bot: commands.Bot,
 	discordContext: commands.Context,
 	wildcard: str,
 	data_group
@@ -36,7 +35,6 @@ async def test_good(
 )
 @pytest.mark.asyncio
 async def test_bad(
-	bot: commands.Bot,
 	discordContext: commands.Context,
 	wildcard: str,
 	data_group,
