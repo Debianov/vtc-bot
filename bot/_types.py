@@ -1,5 +1,5 @@
 """
-Модуль предназначен для абстрактных классов.
+This module contains the abstract classes.
 """
 
 from typing import Protocol, Union

@@ -3,51 +3,53 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Внутренняя документация проекта "Discord bot".
+Docs of the vtc-bot project.
 ==============================================
 
-Модуль bot.main
+The module bot.main
 ======================
 .. automodule:: bot.main
    :members:
    :undoc-members:
 
-Модуль bot.commands
+The module bot.commands
 ====================
 .. automodule:: bot.commands
    :members:
    :undoc-members:
 
-Модуль bot.converters
+The module bot.converters
 ======================
 .. automodule:: bot.converters
    :members:
    :undoc-members:
 
-Модуль bot.data
+The module bot.data
 ======================
 .. automodule:: bot.data
    :members:
    :undoc-members:
 
-Модуль bot.flags
+The module bot.flags
 ======================
 .. automodule:: bot.flags
    :members:
    :undoc-members:
 
-Модуль bot.attrs
+The module bot.attrs
 ======================
 .. automodule:: bot.attrs
    :members:
    :undoc-members:
 
-Модуль bot.utils
+The module bot.utils
 ======================
 .. automodule:: bot.utils
    :members:
    :undoc-members:
 
+FAQ
+======================
 .. include::
    FAQ.rst
 
