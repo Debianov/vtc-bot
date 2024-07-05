@@ -242,20 +242,21 @@ class Case(dict):
 			format_func(Callable[[Any], Any]: should check an object type and
 			get any necessary attrs.
 		"""
-		self.message_string.append(cmd)
-		for elem in self.values():
-			match type(elem):
-				case builtins.list:
-					for inner_elem in elem:
-						self._addInMessageStringList(format_func(inner_elem))
-				case builtins.dict:
-					for key, value in elem.items():
-						if value is not None:
-							self._addInMessageStringList(format_func(key))
-							self._addInMessageStringList(format_func(value))
-				case _:
-					self._addInMessageStringList(elem)
-		return " ".join(self.message_string)
+		if not self.message_string:
+			self.message_string.append(cmd)
+			for elem in self.values():
+				match type(elem):
+					case builtins.list:
+						for inner_elem in elem:
+							self._addInMessageStringList(format_func(inner_elem))
+					case builtins.dict:
+						for key, value in elem.items():
+							if value is not None:
+								self._addInMessageStringList(format_func(key))
+								self._addInMessageStringList(format_func(value))
+					case _:
+						self._addInMessageStringList(elem)
+		return " ".join(self.message_string) # anchor: duplicate
 
 	def _addInMessageStringList(self, elem: Any):
 		"""
