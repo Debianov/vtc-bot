@@ -23,8 +23,8 @@ async def test_good_search_expression_convert_and_checkExpr(
 	discordContext: commands.Context
 ) -> None:
 	a = SearchExpression
-	assert (removeNesting(compare_data) ==
-		await a().convert(discordContext, argument))
+	assert (removeNesting(compare_data) == await a().convert(discordContext,
+		argument))
 	a().checkExpression(argument)
 
 @pytest.mark.parametrize(

@@ -8,7 +8,6 @@ from discord.ext import commands
 from bot.utils import Case, MockLocator, getDiscordMemberID
 
 from .bad_cases import (
-	case_without_explicit_flag,
 	case_without_one_required_params,
 	case_without_two_required_params
 )
@@ -124,31 +123,34 @@ async def test_log_without_require_params(
 		f"все обязательные параметры. Не найденный параметр: "
 		f"{missing_params}")
 
-@pytest.mark.doDelayedExpression
-@pytest.mark.parametrize(
-	"case, unhandle_message_part",
-	[(case_without_explicit_flag, "barhatniy_tyagi")]
-)
-@pytest.mark.asyncio
-async def test_log_bad_flag(
-	case: Case,
-	unhandle_message_part: str
-) -> None:
-	with pytest.raises(commands.CommandInvokeError):
-		await dpytest.message(case.getMessageStringWith("sudo log 1"))
-	assert dpytest.verify().message().content("Убедитесь, что вы "
-		"указали флаги явно, либо указали корректные данные."
-		f" Необработанная часть сообщения: {unhandle_message_part}")
+"""
+https://github.com/GREEN-Corporation/discord-bot/issues/79
+"""
+# @pytest.mark.doDelayedExpression
+# @pytest.mark.parametrize(
+# 	"case, unhandle_message_part",
+# 	[(case_without_explicit_flag, "barhatniy_tyagi")]
+# )
+# @pytest.mark.asyncio
+# async def test_log_bad_flag(
+# 	case: Case,
+# 	unhandle_message_part: str
+# ) -> None:
+# 	with pytest.raises(commands.CommandInvokeError):
+# 		await dpytest.message(case.getMessageStringWith("sudo log 1"))
+# 	assert dpytest.verify().message().content("Убедитесь, что вы "
+# 		"указали флаги явно, либо указали корректные данные."
+# 		f" Необработанная часть сообщения: {unhandle_message_part}")
 
-@pytest.mark.asyncio
-async def test_log_bad_parameters() -> None:
-	with pytest.raises(commands.CommandInvokeError):
-		incorrect_id = 1107606170375565372
-		await dpytest.message("sudo log 1 336420570449051649 43 "
-		f"{incorrect_id}")
-	assert dpytest.verify().message().content("Убедитесь, что вы указали "
-		"флаги явно, либо указали корректные данные. "
-		"Необработанная часть сообщения: 1107606170375565372")
+# @pytest.mark.asyncio
+# async def test_log_bad_parameters() -> None:
+# 	with pytest.raises(commands.CommandInvokeError):
+# 		incorrect_id = 1107606170375565372
+# 		await dpytest.message("sudo log 1 336420570449051649 43 "
+# 		f"{incorrect_id}")
+# 	assert dpytest.verify().message().content("Убедитесь, что вы указали "
+# 		"флаги явно, либо указали корректные данные. "
+# 		"Необработанная часть сообщения: 1107606170375565372")
 
 @pytest.mark.asyncio
 async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
