@@ -25,7 +25,7 @@ async def test_good_search_expression_convert_and_checkExpr(
 	a = SearchExpression
 	assert (removeNesting(compare_data) == await a().convert(discordContext,
 		argument))
-	a().checkExpression(argument)
+	a()._checkExpression(argument)
 
 @pytest.mark.parametrize(
 	"argument",
@@ -42,4 +42,4 @@ async def test_bad_search_expression_convert_and_checkExpr(
 	a = SearchExpression
 	with pytest.raises(SearchExpressionNotFound):
 		await a().convert(discordContext, argument)
-		a().checkExpression(argument)
+		a()._checkExpression(argument)

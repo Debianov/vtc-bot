@@ -1,5 +1,6 @@
 """
-Модуль хранит конвертеры, необходимый для парсинга команд.
+The module for parsing the user commands with converters that support
+discord.py.
 """
 import abc
 from typing import Generic, List, Type, TypeVar, Union
@@ -20,31 +21,31 @@ T = TypeVar("T")
 
 class Expression(commands.Converter, metaclass=abc.ABCMeta):
 	"""
-	Абстрактный класс объектов, реализующих выражения.
+	The abstract class of objects that implement the expression mechanism.
 	"""
 
 	@abc.abstractmethod
 	async def convert(self, ctx: commands.Context, argument: str):
 		"""
-		Вызывается автоматически discord.py. Переопределённный метод класса
-		`commands.Converter <https://discordpy.readthedocs.io/en/stable/ext/\
-		commands/api.html?highlight=help#discord.ext.commands.Converter>`_.
+		Overridden method of the `commands.Converter <https://discordpy.read\
+		thedocs.io/en/stable/ext/commands/api.html?highlight=help#discord.\
+		ext.commands.Converter>`_ class.
 		"""
 		raise NotImplementedError()
 
 	@abc.abstractmethod
-	def checkExpression(self, argument: str):
+	def _checkExpression(self, maybe_expression: str):
 		"""
-		Проверяет выражение с точки зрения синтаксиса.
+		Checks the syntax expression.
 		"""
 		raise NotImplementedError()
 
 class SearchExpression(Expression):
 	"""
-	Класс, реализующий выражение поиска.
+	This class implements search expressions.
 
 	Examples:
-		usr:* — передача всех пользователей в текущем контексте.
+		usr:* — all users.
 	"""
 
 	async def convert(
@@ -52,7 +53,7 @@ class SearchExpression(Expression):
 		ctx: commands.Context,
 		argument: str
 	) -> List[DiscordGuildObjects]:
-		self.checkExpression(argument)
+		self._checkExpression(argument)
 		self.argument = argument
 		self.group_identif: str = self.split_argument[0]
 		self.wildcard: str = self.split_argument[1]
@@ -62,24 +63,20 @@ class SearchExpression(Expression):
 		self._analyzeWildcard()
 		return self.result
 
-	def checkExpression(self, argument: str) -> None:
+	def _checkExpression(self, maybe_expression: str) -> None:
 		"""
-		Проверяет выражение с точки зрения синтаксиса. Данный метод подлежит\
-		вызову вне аннотаций команд для проверки других аргументов в обход convert.
-
-		Args:
-			argument: передаётся, если вызывается вручную не в контексте парсинга.
 		"""
-		self.split_argument = argument.split(":")
-		if argument.find(":") == -1 or len(self.split_argument) > 2:
-			raise SearchExpressionNotFound(argument)
+		self.split_argument = maybe_expression.split(":")
+		if maybe_expression.find(":") == -1 or len(self.split_argument) > 2:
+			raise SearchExpressionNotFound(maybe_expression)
 
 	def _extractDataGroup(self) -> None:
 		"""
-		Метод для определения :class:`DataGroup`.
+		The method to get the :class:`DataGroup` instance.
 
 		Raises:
-			SearchExpressionNotFound: возбуждается при отсутствии подходящих DataGroup.
+			SearchExpressionNotFound: raised when any expressions don't
+			match.
 		"""
 		self.data_groups: List[DiscordObjectsGroup] = DataGroupAnalyzator(
 			self.ctx, self.group_identif).analyze()
@@ -88,7 +85,8 @@ class SearchExpression(Expression):
 
 	def _analyzeWildcard(self) -> None:
 		"""
-		Метод для извлечения информации из :class:`DataGroup`.
+		The method to get the db information from the :class:`DataGroup`
+		instance.
 		"""
 		if not self.wildcard == "*":
 			raise SearchExpressionNotFound(self.argument)
@@ -126,15 +124,15 @@ class ShortSearchExpression(Expression, Generic[T]):
 		argument: str
 	) -> List[DiscordGuildObjects]:
 		self.data_group_instance = self.data_group(ctx)
-		self.checkExpression(argument)
+		self._checkExpression(argument)
 		self.wildcard: str = argument # type: ignore
 		self.result: List[DiscordGuildObjects] = []
 		self._analyzeWildcard()
 		return self.result
 	
-	def checkExpression(self, argument: str) -> None:
-		if not argument == "*":
-			raise ShortSearchExpressionNotFound(argument)
+	def _checkExpression(self, maybe_expression: str) -> None:
+		if not maybe_expression == "*":
+			raise ShortSearchExpressionNotFound(maybe_expression)
 
 	def _analyzeWildcard(self) -> None:
 		if self.wildcard == "*":
@@ -150,9 +148,9 @@ class SpecialExpression(Expression):
 	"""
 
 	async def convert(self, ctx: commands.Context, argument: str) -> str:
-		self.checkExpression(argument)
+		self._checkExpression(argument)
 		return argument
 
-	def checkExpression(self, argument: str) -> None:
-		if argument not in ["df", "default"]:
-			raise SpecialExpressionNotFound(argument)
+	def _checkExpression(self, maybe_expression: str) -> None:
+		if maybe_expression not in ["df", "default"]:
+			raise SpecialExpressionNotFound(maybe_expression)
