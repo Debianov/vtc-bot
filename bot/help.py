@@ -1,5 +1,5 @@
 """
-Модуль содержит логику для обработки и вывода пользовательской документации
+This module contains the logic for outputting user docs.
 """
 
 from typing import List, Mapping, Optional

@@ -1,5 +1,5 @@
 """
-Модуль хранит классы для работы с БД.
+The module contains classes for working with databases.
 """
 
 from typing import Any, Iterable, List, Optional, Sequence, Type, Union
@@ -13,8 +13,8 @@ from .attrs import TargetGroupAttrs
 
 class DataGroupAnalyzator:
 	"""
-	Класс реализует механизм определения :class:`DiscordObjectsGroup`
-	по имени из str.
+	The class implements the mechanism for detecting
+	the :class:`DiscordObjectsGroup` instance by name.
 	"""
 
 	def __init__(self, ctx: commands.Context, string: str) -> None:
@@ -24,7 +24,8 @@ class DataGroupAnalyzator:
 
 	def analyze(self) -> List['DiscordObjectsGroup']:
 		"""
-		Основной метод для определения :class:`DiscordObjectsGroup`.
+		The main method for detecting the :class:`DiscordObjectsGroup`
+		instance.
 		"""
 		to_check: List[Type[DiscordObjectsGroup]] =\
 			DiscordObjectsGroup.__subclasses__()
@@ -39,7 +40,7 @@ class DataGroupAnalyzator:
 
 class DiscordObjectsGroup:
 	"""
-	Абстрактный класс объектов, реализующих доступ к данным через Discord API.
+	The abstract class implements access to data via Discord API.
 	"""
 
 	USER_IDENTIFICATOR: str = ""
@@ -58,9 +59,9 @@ class DiscordObjectsGroup:
 
 class UserGroup(DiscordObjectsGroup):
 	"""
-	Класс реализует доступ к `discord.Member <https://discordpy.\
-	readthedocs.io/en/stable/api.html?highlight=member#discord.Member>`_
-	в контексте гильдии.
+	The class implements access to `discord.Member <https://discordpy.\
+	readthedocs.io/en/stable/api.html?highlight=member#discord.Member>`_ in
+	the context of a guild.
 	"""
 
 	USER_IDENTIFICATOR: str = "usr"
@@ -75,10 +76,10 @@ class UserGroup(DiscordObjectsGroup):
 
 class ChannelGroup(DiscordObjectsGroup):
 	"""
-	Класс реализует доступ к `discord.abc.Channel \
+	The class implements access to `discord.abc.Channel \
 	<https://discordpy.readthedocs.io/en/stable/api.\
-	html?highlight=guildchannel#discord.abc.GuildChannel>`_ в контексте
-	гильдии.
+	html?highlight=guildchannel#discord.abc.GuildChannel>`_ in
+	the context of a guild.
 	"""
 
 	USER_IDENTIFICATOR: str = "ch"
@@ -93,14 +94,13 @@ class ChannelGroup(DiscordObjectsGroup):
 
 class DBObjectsGroup:
 	"""
-	Абстрактный класс объектов, реализующий доступ к данным через БД,
-	а также их корректную запись.
+	The abstract class implements accessing and writing data to the database.
 	"""
 	pass
 
 class ActGroup(DBObjectsGroup):
 	"""
-	Класс реализует объект пользовательских действий.
+	The class implements an object of user actions.
 	"""
 
 	DB_IDENTIFICATOR: str = "act"
@@ -112,7 +112,7 @@ class ActGroup(DBObjectsGroup):
 
 class TargetGroup(DBObjectsGroup):
 	"""
-	Класс реализует объект цели логирования.
+	The class implements an object of the logging target.
 	"""
 
 	DB_IDENTIFICATOR: str = "target"
@@ -123,7 +123,7 @@ class TargetGroup(DBObjectsGroup):
 	) -> None:
 		self.dbconn = attrs["dbconn"]
 		self.context_id = attrs["context_id"]
-		self.dbrecord_id = attrs["dbrecord_id"] or self.generateID()
+		self.dbrecord_id = attrs["dbrecord_id"] or self._generateID()
 		self.target = attrs["target"]
 		self.act = attrs["act"]
 		self.d_in = attrs["d_in"]
@@ -132,7 +132,7 @@ class TargetGroup(DBObjectsGroup):
 		self.priority = attrs["priority"]
 		self.other = attrs["other"]
 
-	def generateID(self) -> int:
+	def _generateID(self) -> int:
 		return 0
 
 	def __setattr__(
@@ -170,8 +170,9 @@ class TargetGroup(DBObjectsGroup):
 	) -> List['TargetGroup']:
 		r"""
 		Args:
-			\**object_parameters: параметры, которые будут переданы в SQL запрос. Если\
-			параметров несколько, то они объединяются через логический оператора OR.
+			\**object_parameters: the parameters that will be passed in the
+			SQL query. If the parameters is several then they will be
+			concatenated through "OR" logical operator.
 		"""
 		values_for_parameters: List[Any] = []
 		query = [psycopg.sql.SQL(
@@ -199,42 +200,36 @@ class TargetGroup(DBObjectsGroup):
 					act, d_in, name, priority, output, other, dbrecord_id)))
 		return result
 
-	def getComparableAttrs(self) -> Union[List[Any], None]:
+	def _getComparableAttrs(self) -> Union[List[Any]]:
 		"""
-		Формирует сравниваемые атрибуты.
+		Forms comparable attributes.
 
 		Returns:
-			List[Any]: список атрибутов, которые имеет смысл сравнивать с другими\
-			экземплярами :class:`TargetGroup`.
+			List[Any]: the attributes list that make sense for comparison
+			with other instances of :class:`TargetGroup`.
 		"""
+		comparable_attrs: List[Any] = []
 		if self.target and self.d_in:
-			comparable_attrs: List[Any] = []
 			objects_id: List[Any] = []
 			for discord_objects in (self.target + self.d_in):
 				objects_id.append(str(discord_objects.id))
 			comparable_attrs += objects_id
 			comparable_attrs.insert(len(self.target), self.act)
 			comparable_attrs.append(self.name)
-			return comparable_attrs
-		return None
+		return comparable_attrs
 
 	def getCoincidenceTo(self, target: 'TargetGroup') -> str:
 		"""
-		Сравнить атрибуты с другим экземпляром :class:`TargetGroup`
-		и вычислить точные совпадения.
+		Compares attributes of the current instance with others of
+		the :class:`TargetGroup` instance.
 
 		Returns:
-			str: все совпавшие значения, перечисленных через запятую.
+			str: all matching values separated by commas.
 		"""
-		if ((maybe_current_attr := self.getComparableAttrs()) and
-			(maybe_compared_attr := target.getComparableAttrs())):
-			current_attr: List[Any] = maybe_current_attr
-			compared_attr: List[Any] = maybe_compared_attr
+		current_attrs: List[Any] = self._getComparableAttrs()
+		compared_attrs: List[Any] = target._getComparableAttrs()
 		coincidence_attrs: List[Any] = []
-		for current_attr in current_attr:
-			if current_attr in compared_attr and current_attr is not None:
-				# is not None — исключаем из проверки None-объекты,
-				# которые появляются только при отсутствии указания флага
-				# -name.
+		for current_attr in current_attrs:
+			if current_attr in compared_attrs and current_attr is not None:
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))

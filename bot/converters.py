@@ -95,12 +95,12 @@ class SearchExpression(Expression):
 
 class ShortSearchExpression(Expression, Generic[T]):
 	r"""
-	Класс представляет реализацию короткого поискового выражения —
-	аналога :class:`SearchExpression`, но без явного указания
-	:class:`DataGroup`.
+	The class implements short search expressions — the alternative to a
+	:class:`SearchExpression` without specifying :class:`DataGroup` in
+	a user message.
 
 	Examples:
-		\* — передача всех объектов.
+		\* — passes all objects.
 	"""
 
 	data_group: Type[DiscordObjectsGroup] = DiscordObjectsGroup
@@ -112,8 +112,8 @@ class ShortSearchExpression(Expression, Generic[T]):
 	) -> Type['ShortSearchExpression']:
 		"""
 		Args:
-			default_data_group (DiscordObjectsGroup): один из объектов
-			:class:`DataGroup`, который использоваться для выполнения wildcard.
+			default_data_group (DiscordObjectsGroup): the :class:`DataGroup`
+			instance that's used next.
 		"""
 		cls.data_group = default_data_group
 		return cls
@@ -140,11 +140,11 @@ class ShortSearchExpression(Expression, Generic[T]):
 
 class SpecialExpression(Expression):
 	"""
-	Класс представляет специальное выражение, которое является
-	специальным именем и характеризует какую-либо опцию.
+	The class implements special expressions that's used as characteristic
+	of some option.
 
 	Examples:
-		df — передача дефолтного объекта из настроек.
+		df — passes a default object (depending on the context).
 	"""
 
 	async def convert(self, ctx: commands.Context, argument: str) -> str:

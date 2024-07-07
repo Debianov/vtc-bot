@@ -14,7 +14,6 @@ from bot.help import BotHelpCommand
 from bot.main import BotConstructor, DBConnFactory
 from bot.utils import (
 	ContextProvider,
-	DiscordObjEvaluator,
 	MockLocator,
 	getEnvIfExist
 )
@@ -75,11 +74,6 @@ def initLocator() -> MockLocator:
 		members=list(config.guilds[0].members)
 	)
 	return locator
-
-@pytest.fixture(scope="package", autouse=True, name="discordObjectEvaluator")
-def initEvaluator(mockLocator: MockLocator) -> DiscordObjEvaluator:
-	instance = DiscordObjEvaluator(mockLocator)
-	return instance
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True)
