@@ -115,9 +115,7 @@ async def test_log_without_require_params(
 	case: Case,
 	missing_params: str
 ) -> None:
-	with pytest.raises(commands.MissingRequiredArgument): # TODO dpytest
-		# почему-то принудительно поднимает исключения, хотя они могут
-		# обрабатываться в on_command_error и проч. ивентах.
+	with pytest.raises(commands.MissingRequiredArgument):
 		await dpytest.message(case.getMessageStringWith("sudo log 1"))
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали "
 		f"все обязательные параметры. Не найденный параметр: "

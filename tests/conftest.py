@@ -17,7 +17,7 @@ sys.path.append(str(root))
 
 from bot.help import BotHelpCommand  # flake8: noqa: I005
 from bot.main import BotConstructor  # flake8: noqa: I005
-from bot.utils import Case, DelayedExprsEvaluator
+from bot.utils import Case
 
 # flake8: noqa: I005
 pytest_plugins = ('pytest_asyncio',)

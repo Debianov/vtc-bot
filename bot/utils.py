@@ -90,13 +90,13 @@ T = TypeVar("T")
 
 
 class DelayedExpression:
-"""
+	"""
 	The reason of why this class was written is an overwhelming developer\
 	desire of to have human-readable expressions under the\
 	`pytest.mark.parametrize <https://docs.pytest.org/en/7.1.x/how-to/param\
 	etrize.html>`_ decorators that is impossible without implementing\
 	something like this.
-"""
+	"""
 
 	def __init__(self, expression: str):
 		self.expression = expression
@@ -130,7 +130,6 @@ class DelayedExpression:
 class Case(dict):
 	"""
 	The class for storing and passing args to test funcs.
-
 	Access to class attributes is any call to `__getitem__`.
 	"""
 
@@ -148,11 +147,11 @@ class Case(dict):
 		format_func: Callable[[Any], Any] = lambda x: x
 	) -> str:
 		"""
-		Return the string for use in user messages.
+		Returns the string for use in user messages.
 
 		Args:
-			format_func(Callable[[Any], Any]: should check an object type and
-			get any necessary attrs.
+			format_func(Callable[[Any], Any]: should to check an object type
+			and get any necessary attrs.
 		"""
 		if not self.message_string:
 			self.message_string.append(cmd)
@@ -172,7 +171,8 @@ class Case(dict):
 
 	def _addInMessageStringList(self, elem: Any):
 		"""
-		Check that elems of a `Case` is evaluated by `DelayedExprsEvaluator`.
+		Checks that elems of a :class:`Case` instance is evaluated by
+		:class:`DelayedExprsEvaluator`.
 		"""
 		match type(elem):
 			case builtins.int:
@@ -183,47 +183,11 @@ class Case(dict):
 				raise TypeError("elem isn't str or int. Message string formation isn't "
 								"possible.")
 
-class DelayedExprsEvaluator:
-	"""
-	Class evals every `DelayedExpression` in given list.
-	"""
-
-	def __init__(
-		self,
-		delayed_exprs: List[DelayedExpression],
-		global_vars: Dict[str, Any]
-	) -> None:
-		"""
-		Args:
-			global_vars (Dict[str, Any]): any vars, that can be used for
-			an expression eval.
-		"""
-		self.global_vars = global_vars
-		self.delayed_exprs = delayed_exprs
-		self.undelayed_exprs: List[Any] = []
-
-	def go(self) -> None:
-		self._setGlobalVarsInLocals(locals())
-		for delay_expr in self.delayed_exprs:
-			self.undelayed_exprs.append(eval(delay_expr.expression))
-
-	def getUndelayedExprs(self) -> List[Any]:
-		return self.undelayed_exprs
-
-	def _setGlobalVarsInLocals(self, locals: Dict[str, Any]):
-		"""
-		Func set a local variable in a func that called it. It needs an eval
-		DelayedExpr because it func loads the built-in eval(), which needs context
-		as a global_vars.
-		"""
-		for (key, value) in self.global_vars.items():
-			locals[key] = value
-		return locals
-
 class DelayedExpressionReplacer:
 	"""
-	The class for replacing elements in nested storages on the
-	the element of `fixtures` argument (respectively).
+	This class for replacing elements in nested storages on the element
+	of a `fixtures <https://docs.pytest.org/en/7.1.x/how-to/fixtures.html>`_
+	namespace (respectively).
 	"""
 	def __init__(
 		self,
@@ -243,7 +207,7 @@ class DelayedExpressionReplacer:
 
 	def go(self) -> None:
 		if not isinstance(self.current_target, self.class_to_change):
-			previous_storage = self.setLastStorage(self.current_target)
+			previous_storage = self._setLastStorage(self.current_target)
 			if (isinstance(self.current_target, dict) or
 					isinstance(self.current_target, list)):
 				self.last_mutable_storage = self.current_target
@@ -260,7 +224,7 @@ class DelayedExpressionReplacer:
 						self.go()
 			elif isinstance(self.current_target, tuple):
 				self.immutable_storages_chain.append((self.current_target, self.item))
-				self.addItemForAccessImmutableStorage(previous_storage)
+				self._addItemForAccessImmutableStorage(previous_storage)
 				for ind, value in enumerate(self.current_target):
 					self.current_target = value
 					self.item = ind
@@ -271,19 +235,19 @@ class DelayedExpressionReplacer:
 		else:
 			delayed_expr = self.current_target
 			evaled_expr = delayed_expr.eval(self.fixtures)
-			self.insert(evaled_expr)
+			self._insert(evaled_expr)
 
-	def setLastStorage(self, target: Any) -> Any:
+	def _setLastStorage(self, target: Any) -> Any:
 		"""
-			Set `self.last_storage` and return old attr value that is
-			necessary to restore a `self.last_storage` attr after
-			exiting from a next recursive layer.
+			Set `self.last_storage` and return an old attr value needed
+			to restore an `self.last_storage` attr after exiting from a
+			next recursive layer.
 		"""
 		previous_storage = self.last_storage
 		self.last_storage = target
 		return previous_storage
 
-	def addItemForAccessImmutableStorage(self, previous_storage: Any) -> None:
+	def _addItemForAccessImmutableStorage(self, previous_storage: Any) -> None:
 		"""
 		A func writes `self.item` to `item_to_access_immutable_storage`.
 		`self.item_to_access_immutable_storage` stores `self.item` to access
@@ -291,10 +255,6 @@ class DelayedExpressionReplacer:
 		is immutable storage `self.item` it doesn't save in
 		`self.item_to_access_immutable_storage`.
 
-		The fact of the matter is if `item_to_access_immutable_storage` is
-		sets from an item that describes a position
-		access to immutable storage (tuple) from list/or tuple consequently
-		we can use this attr for access to tuples.
 		```
 		{'key': ("test", "test2", ["test3", "test4",
 		("test5", object_to_update1, (object_to_update2, "test6"))])}
@@ -317,12 +277,12 @@ class DelayedExpressionReplacer:
 		if isinstance(previous_storage, dict) or isinstance(previous_storage, list):
 			self.item_to_access_immutable_storage = self.item
 
-	def insert(self, object_to_insert: Any):
+	def _insert(self, object_to_insert: Any):
 		if isinstance(self.last_storage, tuple) and isinstance(self.item, int):
-			self.last_storage = _insertInTuple(self.last_storage,
-											object_to_insert, self.item)
-			self.updateImmutableChain(self.last_storage,
-									self.immutable_storages_chain)
+			self.last_storage = insertInTuple(self.last_storage,
+				object_to_insert, self.item)
+			self._updateImmutableChain(self.last_storage,
+				self.immutable_storages_chain)
 			if ((isinstance(self.last_mutable_storage, dict) and
 			isinstance(self.item_to_access_immutable_storage, str)) or
 			(isinstance(self.last_mutable_storage, list) and
@@ -336,14 +296,14 @@ class DelayedExpressionReplacer:
 			mutable_storage = self.last_storage # type: ignore
 			mutable_storage[self.item] = object_to_insert # type: ignore
 
-	def updateImmutableChain(
+	def _updateImmutableChain(
 		self,
 		storage_to_update: Tuple[Any],
 		immutable_storages_chain: List[Tuple[Any, ...]]
 	) -> None:
 		"""
 		An updateImmutableChain func updates the entire chain starting with
-		zero elements.
+		first elements.
 		"""
 		immutable_storages_chain.reverse()
 		for ind in range(0, len(immutable_storages_chain)):
@@ -354,7 +314,7 @@ class DelayedExpressionReplacer:
 				current_storage = immutable_storages_chain[ind][0]
 				previous_storage = immutable_storages_chain[ind - 1][0]
 				item_to_current_storage = immutable_storages_chain[ind - 1][1]
-				current_storage = _insertInTuple(
+				current_storage = insertInTuple(
 					current_storage,
 					previous_storage,
 					item_to_current_storage
@@ -362,10 +322,7 @@ class DelayedExpressionReplacer:
 				immutable_storages_chain[ind] = (current_storage, item_to_next_storage)
 		immutable_storages_chain.reverse()
 
-	def getResults(self) -> Iterable:
-		return self.target
-
-def _insertInTuple(
+def insertInTuple(
 	old_tuple: Tuple[Any],
 	element_to_insert: Any,
 	ind_to_insert: int
@@ -381,15 +338,6 @@ def _insertInTuple(
 	if element_to_insert not in new_tuple:
 		raise Exception
 	return new_tuple
-
-
-class ElemFormater:
-
-	def __init__(self, func: Callable[[Any], str]):
-		self.format = func
-
-	def getElemWithFormat(self, arg: Any) -> str:
-		return self.format(arg)
 
 def isIterable(obj: Any) -> bool:
 	try:

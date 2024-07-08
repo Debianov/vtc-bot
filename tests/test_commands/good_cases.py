@@ -2,15 +2,13 @@ from typing import Any, Union
 
 import discord
 
-from bot.utils import Case, DelayedExpression, ElemFormater
+from bot.utils import Case, DelayedExpression
 
 
 def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
 	if isinstance(arg, discord.Member):
 		return str(arg.id)
 	return arg
-
-format_for_getting_ds_id = ElemFormater(getDiscordMemberObject)
 
 default_case = Case(
 	target=[DelayedExpression('mockLocator.members[0]')],

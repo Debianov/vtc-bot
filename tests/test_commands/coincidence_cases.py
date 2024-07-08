@@ -2,7 +2,7 @@ from typing import Any, Union
 
 import discord
 
-from bot.utils import Case, DelayedExpression, ElemFormater
+from bot.utils import Case, DelayedExpression
 
 
 def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
@@ -10,9 +10,6 @@ def getDiscordMemberObject(arg: Any) -> Union[str, Any]:
         return str(arg.id)
     else:
         return arg
-
-
-format_for_getting_ds_id = ElemFormater(getDiscordMemberObject)
 
 case_for_coincidence_0_1 = Case(
     target=[DelayedExpression('mockLocator.members[0].id')],
