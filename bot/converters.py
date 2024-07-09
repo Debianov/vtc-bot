@@ -26,11 +26,6 @@ class Expression(commands.Converter, metaclass=abc.ABCMeta):
 
 	@abc.abstractmethod
 	async def convert(self, ctx: commands.Context, argument: str):
-		"""
-		Overridden method of the `commands.Converter <https://discordpy.read\
-		thedocs.io/en/stable/ext/commands/api.html?highlight=help#discord.\
-		ext.commands.Converter>`_ class.
-		"""
 		raise NotImplementedError()
 
 	@abc.abstractmethod
