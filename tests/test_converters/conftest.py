@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from bot.help import BotHelpCommand
 from bot.main import BotConstructor
-from bot.utils import ContextProvider, DiscordObjEvaluator, MockLocator
+from bot.utils import ContextProvider, MockLocator
 
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
@@ -34,11 +34,6 @@ def initLocator() -> MockLocator:
 		members=list(config.guilds[0].members)
 	)
 	return locator
-
-@pytest.fixture(scope="package", autouse=True, name="discordObjectEvaluator")
-def initEvaluator(mockLocator: MockLocator) -> DiscordObjEvaluator:
-	instance = DiscordObjEvaluator(mockLocator)
-	return instance
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="discordContext")
 async def createDiscordContext(bot: commands.Bot) -> commands.Context:

@@ -1,5 +1,5 @@
 """
-Модуль содержит все классы исключения.
+This module contains all exception classes.
 """
 
 from discord.ext import commands
@@ -7,7 +7,8 @@ from discord.ext import commands
 
 class ErrorMessage:
 	"""
-		Класс реализует пользовательское сообщение со всеми ошибками.
+		This class implements a user error message that handles all
+		exceptions.
 	"""
 
 	def __init__(self) -> None:

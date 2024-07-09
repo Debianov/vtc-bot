@@ -1,24 +1,19 @@
 import asyncio
 import pathlib
 import sys
-from typing import Any, AsyncGenerator, Dict, Generator, Iterable, List, Tuple
+from typing import Any, AsyncGenerator, Dict, Generator, Iterable
 
-import discord
 import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
-from discord.ext import commands
 
-from bot.utils import DelayedExpression, DelayedExpressionReplacer, isIterable
+from bot.utils import DelayedExpressionReplacer, isIterable
 
 root = pathlib.Path.cwd()
 
 sys.path.append(str(root))
 
-from bot.help import BotHelpCommand  # flake8: noqa: I005
-from bot.main import BotConstructor  # flake8: noqa: I005
-from bot.utils import Case, DelayedExprsEvaluator
-
+from bot.utils import Case
 # flake8: noqa: I005
 pytest_plugins = ('pytest_asyncio',)
 

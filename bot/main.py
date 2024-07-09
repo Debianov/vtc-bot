@@ -1,5 +1,5 @@
 """
-Основной модуль для сбора всех модулей и запуска бота.
+The main module that collects all the modules and starting the bot.
 """
 
 import asyncio
@@ -19,7 +19,7 @@ from .utils import ContextProvider, getEnvIfExist
 
 class DBConnector:
 	"""
-	Основной класс для соединения с БД PostgreSQL.
+	The main class for connecting to a PostgresSQL database.
 	"""
 
 	def __init__(
@@ -27,9 +27,9 @@ class DBConnector:
 		**kwargs: str
 	) -> None:
 		self.conninfo: str = ""
-		self.processArgs(kwargs)
+		self._processArgs(kwargs)
 
-	def processArgs(self, args: Dict[str, str]) -> None:
+	def _processArgs(self, args: Dict[str, str]) -> None:
 		matched_args = []
 		for (key, value) in args.items():
 			matched_args.append(key + "=" + value)
@@ -37,7 +37,7 @@ class DBConnector:
 
 	async def initConnection(self) -> None:
 		"""
-		Функция для инициализации подключения к БД.
+		The function for initializing a PostgresSQL database connection.
 		"""
 		self.dbconn = await psycopg.AsyncConnection.connect(
 			self.conninfo,
@@ -49,7 +49,7 @@ class DBConnector:
 
 class BotConstructor(commands.Bot):
 	"""
-	Класс для формирования экземпляра бота.
+	The class for constructing the bot instance.
 	"""
 
 	def __init__(
@@ -72,9 +72,9 @@ class BotConstructor(commands.Bot):
 
 	async def prepare(self) -> None:
 		"""
-		Метод для запуска механизмов инициализации
-		компонентов бота. Обязателен к запуску, если не
-		используется метод :attr:`run`.
+		The method starts the initialization mechanism of bot
+		components. Needs to be called if the high-level method :attr:`run`
+		isn't called.
 		"""
 		if not isinstance(self.dbconn, Mock) and self.context_provider:
 			await self._registerDBAdapters()
@@ -87,7 +87,9 @@ class BotConstructor(commands.Bot):
 
 		class DiscordObjectsDumper(psycopg.adapt.Dumper):
 			"""
-			Преобразовывает Discord-объекты в ID для записи в БД.
+			This adapter converts `discord.abc.Messageable <https://discord
+			py.readthedocs.io/en/stable/api.html?highlight=messageable#disco
+			rd.abc.Messageable>`_ to a str in the PostgresSQL database.
 			"""
 
 			def dump(
@@ -98,7 +100,7 @@ class BotConstructor(commands.Bot):
 
 		class DiscordObjectsLoader(psycopg.adapt.Loader):
 			"""
-			Преобразовывает записи из БД в объекты Discord.
+			This adapter converts str to a discord object.
 			"""
 
 			def load(
@@ -128,7 +130,7 @@ class BotConstructor(commands.Bot):
 
 async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 	"""
-	Фабрика для создания готового подключения к БД PostgreSQL.
+	The factory for creating a done connection to the PostgresSQL database.
 
 	Returns:
 		psycopg.AsyncConnection[Any]

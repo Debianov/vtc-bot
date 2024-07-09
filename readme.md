@@ -1,59 +1,58 @@
 [![Build Status](https://github.com/GREEN-Corporation/discord-bot/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/GREEN-Corporation/discord-bot/actions/workflows/checks.yml)
 
-# Введение
-Бот разработан в рамках проекта "[Virtual Company Systems](https://vk.com/vcsys)" и предназначен для автоматизации процессов виртуальных транспортных компаний ETS 2/ATS. 
+[Русская версия](./ru-readme.md)
+
+# Functional
 
 ![functional](./docs/diagram.png)
 
-# Подготовка к запуску
+# Install
 
-## База данных
-В проекте используется PostgreSQL.
+## Database
 
-Создайте файл `db_secret.sec` в корне репозитория со следующим содержанием:
+Run `./scripts/setupdb.sh` for creating tables from `schema.sql`:
 ```sh
-<имя базы данных>
-<имя пользователя базы данных>
+./setupdb.sh <db_name> <db_user> 
 ```
 
-Запустите `./scripts/setupdb.sh` для создания таблиц из `schema.sql`, указав в качестве базы данных указанную в `db_secret.sec`, а в качестве имени пользователя — уполномоченного создавать таблицы.
-
-## Среда
-В качестве виртуального окружения используется poetry. Для его инициализации в корне проекта необходимо запустить:
+## The environment
+Environment initialization:
 ```sh
 poetry init
 ```
-
-## VSCode
-В .vscode содержатся верные конфигурации для запуска дебага и тестов. Дополнительных настроек не требуется.
-
-# Запуск
-Не забываем установить зависимости:
+Install dependencies:
 ```sh
 poetry install --only main
 ```
-Запуск осуществляется исключительно через poetry:
+
+# Start
+Create a secret file with the discord key, db name and username:
+```sh
+DISCORD_API_TOKEN=...
+POSTGRES_DBNAME=...
+POSTGRES_USER=...
+```
+And export it:
+```sh
+export file
+```
+Then:
 ```sh
 poetry run bot
 ```
-Поскольку в проекте используется относительное
-импортирование, при запуске другим способом это приведёт к ошибкам импортирования.
+At starts with other ways it causes the import errors.
 
-# Совместная разработка
+# Contributing
+The project stack: discord.py, psycopg, pytest + dpytest. Check out our 
+[contributing guidelines](./contributing.md) for ways to give feedback and contribute.
 
-## Установка зависимостей
+## Dev dependencies
 ```sh
 poetry install --with dev,docs
 ```
-## Документация
-За внутреннюю документацию отвечает sphinx. Для его генерации необходимо:
+## Docs generation
+If you want a web version of the docs:
 ```sh
 cd docs
 make html
 ```
-
-Внешняя документация — документация всех функций, которые непосредственно вызываются при вызове команды — реализуется через команды типа "help".
-
-# Ресурсы проекта
-[Группа в VK](https://vk.com/vcsys)\
-[Цикл стримов с разработкой бота на YT](https://youtube.com/playlist?list=PLhz29l3FXDWhePFfKJw447uN3rLl020xz)

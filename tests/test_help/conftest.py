@@ -1,18 +1,13 @@
-import asyncio
-import pathlib
-import sys
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 
 import discord
 import discord.ext.test as dpytest
-import pytest
 import pytest_asyncio
 from discord.ext import commands
 
-from bot.help import BotHelpCommand  # flake8: noqa: I005
-from bot.main import BotConstructor  # flake8: noqa: I005
+from bot.help import BotHelpCommand
+from bot.main import BotConstructor
 
-# flake8: noqa: I005
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
 async def botInit() -> commands.Bot:

@@ -1,8 +1,8 @@
 """
-Модуль хранит основную логику всех пользовательских команд.
+Logic of the all user commands.
 """
 
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, Union
 
 import discord
 import psycopg
@@ -10,13 +10,12 @@ from discord.ext import commands
 
 from .attrs import TargetGroupAttrs
 from .converters import (
-	Expression,
 	SearchExpression,
 	ShortSearchExpression,
 	SpecialExpression
 )
 from .data import ActGroup, TargetGroup
-from .exceptions import ExpressionNotFound, UnhandlePartMessageSignal
+from .exceptions import UnhandlePartMessageSignal
 from .flags import UserLogFlags
 from .main import BotConstructor
 from .utils import ContextProvider, removeNesting
@@ -41,15 +40,14 @@ class UserLog(commands.Cog):
 		error: commands.CommandError
 	) -> None:
 		"""
-		Функция обработки ошибок. Является обработчиком discord.py.
-		Обрабатывает все общие ошибки.
+		The function for handling discord.py and custom errors.
 
 		Raises:
-			error: если обработка исключения error не предусмотрена.
+			error: if the current error cannot be handled.
 		"""
 		if isinstance(error, commands.BadUnionArgument):
 			await ctx.send("Убедитесь, что вы указали существующие "
-				"объекты\"{}\" в параметре {}, и у меня есть к ним доступ.".format(
+				"объекты (\"{}\") в параметре {}, и у меня есть к ним доступ.".format(
 				error.errors[0].argument, error.param.name)) # type: ignore
 		elif isinstance(error, commands.MissingRequiredArgument):
 			current_parameter = error.param.name
@@ -57,7 +55,7 @@ class UserLog(commands.Cog):
 				"параметры. Не найденный параметр:"
 				f" {current_parameter}")
 		elif isinstance(error.original, UnhandlePartMessageSignal): # type: ignore
-			# данная ошибка передаётся только через атрибут original
+			# this error is only passed as .original attr.
 			await ctx.send("Убедитесь, что вы указали флаги явно, либо "
 				"указали корректные данные."
 				f" Необработанная часть сообщения: {ctx.current_argument}")
@@ -67,7 +65,7 @@ class UserLog(commands.Cog):
 	@commands.group(aliases=["logs"], invoke_without_command=True)
 	async def log(self, ctx: commands.Context) -> None:
 		"""
-		Команда предоставляет подкоманды, реализующие управление логированием.
+		The command provides subcommands for managing logs.
 		"""
 		await ctx.send("Убедитесь, что вы указали подкоманду.")
 
@@ -84,32 +82,28 @@ class UserLog(commands.Cog):
 		flags: UserLogFlags
 	) -> None:
 		"""
-		Подкоманда для создания и записи цели, действия которой нужно логировать.
+		The subcommand for creating a logging rule.
 
-		Аргументы:
-			target (упоминание, SearchExpression): за кем/чем следить.
-			act (ShortSearchExpression, название/ID действия):
-			какие действия отслеживать.
-			d_in (упоминание канала/пользователя, SearchExpression, df/default):
-			куда отправлять логи. Если df\
-			— то в установленный по умолчанию объект.
+		The arguments:
+			target (@user, SearchExpression): who/what to watch.
+			act (ShortSearchExpression, a name/ID of the action):
+			what actions to watch. The greedy parameter.
+			d_in (#channel/@user, SearchExpression, df/default):
+			the receiver for logs. If "df" — in the default object. The
+			greedy parameter.
 		"""
 		if not ctx.guild:
 			return None
 
 		self.context_provider.updateContext(ctx.guild)
 
-		initial_target = removeNesting(target)
-		initial_d_in = removeNesting(d_in)
+		removeNesting(target)
+		removeNesting(d_in)
 
-		if not d_in: # если пропускается последний обязательный параметр
-			# — ошибка не выводится, поэтому приходится выкручиваться.
+		if not d_in: # if the last required parameter is omitted — the
+			# exceptation isn't raised, so we have to work around it.
 			raise commands.MissingRequiredArgument(ctx.
 				command.clean_params["d_in"]) # type: ignore [union-attr]
-		else:
-			await self.checkForUnhandleContent(ctx, initial_target or target,
-				act, initial_d_in or d_in, flags.name,
-				flags.output, flags.priority, flags.other)
 
 		target_instance = TargetGroup(TargetGroupAttrs(
 			self.dbconn,
@@ -139,76 +133,6 @@ class UserLog(commands.Cog):
 		else:
 			await target_instance.writeData()
 			await ctx.send("Цель добавлена успешно.")
-
-	async def checkForUnhandleContent(
-		self,
-		ctx: commands.Context,
-		*parameters: Any
-	) -> None:
-		r"""
-		Для проверки на необработанный контент. Основан на сравнении
-		`ctx.current_argument <https://discordpy.readthedocs.io/en/
-		stable/ext/commands/api.html?highlight=ctx%20
-		current_argument#discord.ext.commands.Context.current_argument>`_
-		обработанного аргумента со всеми параметрами.
-
-		Args:
-			\*parameters (Any): все распарсенные параметры из команды.
-
-		Raises:
-			UnhandlePartMessageSignal: вызывается при обнаружении необработанного\
-			элемента.
-		"""
-		if not ctx.current_argument:
-			return
-		current_argument = ctx.current_argument.split(
-			" ") # discord.py останавливается на
-		# необработанном аргументе, если ни один из конвертеров не подошёл.
-		for (ind, maybe_argument) in enumerate(current_argument[:]):
-			if maybe_argument.startswith("-"):
-				current_argument.remove(maybe_argument)
-			elif maybe_argument.startswith("<") and maybe_argument.\
-				endswith(">"):
-				converter = commands.ObjectConverter()
-				discord_object = await converter.convert(ctx, maybe_argument)
-				current_argument[ind] = str(discord_object.id)
-			# второй раз проверяю, поскольку других методов игнорирования
-		if self.checkExpressions(current_argument):
-			# верных expression-ов не нашёл.
-			return
-		ready_check_parameters: List[str] = []
-		for element in parameters:
-			if hasattr(element, "id"):
-				ready_check_parameters.append(str(element.id))
-			elif isinstance(element, list):
-				for d_id in map(lambda x: str(x.id), element):
-					ready_check_parameters.append(d_id)
-			else:
-				ready_check_parameters.append(element)
-		for argument in current_argument:
-			if argument not in ready_check_parameters:
-				raise UnhandlePartMessageSignal(ctx.current_argument)
-
-	def checkExpressions(self, maybe_expressions: List[str]) -> bool:
-		"""
-		Команда для проверки текста на все возможные Expression.
-
-		Returns:
-			bool
-		"""
-		expression_classes: Tuple[Type[Expression], ...] = (
-			SearchExpression, ShortSearchExpression, SpecialExpression
-		)
-		for argument in maybe_expressions:
-			for d_class in expression_classes:
-				instance = d_class()
-				try:
-					instance.checkExpression(argument)
-				except ExpressionNotFound:
-					continue
-				else:
-					return True
-		return False
 
 async def setup(
 	bot: BotConstructor, # type: ignore [name-defined]

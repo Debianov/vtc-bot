@@ -1,5 +1,7 @@
 """
-Модуль содержит объекты флагов для построения парсинга команд.
+This module contains `flag instances <https://discordpy.readthedocs.io/en/
+stable/ext/commands/api.html?highlight=flagconverter#discord.ext.commands.
+FlagConverter>`_ for constructing a command parser.
 """
 
 from typing import Optional, Union

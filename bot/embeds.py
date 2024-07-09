@@ -1,5 +1,6 @@
 """
-Модуль содержит переопределённый embeds с некоторыми предустановками.
+This module contains overriding `embeds <https://discordpy.readthedocs.io/
+en/stable/api.html?highlight=embed#discord.Embed>`_.
 """
 
 from typing import Any

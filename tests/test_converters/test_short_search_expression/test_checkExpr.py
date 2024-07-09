@@ -15,7 +15,7 @@ async def test_good(
 	wildcard: str
 ) -> None:
 	a = ShortSearchExpression
-	a().checkExpression(wildcard)
+	a()._checkExpression(wildcard)
 
 @pytest.mark.parametrize(
 	"wildcard",
@@ -31,4 +31,4 @@ async def test_bad(
 ) -> None:
 	a = ShortSearchExpression
 	with pytest.raises(ShortSearchExpressionNotFound):
-		a().checkExpression(wildcard)
+		a()._checkExpression(wildcard)

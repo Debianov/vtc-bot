@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "discord-bot"
+name = "vtc-bot"
 version = "2.0.0"
-description = "Публичная версия бота для Discord"
+description = "The bot for managing a VTC."
 authors = ["GREEN Corporation <vtcgreenlogistic@gmail.com>"]
 license = "GPL-2.0"
 readme = "readme.md"
@@ -30,6 +30,7 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.0.1"
+groundwork-sphinx-theme = "^1.1.1"
 
 [build-system]
 requires = ["poetry-core"]
