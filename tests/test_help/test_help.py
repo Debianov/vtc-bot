@@ -25,7 +25,6 @@ async def test_commands_help_page(bot: commands.Bot) -> None:
 )
 @pytest.mark.asyncio
 async def test_bad_commands_help_page(
-	bot: commands.Bot,
 	command_arg: str
 ) -> None:
 	await dpytest.message(f"sudo help {command_arg}")
