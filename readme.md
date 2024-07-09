@@ -1,8 +1,5 @@
 [![Build Status](https://github.com/GREEN-Corporation/discord-bot/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/GREEN-Corporation/discord-bot/actions/workflows/checks.yml)
 
-# Введение
-Бот разработан в рамках проекта "[Virtual Company Systems](https://vk.com/vcsys)" и предназначен для автоматизации процессов виртуальных транспортных компаний ETS 2/ATS. 
-
 ![functional](./docs/diagram.png)
 
 # Подготовка к запуску
@@ -55,5 +52,4 @@ make html
 Внешняя документация — документация всех функций, которые непосредственно вызываются при вызове команды — реализуется через команды типа "help".
 
 # Ресурсы проекта
-[Группа в VK](https://vk.com/vcsys)\
-[Цикл стримов с разработкой бота на YT](https://youtube.com/playlist?list=PLhz29l3FXDWhePFfKJw447uN3rLl020xz)
+
