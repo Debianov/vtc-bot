@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'discord-bot'
-copyright = '2023, Debianov'
-author = 'Debianov'
+project = 'vtc-bot'
+copyright = '2024'
+author = 'vtc-bot contributors'
 
 
 # -- General configuration ---------------------------------------------------
