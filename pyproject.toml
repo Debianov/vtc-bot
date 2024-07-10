@@ -2,7 +2,7 @@
 name = "vtc-bot"
 version = "2.0.0"
 description = "The bot for managing a VTC."
-authors = ["GREEN Corporation <vtcgreenlogistic@gmail.com>"]
+authors = ["vtc-bot contributors"]
 license = "GPL-2.0"
 readme = "readme.md"
 packages = [{include = "bot"}]
