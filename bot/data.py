@@ -161,7 +161,7 @@ class TargetGroup(DBObjectsGroup):
 			await acur.execute("""
 					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""",
 					[self.dbrecord_id, self.context_id, self.target, self.act, self.d_in,
-					self.name, self.output, self.priority, self.other])
+					self.name, self.priority, self.output, self.other])
 
 	async def extractData(
 		self,
