@@ -85,7 +85,7 @@ async def test_good_log_create_without_flags(
 			"SELECT * FROM target"
 		)
 		for row in await acur.fetchall():
-			flags_values = [None, None, '-1', None]
+			flags_values = [None, -1, None, None]
 			assert row == ("0", str(mockLocator.guild.id),
 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
 				*flags_values)
@@ -224,7 +224,7 @@ async def test_log_1_good_expression(
 			"SELECT * FROM target"
 		)
 		for row in await acur.fetchall():
-			flags_values = [None, None, '-1', None]
+			flags_values = [None, -1, None, None]
 			assert row == ("0", str(mockLocator.guild.id), compared_objects["target"],
 				'23', compared_objects["d_in"], *flags_values)
 

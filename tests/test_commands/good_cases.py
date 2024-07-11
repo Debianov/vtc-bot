@@ -14,7 +14,7 @@ default_case = Case(
 	target=[DelayedExpression('mockLocator.members[0]')],
 	act="23",
 	d_in=[DelayedExpression('mockLocator.members[1]')],
-	flags={"-name": "Test", "-output": None, "-priority": "-1", "other": None}
+	flags={"-name": "Test", "-priority": -1, "-output": None, "other": None}
 )
 
 default_case_with_several_users = Case(
@@ -23,15 +23,14 @@ default_case_with_several_users = Case(
 	act="23",
 	d_in=[DelayedExpression('mockLocator.members[2]'),
 	DelayedExpression('mockLocator.members[3]')],
-	flags={"-name": "Test", "-output": None, "-priority": "-1",
-	"other": None}
+	flags={"-name": "Test", "-priority": -1, "-output": None, "other": None}
 )
 
 default_case_with_other_target_name = Case(
 	target=[DelayedExpression('mockLocator.members[0]')],
 	act="23",
 	d_in=[DelayedExpression('mockLocator.members[1]')],
-	flags={"-name": "Aboba", "-output": None, "-priority": "-1", "other": None}
+	flags={"-name": "Aboba", "-priority": -1, "-output": None, "other": None}
 )
 
 case_with_all_users_exprs = Case(
