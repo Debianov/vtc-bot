@@ -250,3 +250,33 @@ async def test_log_1_bad_expression(
 			f" {exp2}")
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
 		f" обязательные параметры. Не найденный параметр: {missing_params}")
+
+"""
+https://github.com/Debianov/vtc-bot/issues/72
+"""
+# @pytest.mark.asyncio
+# async def test_log_double_entry_call(
+# 	db: psycopg.AsyncConnection[Any],
+# 	mockLocator: MockLocator
+# ) -> None:
+# 	parts = []
+# 	parts.append("sudo log 1")
+# 	parts.append(str(mockLocator.members[0].id))
+# 	parts.append("23")
+# 	parts.append(str(mockLocator.members[1].id))
+# 	parts.extend(parts)
+# 	await dpytest.message(" ".join(parts))
+# 	assert dpytest.verify().message().content("Цель добавлена успешно.")
+# 	async with db.cursor() as acur:
+# 		await acur.execute(
+# 			"SELECT * FROM target"
+# 		)
+# 		row_count = 0
+# 		for row in await acur.fetchall():
+# 			row_count += 1
+# 			flags_values = [None, 0, None, None]
+# 			assert row == ("0", str(mockLocator.guild.id),
+# 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
+# 				*flags_values)
+# 		if row_count <= 1:
+# 			raise AssertionError
