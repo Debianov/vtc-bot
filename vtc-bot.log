@@ -1,2 +1,0 @@
-2024-07-13 01:47:29,172 - [INFO] - discord.client - (client.py).login(611) - logging in using static token
-2024-07-13 01:47:32,354 - [INFO] - discord.gateway - (gateway.py).received_message(563) - Shard ID None has connected to Gateway (Session ID: f094d08933fe682f7379854f924b1862).

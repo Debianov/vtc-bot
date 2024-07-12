@@ -33,7 +33,7 @@ POSTGRES_USER=...
 ```
 После:
 ```sh
-export file
+source file
 ```
 Затем:
 ```sh
