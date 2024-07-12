@@ -225,8 +225,9 @@ async def test_log_1_good_expression(
 		)
 		for row in await acur.fetchall():
 			flags_values = [None, 0, None, None]
-			assert row == (row[0], str(mockLocator.guild.id), compared_objects["target"],
-				'23', compared_objects["d_in"], *flags_values)
+			assert row == (row[0], str(mockLocator.guild.id),
+				compared_objects["target"], '23', compared_objects["d_in"],
+				*flags_values)
 
 @pytest.mark.parametrize(
 	"exp1, exp2, missing_params",

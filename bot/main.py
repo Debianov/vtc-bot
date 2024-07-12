@@ -3,6 +3,8 @@ The main module that collects all the modules and starting the bot.
 """
 
 import asyncio
+import logging
+import logging.handlers
 import os
 from typing import Any, Dict, Optional, Union
 
@@ -16,6 +18,24 @@ from .help import BotHelpCommand
 from .mock import Mock, MockAsyncConnection
 from .utils import ContextProvider, getEnvIfExist
 
+
+def _init_logging() -> None:
+	logger = logging.getLogger('discord')
+	logger.setLevel(logging.DEBUG)
+	logging.getLogger('discord.http').setLevel(logging.INFO)
+
+	handler = logging.handlers.RotatingFileHandler(
+		filename='vtc-bot.log',
+		encoding='utf-8',
+		maxBytes=32 * 1024 * 1024,  # 32 MiB
+		backupCount=5,  # Rotate through 5 files
+	)
+	dt_fmt = '%Y-%m-%d %H:%M:%S'
+	formatter = logging.Formatter(
+		'[{asctime}] [{levelname:<8}] {module_func}: {message}',
+		dt_fmt, style='{')
+	handler.setFormatter(formatter)
+	logger.addHandler(handler)
 
 class DBConnector:
 	"""
@@ -46,6 +66,7 @@ class DBConnector:
 
 	def getDBconn(self) -> psycopg.AsyncConnection[Any]:
 		return self.dbconn
+
 
 class BotConstructor(commands.Bot):
 	"""
@@ -106,9 +127,10 @@ class BotConstructor(commands.Bot):
 			def load(
 				self,
 				data: bytes
-			) -> Union[discord.abc.Messageable, discord.abc.Connectable, str]:
+			) -> Union[
+				discord.abc.Messageable, discord.abc.Connectable, str]:
 				string_data: str = data.decode()
-				ctx = context_provider.getContext() # type: ignore [union-attr]
+				ctx = context_provider.getContext()  # type: ignore [union-attr]
 				for attr in ('get_member', 'get_user', 'get_channel'):
 					try:
 						result: Optional[discord.abc.Messageable] = getattr(
@@ -119,7 +141,7 @@ class BotConstructor(commands.Bot):
 						continue
 				return string_data
 
-		self.dbconn.adapters.register_dumper( # type: ignore [union-attr]
+		self.dbconn.adapters.register_dumper(  # type: ignore [union-attr]
 			discord.abc.Messageable, DiscordObjectsDumper)
 		self.dbconn.adapters.register_loader("bigint[]", # type: ignore [union-attr]
 			DiscordObjectsLoader)
@@ -127,6 +149,7 @@ class BotConstructor(commands.Bot):
 	async def _initCogs(self) -> None:
 		for module_name in ("commands",):
 			await self.load_extension(f"bot.{module_name}")
+
 
 async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 	"""
@@ -139,7 +162,9 @@ async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 	await dbconn_instance.initConnection()
 	return dbconn_instance.getDBconn()
 
+
 def runForPoetry() -> None:
+	_init_logging()
 	loop = asyncio.get_event_loop()
 	if extract_envs := getEnvIfExist("POSTGRES_DBNAME", "POSTGRES_USER"):
 		dbconn = loop.run_until_complete(DBConnFactory(
@@ -147,7 +172,8 @@ def runForPoetry() -> None:
 			user=extract_envs[1]
 		))
 	else:
-		raise StartupBotError("Не удалось извлечь данные БД для подключения.")
+		raise StartupBotError(
+			"Не удалось извлечь данные БД для подключения.")
 	intents = discord.Intents.all()
 	intents.dm_messages = False
 	VCSBot = BotConstructor(
@@ -156,6 +182,7 @@ def runForPoetry() -> None:
 		command_prefix="sudo ",
 		intents=intents,
 		help_command=BotHelpCommand(),
+		log_handler=None
 	)
 	VCSBot.run(os.getenv("DISCORD_API_TOKEN"))
 

@@ -159,11 +159,11 @@ class TargetGroup(DBObjectsGroup):
 	async def writeData(self) -> None:
 		async with self.dbconn.cursor() as acur:
 			await acur.execute("""
-					INSERT INTO target(context_id, target, act, d_in, name, 
-					priority, output, other) 
-					VALUES (%s, %s, %s, %s, %s, %s, %s, %s);""",
-					[self.context_id, self.target, self.act, self.d_in,
-					self.name, self.priority, self.output, self.other])
+				INSERT INTO target(context_id, target, act, d_in, name,
+				priority, output, other)
+				VALUES (%s, %s, %s, %s, %s, %s, %s, %s);""",
+				[self.context_id, self.target, self.act, self.d_in,
+				self.name, self.priority, self.output, self.other])
 
 	async def extractData(
 		self,

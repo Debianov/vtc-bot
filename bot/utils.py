@@ -1,4 +1,5 @@
 import builtins
+import logging
 import os
 from typing import (
 	Any,
@@ -19,6 +20,7 @@ from discord.ext import commands
 
 from bot.data import DiscordObjectsGroup
 
+logger = logging.getLogger(__name__)
 
 class ContextProvider:
 	"""
@@ -355,5 +357,6 @@ def getDiscordMemberID(obj: Any) -> Any:
 	if hasattr(obj, "id"):
 		return obj.id
 	else:
-		print("getDiscordMemberID", f"the id attr hasn't been found in {obj}. Skip.")
+		logger.info("getDiscordMemberID, the id attr hasn't been found in "
+			f"{obj}. Skip.")
 		return obj

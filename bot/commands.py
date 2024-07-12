@@ -20,6 +20,9 @@ from .flags import UserLogFlags
 from .main import BotConstructor
 from .utils import ContextProvider, removeNesting
 
+import logging.handlers
+
+logging = logging.getLogger(__name__)
 
 class UserLog(commands.Cog):
 
@@ -60,6 +63,8 @@ class UserLog(commands.Cog):
 				"указали корректные данные."
 				f" Необработанная часть сообщения: {ctx.current_argument}")
 		else:
+			logging.error(f"Unhadle exception {error}",
+				extra={"module_func": "commands -> _on_command_error"})
 			raise error
 
 	@commands.group(aliases=["logs"], invoke_without_command=True)

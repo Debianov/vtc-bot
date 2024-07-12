@@ -14,6 +14,7 @@ root = pathlib.Path.cwd()
 sys.path.append(str(root))
 
 from bot.utils import Case
+
 # flake8: noqa: I005
 pytest_plugins = ('pytest_asyncio',)
 
