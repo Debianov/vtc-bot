@@ -19,7 +19,7 @@ class TargetGroupAttrs(Attrs):
 		act: Union[IDObjects, str],
 		d_in: List[IDObjects],
 		name: Union[str, None] = None,
-		priority: Union[int, None] = -1,
+		priority: Union[int, None] = 0,
 		output: Union[str, None] = None,
 		other: Union[str, None] = None,
 		dbrecord_id: Union[int, None] = None
