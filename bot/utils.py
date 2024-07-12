@@ -96,6 +96,10 @@ class DelayedExpression:
 	`pytest.mark.parametrize <https://docs.pytest.org/en/7.1.x/how-to/param\
 	etrize.html>`_ decorators that is impossible without implementing\
 	something like this.
+
+	Be careful when using with the list/dict/tuple expression — it can cause
+	excessive nesting: `DelayedExpression(list(bla))` and `[DelayedExpression
+	(list(bla))]` are different.
 	"""
 
 	def __init__(self, expression: str):
