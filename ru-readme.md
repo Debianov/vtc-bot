@@ -1,5 +1,7 @@
 [![Build Status](https://github.com/GREEN-Corporation/discord-bot/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/GREEN-Corporation/discord-bot/actions/workflows/checks.yml)
  
+Система управления ВТК, реализованная на основе бота Discord.
+
 # Функционал
 
 ![functional](./docs/diagram.png)

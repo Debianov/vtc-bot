@@ -2,6 +2,8 @@
 
 [Русская версия](./ru-readme.md)
 
+The bot-based drivers hub for VTC management. 
+
 # Functional
 ![functional](./docs/diagram.png)
 
