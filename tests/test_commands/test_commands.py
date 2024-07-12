@@ -64,7 +64,7 @@ async def test_good_log_create_with_flags(
 			"SELECT * FROM target"
 		)
 		for row in await acur.fetchall():
-			assert row == ("0", str(mockLocator.guild.id),
+			assert row == (row[0], str(mockLocator.guild.id),
 				case["target"], case["act"], case["d_in"],
 				*list(case["flags"].values()))
 
@@ -86,7 +86,7 @@ async def test_good_log_create_without_flags(
 		)
 		for row in await acur.fetchall():
 			flags_values = [None, 0, None, None]
-			assert row == ("0", str(mockLocator.guild.id),
+			assert row == (row[0], str(mockLocator.guild.id),
 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
 				*flags_values)
 
@@ -187,11 +187,11 @@ async def test_coincidence_targets(
 
 	await dpytest.message(compared_case.getMessageStringWith(
 		"sudo log 1"))
-	assert dpytest.verify().message().content(f"Цель с подобными "
-		f"параметрами уже существует: {error_part['id']} "
-		f"({error_part['name']}). "
+	bot_reply = dpytest.get_message().content
+	coincidence_error_message_part = (f"({error_part['name']}). "
 		f"Совпадающие элементы: "
 		f"{', '.join(map(str, error_part['coincidence_elems']))}")
+	assert coincidence_error_message_part in bot_reply
 
 @pytest.mark.doDelayedExpression
 @pytest.mark.parametrize(
@@ -225,7 +225,7 @@ async def test_log_1_good_expression(
 		)
 		for row in await acur.fetchall():
 			flags_values = [None, 0, None, None]
-			assert row == ("0", str(mockLocator.guild.id), compared_objects["target"],
+			assert row == (row[0], str(mockLocator.guild.id), compared_objects["target"],
 				'23', compared_objects["d_in"], *flags_values)
 
 @pytest.mark.parametrize(

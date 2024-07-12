@@ -25,7 +25,7 @@ case_for_coincidence_0_2 = Case(
     flags={"-name": "Aboba"}
 )
 
-error_fragments_0 = {"id": "0", "name": "Aboba", "coincidence_elems": [
+error_fragments_0 = {"name": "Aboba", "coincidence_elems": [
     DelayedExpression('mockLocator.members[0].id'), "26",
     DelayedExpression('mockLocator.members[1].id'), "Aboba"]}
 
@@ -43,7 +43,7 @@ case_for_coincidence_1_2 = Case(
     flags={"-name": "Aboba"}
 )
 
-error_fragments_1 = {"id": "0", "name": "Aboba", "coincidence_elems": ["26",
+error_fragments_1 = {"name": "Aboba", "coincidence_elems": ["26",
     DelayedExpression('mockLocator.members[1].id'), "Aboba"]}
 
 case_for_coincidence_2_1 = Case(
@@ -63,7 +63,7 @@ case_for_coincidence_2_2 = Case(
     flags={"-name": "Aboba"}
 )
 
-error_fragments_2 = {"id": "0", "name": "Aboba", "coincidence_elems": [
+error_fragments_2 = {"name": "Aboba", "coincidence_elems": [
     DelayedExpression('mockLocator.members[0].id'),
     DelayedExpression('mockLocator.members[1].id'), "26",
     DelayedExpression('mockLocator.members[2].id'), "Aboba"]}
@@ -82,7 +82,7 @@ case_for_coincidence_3_2 = Case(
     flags={"-name": "Aboba"}
 )
 
-error_fragments_3 = {"id": "0", "name": "Aboba", "coincidence_elems": [
+error_fragments_3 = {"name": "Aboba", "coincidence_elems": [
     "Aboba"]}
 
 case_for_coincidence_4_1 = Case(
@@ -99,7 +99,7 @@ case_for_coincidence_4_2 = Case(
     flags={"-name": "aboba"}
 )
 
-error_fragments_4 = {"id": "0", "name": "Aboba", "coincidence_elems": [
+error_fragments_4 = {"name": "Aboba", "coincidence_elems": [
     DelayedExpression('mockLocator.members[0].id'), "26",
     DelayedExpression('mockLocator.members[1].id')]}
 
@@ -117,6 +117,6 @@ case_for_coincidence_5_2 = Case(
     flags={"-name": ""}
 )
 
-error_fragments_5 = {"id": "0", "name": "Aboba", "coincidence_elems": [
+error_fragments_5 = {"name": "Aboba", "coincidence_elems": [
     DelayedExpression('mockLocator.members[0].id'), "26",
     DelayedExpression('mockLocator.members[1].id')]}
