@@ -21,7 +21,7 @@ POSTGRES_USER=...
 ```
 And export it:
 ```sh
-export file
+source file
 ```
 Then:
 ```sh
