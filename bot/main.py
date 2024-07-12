@@ -23,17 +23,14 @@ def _init_logging() -> None:
 	logger = logging.getLogger('discord')
 	logger.setLevel(logging.DEBUG)
 	logging.getLogger('discord.http').setLevel(logging.INFO)
-
 	handler = logging.handlers.RotatingFileHandler(
 		filename='vtc-bot.log',
 		encoding='utf-8',
-		maxBytes=32 * 1024 * 1024,  # 32 MiB
-		backupCount=5,  # Rotate through 5 files
+		maxBytes=32 * 1024 * 1024,
+		backupCount=5,
 	)
-	dt_fmt = '%Y-%m-%d %H:%M:%S'
-	formatter = logging.Formatter(
-		'[{asctime}] [{levelname:<8}] {module_func}: {message}',
-		dt_fmt, style='{')
+	formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - "
+		"%(name)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s")
 	handler.setFormatter(formatter)
 	logger.addHandler(handler)
 
