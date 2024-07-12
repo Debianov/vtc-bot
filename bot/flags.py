@@ -16,5 +16,5 @@ class UserLogFlags( # type: ignore
 ):
 	name: Optional[Union[str]]
 	output: Optional[Union[str]]
-	priority: Optional[int] = -1
+	priority: Optional[int]
 	other: Optional[Union[str]]
