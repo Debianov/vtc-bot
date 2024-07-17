@@ -297,7 +297,8 @@ class DelayedExpressionReplacer:
 				item_to_access_immutable_storage] = (self.
 				immutable_storages_chain[0][0])
 			else:
-				raise TypeError("Unexpected type at assignment.")
+				raise TypeError("Unexpected type at assignment. Maybe the "
+					"algorithm needs improving.")
 		else:
 			mutable_storage = self.last_storage # type: ignore
 			mutable_storage[self.item] = object_to_insert # type: ignore
