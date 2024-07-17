@@ -4,12 +4,14 @@ The main module that collects all the modules and starting the bot.
 
 import asyncio
 import logging
+import logging.config
 import logging.handlers
 import os
 from typing import Any, Dict, Optional, Union
 
 import discord
 import psycopg
+import yaml
 from discord.ext import commands
 
 from ._types import IDObjects
@@ -19,20 +21,18 @@ from .mock import Mock, MockAsyncConnection
 from .utils import ContextProvider, getEnvIfExist
 
 
-def _init_logging() -> None:
-	logger = logging.getLogger('discord')
-	logger.setLevel(logging.DEBUG)
-	logging.getLogger('discord.http').setLevel(logging.INFO)
-	handler = logging.handlers.RotatingFileHandler(
-		filename='vtc-bot.log',
-		encoding='utf-8',
-		maxBytes=32 * 1024 * 1024,
-		backupCount=5,
-	)
-	formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - "
-		"%(name)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s")
-	handler.setFormatter(formatter)
-	logger.addHandler(handler)
+def _setup_logging(
+	path: str = "bot/log-config.yaml"
+) -> None:
+	"""
+	Parses .yaml config file and sets up loggers based on it.
+	"""
+	if os.path.exists(path):
+		with open(path, "rt") as f:
+			config = yaml.safe_load(f.read())
+		logging.config.dictConfig(config)
+	else:
+		raise Exception(f".yaml config on {path} doesn't exist.")
 
 class DBConnector:
 	"""
@@ -161,7 +161,7 @@ async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 
 
 def runForPoetry() -> None:
-	_init_logging()
+	_setup_logging()
 	loop = asyncio.get_event_loop()
 	if extract_envs := getEnvIfExist("POSTGRES_DBNAME", "POSTGRES_USER"):
 		dbconn = loop.run_until_complete(DBConnFactory(
