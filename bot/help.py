@@ -16,30 +16,30 @@ class BotHelpCommand(commands.HelpCommand):
 		mapping: Mapping[Optional[commands.Cog],
 		List[commands.Command]]
 	) -> None:
-		embed = BotEmbed(title="Документация")
+		embed = BotEmbed(title="Documentation")
 		embed.add_field(
-			name="Добро пожаловать в документацию бота!",
-			value="Введите конкретную команду, чтобы получить справку:\n"
-			" :keyboard:help <название команды>"
+			name="Welcome to the vtc-bot documentation!",
+			value="Use :keyboard:help <command> to get information about the "
+				"command."
 		)
 		channel = self.get_destination()
 		await channel.send(embed=embed)
 
-	# async def send_cog_help(self, cog: commands.Cog) -> None: # когов:нет
-	# 	embed = BotEmbed(title="Документация")
+	# async def send_cog_help(self, cog: commands.Cog) -> None: # bug???
+	# 	embed = BotEmbed(title="Documentation")
 	# 	embed.add_field(
-	# 		name = "Описание",
+	# 		name = "Description",
 	# 		value = cog.description(self, description)
 	# 	)
 
 	async def send_group_help(self, group: commands.Group) -> None:
-		embed = BotEmbed(title="Документация")
+		embed = BotEmbed(title="Documentation")
 		embed.add_field(
-			name="Описание",
-			value=group.help if group.help else "Отсутствует."
+			name="Description",
+			value=group.help if group.help else "Missing."
 		)
 		embed.add_field(
-			name="Подкоманды:",
+			name="Subcommands:",
 			value=""
 		)
 		for command in group.commands:
@@ -47,7 +47,7 @@ class BotHelpCommand(commands.HelpCommand):
 				field_value = f"{command.help[:80]} \
 				{'' if len(command.help) < 80 else '...'}"
 			else:
-				field_value = "Описание отсутствует."
+				field_value = "Missing."
 			embed.add_field(
 				name=f"{command.name}{'/' if command.aliases else ...}"
 				f"{'/'.join(command.aliases)}",
@@ -57,24 +57,24 @@ class BotHelpCommand(commands.HelpCommand):
 		await channel.send(embed=embed)
 
 	async def send_command_help(self, command: commands.Command) -> None:
-		embed = BotEmbed(title="Документация")
+		embed = BotEmbed(title="Documentation")
 		value: str = ""
 		if command.name == "help":
-			value = "Вывод данного сообщения."
+			value = "The command returns this message."
 		else:
-			value = command.help if command.help else "Отсутствует."
+			value = command.help if command.help else "Missing."
 		embed.add_field(
-			name="Описание",
+			name="Description",
 			value=value,
 		)
 		channel = self.get_destination()
 		await channel.send(embed=embed)
 
 	async def send_error_message(self, error: str) -> None:
-		embed = BotEmbed(title="Документация")
+		embed = BotEmbed(title="Documentation")
 		embed.add_field(
-			name="Ошибка",
-			value="Указанная команда не найдена."
+			name="Error",
+			value="The command wasn't found."
 		)
 		channel = self.get_destination()
 		await channel.send(embed=embed)
