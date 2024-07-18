@@ -44,7 +44,7 @@ async def createTargetTable(db) -> AsyncGenerator[None, None]:
 	async with db.cursor() as acur:
 		await acur.execute(
 			"""CREATE TABLE public.target (
-			id bigint,
+			id bigint GENERATED ALWAYS AS IDENTITY,
 			context_id bigint,
 			target bigint[],
 			act text,

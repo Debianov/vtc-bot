@@ -26,7 +26,7 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.target (
-    id bigint,
+    id bigint GENERATED ALWAYS AS IDENTITY,
     context_id bigint,
     target bigint[],
     act text,

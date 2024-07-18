@@ -2,6 +2,8 @@
 
 [Русская версия](./ru-readme.md)
 
+The bot-based drivers hub for VTC management. 
+
 # Functional
 ![functional](./docs/diagram.png)
 
@@ -31,7 +33,7 @@ POSTGRES_USER=...
 ```
 And export it:
 ```sh
-export file
+source file
 ```
 Then:
 ```sh

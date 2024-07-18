@@ -12,8 +12,7 @@ class ErrorMessage:
 	"""
 
 	def __init__(self) -> None:
-		self.text_start = ("При выполнении операции произошла"
-			"пользовательская ошибка.\nПожалуйста, убедитесь в следующем:\n")
+		self.text_start = ("Unexpected error occurs.\nPlease check:\n")
 		self.current_point: int = 0
 
 	def addError(self, error_text: str) -> None:

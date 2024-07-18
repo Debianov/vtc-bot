@@ -1,4 +1,5 @@
 import builtins
+import logging
 import os
 from typing import (
 	Any,
@@ -19,6 +20,7 @@ from discord.ext import commands
 
 from bot.data import DiscordObjectsGroup
 
+logger = logging.getLogger(__name__)
 
 class ContextProvider:
 	"""
@@ -96,6 +98,10 @@ class DelayedExpression:
 	`pytest.mark.parametrize <https://docs.pytest.org/en/7.1.x/how-to/param\
 	etrize.html>`_ decorators that is impossible without implementing\
 	something like this.
+
+	Be careful when using with the list/dict/tuple expression — it can cause
+	excessive nesting: `DelayedExpression(list(bla))` and `[DelayedExpression
+	(list(bla))]` are different.
 	"""
 
 	def __init__(self, expression: str):
@@ -162,7 +168,7 @@ class Case(dict):
 							self._addInMessageStringList(format_func(inner_elem))
 					case builtins.dict:
 						for key, value in elem.items():
-							if value is not None:
+							if bool(value):
 								self._addInMessageStringList(format_func(key))
 								self._addInMessageStringList(format_func(value))
 					case _:
@@ -291,7 +297,8 @@ class DelayedExpressionReplacer:
 				item_to_access_immutable_storage] = (self.
 				immutable_storages_chain[0][0])
 			else:
-				raise TypeError("Unexpected type at assignment.")
+				raise TypeError("Unexpected type at assignment. Maybe the "
+					"algorithm needs improving.")
 		else:
 			mutable_storage = self.last_storage # type: ignore
 			mutable_storage[self.item] = object_to_insert # type: ignore
@@ -351,5 +358,6 @@ def getDiscordMemberID(obj: Any) -> Any:
 	if hasattr(obj, "id"):
 		return obj.id
 	else:
-		print("getDiscordMemberID", f"the id attr hasn't been found in {obj}. Skip.")
+		logger.info("getDiscordMemberID, the id attr hasn't been found in "
+			f"{obj}. Skip.")
 		return obj

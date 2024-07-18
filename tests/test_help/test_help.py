@@ -28,9 +28,9 @@ async def test_bad_commands_help_page(
 	command_arg: str
 ) -> None:
 	await dpytest.message(f"sudo help {command_arg}")
-	check_embed = BotEmbed(title="Документация")
+	check_embed = BotEmbed(title="Documentation")
 	check_embed.add_field(
-		name="Ошибка",
-		value="Указанная команда не найдена."
+		name="Error",
+		value="The command wasn't found."
 	)
 	assert dpytest.verify().message().embed(check_embed)

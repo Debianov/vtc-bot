@@ -123,7 +123,7 @@ class TargetGroup(DBObjectsGroup):
 	) -> None:
 		self.dbconn = attrs["dbconn"]
 		self.context_id = attrs["context_id"]
-		self.dbrecord_id = attrs["dbrecord_id"] or self._generateID()
+		self.dbrecord_id = attrs["dbrecord_id"]
 		self.target = attrs["target"]
 		self.act = attrs["act"]
 		self.d_in = attrs["d_in"]
@@ -159,9 +159,11 @@ class TargetGroup(DBObjectsGroup):
 	async def writeData(self) -> None:
 		async with self.dbconn.cursor() as acur:
 			await acur.execute("""
-					INSERT INTO target VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-					[self.dbrecord_id, self.context_id, self.target, self.act, self.d_in,
-					self.name, self.output, self.priority, self.other])
+				INSERT INTO target(context_id, target, act, d_in, name,
+				priority, output, other)
+				VALUES (%s, %s, %s, %s, %s, %s, %s, %s);""",
+				[self.context_id, self.target, self.act, self.d_in,
+				self.name, self.priority, self.output, self.other])
 
 	async def extractData(
 		self,

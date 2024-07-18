@@ -2,6 +2,7 @@
 Logic of the all user commands.
 """
 
+import logging.handlers
 from typing import Any, Union
 
 import discord
@@ -20,6 +21,7 @@ from .flags import UserLogFlags
 from .main import BotConstructor
 from .utils import ContextProvider, removeNesting
 
+logger = logging.getLogger(__name__)
 
 class UserLog(commands.Cog):
 
@@ -60,6 +62,7 @@ class UserLog(commands.Cog):
 				"указали корректные данные."
 				f" Необработанная часть сообщения: {ctx.current_argument}")
 		else:
+			logger.error(f"Unhadle exception {error}")
 			raise error
 
 	@commands.group(aliases=["logs"], invoke_without_command=True)

@@ -19,8 +19,8 @@ class TargetGroupAttrs(Attrs):
 		act: Union[IDObjects, str],
 		d_in: List[IDObjects],
 		name: Union[str, None] = None,
+		priority: Union[int, None] = 0,
 		output: Union[str, None] = None,
-		priority: Union[int, None] = None,
 		other: Union[str, None] = None,
 		dbrecord_id: Union[int, None] = None
 	):
@@ -31,8 +31,8 @@ class TargetGroupAttrs(Attrs):
 		self.act = act
 		self.d_in = d_in
 		self.name = name
-		self.output = output
 		self.priority = priority
+		self.output = output
 		self.other = other
 
 	def keys(self):
