@@ -42,7 +42,7 @@ build-backend = "poetry.core.masonry.api"
 bot = "bot.main:runForPoetry"
 
 [tool.flake8]
-ignore = ['W191', 'E302', 'W191', 'W292', 'E305', 'E261', 'W293', 'E128', 'E122', 'E115', 'E262', 'E265', 'W504']
+ignore = ['W191', 'E302', 'W191', 'W292', 'E305', 'E261', 'W293', 'E128', 'E122', 'E115', 'E262', 'E265', 'W504', 'E131']
 exclude = "./docs/*"
 
 [tool.isort]

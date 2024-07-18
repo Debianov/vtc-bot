@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from bot.utils import Case, MockLocator, getDiscordMemberID
 
-from .bad_cases import (
+from .bad_cases import (  # empty_case
 	case_without_one_required_params,
 	case_without_two_required_params
 )
@@ -102,13 +102,8 @@ async def test_log_without_subcommand() -> None:
 	[
 		(case_without_two_required_params, "act"),
 		(case_without_one_required_params, "d_in"),
+		# (empty_case, "target") # TODO improved in discord.py
 	]
-	#( # TODO доработать
-	# [""],
-	# "",
-	# [""],
-	# "target"
-	# ),
 )
 @pytest.mark.asyncio
 async def test_log_without_require_params(
@@ -232,7 +227,7 @@ async def test_log_1_good_expression(
 @pytest.mark.parametrize(
 	"exp1, exp2, missing_params",
 	[
-		# ( # доработать
+		# ( # improved in discord.py library
 		# 	"fger", "erert", "target",
 		# ),
 		(

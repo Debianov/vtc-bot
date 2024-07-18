@@ -170,7 +170,7 @@ def runForPoetry() -> None:
 		))
 	else:
 		raise StartupBotError(
-			"Не удалось извлечь данные БД для подключения.")
+			"Failed to extract environment variables.")
 	intents = discord.Intents.all()
 	intents.dm_messages = False
 	VCSBot = BotConstructor(

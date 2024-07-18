@@ -22,6 +22,12 @@ case_without_one_required_params = Case(
 	d_in=""
 )
 
+empty_case = Case(
+	target="",
+	act="",
+	d_in=""
+)
+
 case_without_explicit_flag = Case(
 	target=DelayedExpression("mockLocator.members[0].id"),
 	act="54",
