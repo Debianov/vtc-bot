@@ -9,8 +9,7 @@ from bot.utils import Case, MockLocator, getDiscordMemberID
 
 from .bad_cases import (  # empty_case
 	case_without_one_required_params,
-	case_without_two_required_params,
-	empty_case
+	case_without_two_required_params
 )
 from .coincidence_cases import (
 	case_for_coincidence_0_1,
