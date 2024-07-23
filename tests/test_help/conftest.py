@@ -13,7 +13,7 @@ from bot.main import BotConstructor
 async def botInit() -> commands.Bot:
 	intents = discord.Intents.all()
 	VCSBot = BotConstructor(
-		command_prefix="sudo ",
+		command_prefix="",
 		intents=intents,
 		help_command=BotHelpCommand(),
 		cog_load=False

@@ -176,7 +176,6 @@ def runForPoetry() -> None:
 	VCSBot = BotConstructor(
 		dbconn=dbconn,
 		context_provider=ContextProvider(),
-		command_prefix="sudo ",
 		intents=intents,
 		help_command=BotHelpCommand(),
 		log_handler=None

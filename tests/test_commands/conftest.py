@@ -52,7 +52,7 @@ async def botInit(db: psycopg.AsyncConnection[Any]) -> commands.Bot:
 	VCSBot = BotConstructor(
 		dbconn=db,
 		context_provider=ContextProvider(),
-		command_prefix="sudo ",
+		command_prefix="",
 		intents=intents,
 		help_command=BotHelpCommand(),
 	)

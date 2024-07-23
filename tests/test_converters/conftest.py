@@ -15,7 +15,7 @@ async def botInit() -> commands.Bot:
 	intents = discord.Intents.all()
 	VCSBot = BotConstructor(
 		context_provider=ContextProvider(),
-		command_prefix="sudo ",
+		command_prefix="",
 		intents=intents,
 		help_command=BotHelpCommand(),
 		load_cogs=False,
@@ -37,6 +37,6 @@ def initLocator() -> MockLocator:
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="discordContext")
 async def createDiscordContext(bot: commands.Bot) -> commands.Context:
-	message = await dpytest.message("sudo help")
+	message = await dpytest.message("help")
 	current_ctx = await bot.get_context(message)
 	return current_ctx

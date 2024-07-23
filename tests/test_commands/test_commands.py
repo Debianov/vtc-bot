@@ -56,7 +56,7 @@ async def test_good_log_create_with_flags(
 	mockLocator: MockLocator,
 	case: Case
 ) -> None:
-	await dpytest.message(case.getMessageStringWith("sudo log 1",
+	await dpytest.message(case.getMessageStringWith("log 1",
 		getDiscordMemberID))
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
@@ -74,7 +74,7 @@ async def test_good_log_create_without_flags(
 	mockLocator: MockLocator
 ) -> None:
 	parts = []
-	parts.append("sudo log 1")
+	parts.append("log 1")
 	parts.append(str(mockLocator.members[0].id))
 	parts.append("23")
 	parts.append(str(mockLocator.members[1].id))
@@ -92,7 +92,7 @@ async def test_good_log_create_without_flags(
 
 @pytest.mark.asyncio
 async def test_log_without_subcommand() -> None:
-	await dpytest.message("sudo log")
+	await dpytest.message("log")
 	assert dpytest.verify().message().content(
 		"Убедитесь, что вы указали подкоманду.")
 
@@ -111,7 +111,7 @@ async def test_log_without_require_params(
 	missing_params: str
 ) -> None:
 	with pytest.raises(commands.MissingRequiredArgument):
-		await dpytest.message(case.getMessageStringWith("sudo log 1"))
+		await dpytest.message(case.getMessageStringWith("log 1"))
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали "
 		f"все обязательные параметры. Не найденный параметр: "
 		f"{missing_params}")
@@ -130,7 +130,7 @@ https://github.com/GREEN-Corporation/discord-bot/issues/79
 # 	unhandle_message_part: str
 # ) -> None:
 # 	with pytest.raises(commands.CommandInvokeError):
-# 		await dpytest.message(case.getMessageStringWith("sudo log 1"))
+# 		await dpytest.message(case.getMessageStringWith("log 1"))
 # 	assert dpytest.verify().message().content("Убедитесь, что вы "
 # 		"указали флаги явно, либо указали корректные данные."
 # 		f" Необработанная часть сообщения: {unhandle_message_part}")
@@ -139,7 +139,7 @@ https://github.com/GREEN-Corporation/discord-bot/issues/79
 # async def test_log_bad_parameters() -> None:
 # 	with pytest.raises(commands.CommandInvokeError):
 # 		incorrect_id = 1107606170375565372
-# 		await dpytest.message("sudo log 1 336420570449051649 43 "
+# 		await dpytest.message("log 1 336420570449051649 43 "
 # 		f"{incorrect_id}")
 # 	assert dpytest.verify().message().content("Убедитесь, что вы указали "
 # 		"флаги явно, либо указали корректные данные. "
@@ -147,7 +147,7 @@ https://github.com/GREEN-Corporation/discord-bot/issues/79
 
 @pytest.mark.asyncio
 async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
-	await dpytest.message(f"sudo log 1 <@{mockLocator.members[0].id}> 23"
+	await dpytest.message(f"log 1 <@{mockLocator.members[0].id}> 23"
 		f" <@{mockLocator.members[1].id}>")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 
@@ -177,11 +177,11 @@ async def test_coincidence_targets(
 ) -> None:
 
 	await dpytest.message(case.getMessageStringWith(
-		"sudo log 1"))
+		"log 1"))
 	dpytest.get_message()
 
 	await dpytest.message(compared_case.getMessageStringWith(
-		"sudo log 1"))
+		"log 1"))
 	bot_reply = dpytest.get_message().content
 	coincidence_error_message_part = (f"({error_part['name']}). "
 		f"Совпадающие элементы: "
@@ -211,7 +211,7 @@ async def test_log_1_good_expression(
 	compared_objects: Case,
 	mockLocator: MockLocator,
 ) -> None:
-	await dpytest.message(f"sudo log 1 {case['target']} 23"
+	await dpytest.message(f"log 1 {case['target']} 23"
 		f" {case['d_in']}")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
@@ -242,7 +242,7 @@ async def test_log_1_bad_expression(
 	missing_params: str
 ) -> None:
 	with pytest.raises(commands.CommandError):
-		await dpytest.message(f"sudo log 1 {exp1} 23"
+		await dpytest.message(f"log 1 {exp1} 23"
 			f" {exp2}")
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
 		f" обязательные параметры. Не найденный параметр: {missing_params}")
@@ -256,7 +256,7 @@ https://github.com/Debianov/vtc-bot/issues/72
 # 	mockLocator: MockLocator
 # ) -> None:
 # 	parts = []
-# 	parts.append("sudo log 1")
+# 	parts.append("log 1")
 # 	parts.append(str(mockLocator.members[0].id))
 # 	parts.append("23")
 # 	parts.append(str(mockLocator.members[1].id))
