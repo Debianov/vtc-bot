@@ -8,7 +8,7 @@ import psycopg
 from discord.ext import commands
 
 from ._types import DiscordGuildObjects
-from .attrs import TargetGroupAttrs
+from .attrs import TargetGroupAttrs, GuildDescriptionAttrs
 
 
 class DataGroupAnalyzator:
@@ -235,3 +235,43 @@ class TargetGroup(DBObjectsGroup):
 			if current_attr in compared_attrs and current_attr is not None:
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
+
+class GuildDescription(DBObjectsGroup):
+
+	def __init__(
+		self,
+		attrs: GuildDescriptionAttrs
+	):
+		self.guild_id: int = attrs["guild_id"]
+		self.selected_language: str = attrs["selected_language"]
+
+	def _checkLanguageName(self):
+		pass
+
+	async def write(self) -> None:
+		async with self.dbconn.cursor() as acur:
+			await acur.execute("""
+				INSERT INTO guilds(guild_id, selected_language)
+				VALUES (%s, %s);""",
+				[self.guild_id, self.selected_language])
+
+	@staticmethod
+	async def extract(
+		guild_id: int
+	) -> List[Union[GuildDescription, None]]:
+		query = [psycopg.sql.SQL(
+			f"SELECT * FROM guilds WHERE guild_id = %s")]
+		async with self.dbconn.cursor() as acur:
+			await acur.execute(
+				query,
+				guild_id
+			)
+			result: List[GuildDescription] = []
+			for row in await acur.fetchall():
+				guild_id, selected_language = row[0], row[1]
+				result.append(GuildDescription(
+					GuildDescriptionAttrs(guild_id, selected_language)))
+		if len(result) > 1:
+			raise ValueError("Received an unexpected number of DB records.") # one
+				# guild - one record
+		return result

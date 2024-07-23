@@ -1,3 +1,4 @@
+import abc
 from abc import ABCMeta
 from typing import Any, List, Union
 
@@ -7,7 +8,14 @@ from bot._types import IDObjects
 
 
 class Attrs(metaclass=ABCMeta):
-	pass
+
+	@abc.abstractmethod
+	def keys(self):
+		return list(self.__dict__.keys())
+
+	@abc.abstractmethod
+	def __getitem__(self, item):
+		return self.__dict__[item]
 
 class TargetGroupAttrs(Attrs):
 
@@ -35,8 +43,11 @@ class TargetGroupAttrs(Attrs):
 		self.output = output
 		self.other = other
 
-	def keys(self):
-		return list(self.__dict__.keys())
+class GuildDescriptionAttrs(Attrs):
 
-	def __getitem__(self, item):
-		return self.__dict__[item]
+	def __init__(self,
+		 guild_id: int,
+		 selected_language: str
+	):
+		self.guild_id: int = guild_id
+		self.selected_language: str = selected_language

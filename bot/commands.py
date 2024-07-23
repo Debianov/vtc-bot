@@ -15,13 +15,54 @@ from .converters import (
 	ShortSearchExpression,
 	SpecialExpression
 )
-from .data import ActGroup, TargetGroup
+from .data import ActGroup, TargetGroup, GuildDescription
 from .exceptions import UnhandlePartMessageSignal
 from .flags import UserLogFlags
 from .main import BotConstructor
 from .utils import ContextProvider, removeNesting
 
 logger = logging.getLogger(__name__)
+
+class Settings(commands.Cog):
+	def __init__(
+		self,
+		bot: commands.Bot,
+		dbconn: psycopg.AsyncConnection[Any],
+		context_provider: ContextProvider
+	) -> None:
+		self.bot = bot
+		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
+		self.context_provider: ContextProvider = context_provider
+
+	@commands.group
+	async def setup(self):
+		"""
+		The command to manage bot settings.
+		"""
+		raise NotImplementedError
+
+	@setup.command(aliases="lang")
+	async def language(
+		self,
+		lang_name: str,
+		ctx: commands.Context,
+		confirm_flag: bool = false
+	):
+		"""
+		It sets a language the bot will use to communicate.
+
+		:param lang_name: Short or full language name ("en"/"english").
+		Currently only available is english and russian.
+		"""
+		if confirm_flag:
+			_setLanguage(lang_name, ctx)
+		instance = GuildDescription.extract(ctx.guild.id)
+		if instance[0] is not None:
+			"You sure to change the bot language? (Y/N)"
+			await ctx.send(embed=default)
+			await self.language(lang_name=lang_name, confirm_flag=true)
+		else:
+			_setLanguage(lang_name, ctx)
 
 class UserLog(commands.Cog):
 
