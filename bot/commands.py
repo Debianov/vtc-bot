@@ -15,7 +15,8 @@ from .converters import (
 	ShortSearchExpression,
 	SpecialExpression
 )
-from .data import ActGroup, TargetGroup, GuildDescription
+from .data import ActGroup, GuildDescription, TargetGroup
+from .embeds import WarningEmbed
 from .exceptions import UnhandlePartMessageSignal
 from .flags import UserLogFlags
 from .main import BotConstructor
@@ -27,26 +28,27 @@ class Settings(commands.Cog):
 	def __init__(
 		self,
 		bot: commands.Bot,
-		dbconn: psycopg.AsyncConnection[Any],
-		context_provider: ContextProvider
+		dbconn: psycopg.AsyncConnection[Any]
 	) -> None:
 		self.bot = bot
 		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
-		self.context_provider: ContextProvider = context_provider
 
-	@commands.group
-	async def setup(self):
+	@commands.group(invoke_without_command=True)
+	async def setup(
+		self,
+		ctx: commands.Context
+	):
 		"""
 		The command to manage bot settings.
 		"""
-		raise NotImplementedError
+		await ctx.send("Убедитесь, что вы указали подкоманду.")
 
-	@setup.command(aliases="lang")
+	@setup.command(aliases=["lang"])
 	async def language(
 		self,
-		lang_name: str,
 		ctx: commands.Context,
-		confirm_flag: bool = false
+		lang_name: str,
+		confirm_flag: bool = False
 	):
 		"""
 		It sets a language the bot will use to communicate.
@@ -56,13 +58,17 @@ class Settings(commands.Cog):
 		"""
 		if confirm_flag:
 			_setLanguage(lang_name, ctx)
-		instance = GuildDescription.extract(ctx.guild.id)
-		if instance[0] is not None:
-			"You sure to change the bot language? (Y/N)"
-			await ctx.send(embed=default)
-			await self.language(lang_name=lang_name, confirm_flag=true)
+		instance = GuildDescription.extract(self.bot.dbconn, ctx.guild.id)
+		if instance is not None:
+			embed = WarningEmbed.add_field(name="Warning", value="You sure to change "
+				"the bot language? (Y/N)")
+			await ctx.send(embed=embed)
+			await self.language(ctx=ctx, lang_name=lang_name, confirm_flag=True)
 		else:
 			_setLanguage(lang_name, ctx)
+
+	def _setLanguage(self, lang_name, ctx):
+		pass
 
 class UserLog(commands.Cog):
 
@@ -182,3 +188,4 @@ async def setup(
 	bot: BotConstructor, # type: ignore [name-defined]
 ) -> None:
 	await bot.add_cog(UserLog(bot, bot.dbconn, bot.context_provider))
+	await bot.add_cog(Settings(bot, bot.dbconn))

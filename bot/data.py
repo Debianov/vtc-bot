@@ -8,7 +8,7 @@ import psycopg
 from discord.ext import commands
 
 from ._types import DiscordGuildObjects
-from .attrs import TargetGroupAttrs, GuildDescriptionAttrs
+from .attrs import GuildDescriptionAttrs, TargetGroupAttrs
 
 
 class DataGroupAnalyzator:
@@ -257,11 +257,12 @@ class GuildDescription(DBObjectsGroup):
 
 	@staticmethod
 	async def extract(
+		dbconn: psycopg.AsyncConnection[Any],
 		guild_id: int
-	) -> List[Union[GuildDescription, None]]:
+	) -> List[Union['GuildDescription', None]]:
 		query = [psycopg.sql.SQL(
-			f"SELECT * FROM guilds WHERE guild_id = %s")]
-		async with self.dbconn.cursor() as acur:
+			"SELECT * FROM guilds WHERE guild_id = %s")]
+		async with dbconn.cursor() as acur:
 			await acur.execute(
 				query,
 				guild_id
@@ -273,5 +274,5 @@ class GuildDescription(DBObjectsGroup):
 					GuildDescriptionAttrs(guild_id, selected_language)))
 		if len(result) > 1:
 			raise ValueError("Received an unexpected number of DB records.") # one
-				# guild - one record
+			# guild - one record
 		return result

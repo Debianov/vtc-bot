@@ -2,7 +2,7 @@ import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
 
-from bot.embeds import BotEmbed
+from bot.embeds import BaseEmbed
 
 
 @pytest.mark.asyncio
@@ -28,7 +28,7 @@ async def test_bad_commands_help_page(
 	command_arg: str
 ) -> None:
 	await dpytest.message(f"help {command_arg}")
-	check_embed = BotEmbed(title="Documentation")
+	check_embed = BaseEmbed(title="Documentation")
 	check_embed.add_field(
 		name="Error",
 		value="The command wasn't found."
