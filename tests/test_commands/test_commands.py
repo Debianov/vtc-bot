@@ -276,3 +276,14 @@ https://github.com/Debianov/vtc-bot/issues/72
 # 				*flags_values)
 # 		if row_count <= 1:
 # 			raise AssertionError
+
+@pytest.mark.parametrize(
+	"language",
+	["en", "english", "ru", "russian"]
+)
+@pytest.mark.asyncio
+async def test_good_set_language(
+	language: str
+) -> None:
+	await dpytest.message(f"setup lang {language}")
+	# await dpytest.message("setup get lang")
