@@ -6,7 +6,8 @@ import pytest
 from discord.ext import commands
 
 from bot.utils import Case, MockLocator, getDiscordMemberID
-
+from bot.exceptions import DuplicateInstanceError
+from bot.embeds import SuccessEmbed
 from .bad_cases import (  # empty_case
 	case_without_one_required_params,
 	case_without_two_required_params
@@ -283,7 +284,20 @@ https://github.com/Debianov/vtc-bot/issues/72
 )
 @pytest.mark.asyncio
 async def test_good_set_language(
+	db: psycopg.AsyncConnection[Any],
 	language: str
 ) -> None:
 	await dpytest.message(f"setup lang {language}")
-	# await dpytest.message("setup get lang")
+	reply_embed = SuccessEmbed().add_field(name="Success!", value="The bot "
+		"language has been changed.")
+	reply_message = dpytest.get_message()
+	assert reply_message.embed(reply_embed)
+	async with db.cursor() as acur:
+		await acur.execute("SELECT * FROM guilds")
+		row_count = 0
+		for row in await acur.fetchall():
+			row_count += 1
+			# assert row == (reply_message.guild.id, )
+			if row_count > 1:
+				raise DuplicateInstanceError("the record with the same "
+					"guild_id twice.")

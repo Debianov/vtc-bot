@@ -56,3 +56,6 @@ class UnhandlePartMessageSignal(Exception):
 
 class StartupBotError(Exception):
 	pass
+
+class DuplicateInstanceError(Exception):
+	pass

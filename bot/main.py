@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional, Union
 import discord
 import psycopg
 import yaml
+import gettext
 from discord.ext import commands
 
 from ._types import IDObjects
@@ -33,6 +34,13 @@ def _setup_logging(
 		logging.config.dictConfig(config)
 	else:
 		raise Exception(f".yaml config on {path} doesn't exist.")
+
+def _setup_i18n(
+	path_to_locale: str = "locale"
+): # what is the instance it sends?
+	t = gettext.translation("vtc-bot", path_to_locale)
+	logging.info("i18n successfully inits.")
+	return t
 
 class DBConnector:
 	"""
@@ -72,12 +80,14 @@ class BotConstructor(commands.Bot):
 
 	def __init__(
 		self,
+		i18n_translator,
 		dbconn: psycopg.AsyncConnection[Any] = MockAsyncConnection(),
 		context_provider: ContextProvider = ContextProvider(),
 		cog_load: bool = True,
 		*args: Any,
 		**kwargs: Any
 	) -> None:
+		self.i18n_translator = i18n_translator
 		self.dbconn = dbconn
 		self.context_provider = context_provider
 		self.cog_load = cog_load
@@ -173,12 +183,14 @@ def runForPoetry() -> None:
 			"Failed to extract environment variables.")
 	intents = discord.Intents.all()
 	intents.dm_messages = False
+	i18n_translator = _setup_i18n()
 	VCSBot = BotConstructor(
 		dbconn=dbconn,
 		context_provider=ContextProvider(),
 		intents=intents,
 		help_command=BotHelpCommand(),
-		log_handler=None
+		log_handler=None,
+		i18n_translator=i18n_translator
 	)
 	VCSBot.run(os.getenv("DISCORD_API_TOKEN"))
 

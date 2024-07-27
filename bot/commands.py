@@ -16,7 +16,7 @@ from .converters import (
 	SpecialExpression
 )
 from .data import ActGroup, GuildDescription, TargetGroup
-from .embeds import WarningEmbed
+from .embeds import SuccessEmbed
 from .exceptions import UnhandlePartMessageSignal
 from .flags import UserLogFlags
 from .main import BotConstructor
@@ -28,10 +28,12 @@ class Settings(commands.Cog):
 	def __init__(
 		self,
 		bot: commands.Bot,
-		dbconn: psycopg.AsyncConnection[Any]
+		dbconn: psycopg.AsyncConnection[Any],
+		i18n
 	) -> None:
 		self.bot = bot
 		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
+		self._ = i18n
 
 	@commands.group(invoke_without_command=True)
 	async def setup(
@@ -41,14 +43,13 @@ class Settings(commands.Cog):
 		"""
 		The command to manage bot settings.
 		"""
-		await ctx.send("Убедитесь, что вы указали подкоманду.")
+		await ctx.send(self._("Make sure you enter a subcommand."))
 
 	@setup.command(aliases=["lang"])
 	async def language(
 		self,
 		ctx: commands.Context,
-		lang_name: str,
-		confirm_flag: bool = False
+		lang_name: str
 	):
 		"""
 		It sets a language the bot will use to communicate.
@@ -56,18 +57,29 @@ class Settings(commands.Cog):
 		:param lang_name: Short or full language name ("en"/"english").
 		Currently only available is english and russian.
 		"""
-		if confirm_flag:
-			_setLanguage(lang_name, ctx)
-		instance = GuildDescription.extract(self.bot.dbconn, ctx.guild.id)
-		if instance is not None:
-			embed = WarningEmbed.add_field(name="Warning", value="You sure to change "
-				"the bot language? (Y/N)")
-			await ctx.send(embed=embed)
-			await self.language(ctx=ctx, lang_name=lang_name, confirm_flag=True)
-		else:
-			_setLanguage(lang_name, ctx)
+		# new_instance = GuildDescription(GuildDescriptionAttr(ctx.guild.id, Language(lang_name)))
+		# await new_instance.write()
+		embed = SuccessEmbed().add_field(
+			name=self._("Success!"),
+			value=self._("The bot language has been set.")
+		)
+		await ctx.send(embed=embed)
 
-	def _setLanguage(self, lang_name, ctx):
+class Language:
+
+	def __init__(self, name: str):
+		self.is_supported = True
+		if self._isSupported(name):
+			self.is_supported = False
+		self.unhandled_name = name
+		self.short_name, self.full_name = self.getShortName(), self.getFullName()
+
+	@staticmethod
+	def isSupported(name):
+		#from the locales manually or through gettext library.
+		pass
+
+	def getShortName(self):
 		pass
 
 class UserLog(commands.Cog):
@@ -76,7 +88,7 @@ class UserLog(commands.Cog):
 		self,
 		bot: commands.Bot,
 		dbconn: psycopg.AsyncConnection[Any],
-		context_provider: ContextProvider
+		context_provider: ContextProvider,
 	) -> None:
 		self.bot = bot
 		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
@@ -188,4 +200,4 @@ async def setup(
 	bot: BotConstructor, # type: ignore [name-defined]
 ) -> None:
 	await bot.add_cog(UserLog(bot, bot.dbconn, bot.context_provider))
-	await bot.add_cog(Settings(bot, bot.dbconn))
+	await bot.add_cog(Settings(bot, bot.dbconn, bot.i18n_translator))
