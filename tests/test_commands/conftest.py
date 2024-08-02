@@ -11,7 +11,7 @@ from discord.ext import commands
 
 from bot.exceptions import StartupBotError
 from bot.help import BotHelpCommand
-from bot.main import BotConstructor, DBConnFactory
+from bot.main import BotConstructor, DBConnFactory, _setup_i18n
 from bot.utils import ContextProvider, MockLocator, getEnvIfExist
 
 root = pathlib.Path.cwd()
@@ -49,12 +49,14 @@ async def setupDB() -> psycopg.AsyncConnection[Any]:
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
 async def botInit(db: psycopg.AsyncConnection[Any]) -> commands.Bot:
 	intents = discord.Intents.all()
+	i18n_translator = _setup_i18n()
 	VCSBot = BotConstructor(
 		dbconn=db,
 		context_provider=ContextProvider(),
 		command_prefix="",
 		intents=intents,
 		help_command=BotHelpCommand(),
+		i18n_translator=i18n_translator
 	)
 	await VCSBot._async_setup_hook()
 	await VCSBot.prepare()

@@ -3,16 +3,17 @@ The main module that collects all the modules and starting the bot.
 """
 
 import asyncio
+import gettext
 import logging
 import logging.config
 import logging.handlers
 import os
+import typing
 from typing import Any, Dict, Optional, Union
 
 import discord
 import psycopg
 import yaml
-import gettext
 from discord.ext import commands
 
 from ._types import IDObjects
@@ -37,10 +38,10 @@ def _setup_logging(
 
 def _setup_i18n(
 	path_to_locale: str = "locale"
-): # what is the instance it sends?
-	t = gettext.translation("vtc-bot", path_to_locale)
+) -> typing.Callable[[str], str]:
+	t = gettext.translation("vtc-bot", path_to_locale, languages=["en", "ru"])
 	logging.info("i18n successfully inits.")
-	return t
+	return t.gettext
 
 class DBConnector:
 	"""
@@ -185,6 +186,7 @@ def runForPoetry() -> None:
 	intents.dm_messages = False
 	i18n_translator = _setup_i18n()
 	VCSBot = BotConstructor(
+		command_prefix="",
 		dbconn=dbconn,
 		context_provider=ContextProvider(),
 		intents=intents,

@@ -60,8 +60,8 @@ class Settings(commands.Cog):
 		# new_instance = GuildDescription(GuildDescriptionAttr(ctx.guild.id, Language(lang_name)))
 		# await new_instance.write()
 		embed = SuccessEmbed().add_field(
-			name=self._("Success!"),
-			value=self._("The bot language has been set.")
+			name=self._("success"),
+			value=self._("success_bot_language_set")
 		)
 		await ctx.send(embed=embed)
 
