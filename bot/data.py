@@ -102,9 +102,6 @@ class ActGroup(DBObjectsGroup):
 	"""
 	The class implements an object of user actions.
 	"""
-
-	DB_IDENTIFICATOR: str = "act"
-
 	def extractData(self, coord: Optional[str] = None) -> Iterable[str]:
 		if not coord:
 			pass
@@ -114,8 +111,6 @@ class TargetGroup(DBObjectsGroup):
 	"""
 	The class implements an object of the logging target.
 	"""
-
-	DB_IDENTIFICATOR: str = "target"
 
 	def __init__(
 		self,
