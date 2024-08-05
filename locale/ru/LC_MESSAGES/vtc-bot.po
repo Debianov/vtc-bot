@@ -18,8 +18,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: bot/commands.py:46
-msgid "Make sure you enter a subcommand."
-msgstr ""
+msgid "make_sure_subcommand"
+msgstr "Эта команда может использоваться только с подкомандами."
 
 #: bot/commands.py:63
 msgid "success"
