@@ -25,6 +25,13 @@ msgstr "Эта команда может использоваться тольк
 msgid "success"
 msgstr "Успешно!"
 
+msgid "error"
+msgstr "Ошибка!"
+
 #: bot/commands.py:64
 msgid "success_bot_language_set"
 msgstr "Язык бота установлен."
+
+#: bot/exceptions.py:98
+msgid "language_isnt_supported"
+msgstr "язык не поддерживается."

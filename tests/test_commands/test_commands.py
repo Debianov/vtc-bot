@@ -1,11 +1,12 @@
 from typing import Any, Dict
 
+import discord
 import discord.ext.test as dpytest
 import psycopg
 import pytest
 from discord.ext import commands
 
-from bot.embeds import SuccessEmbed
+from bot.embeds import ErrorEmbed, SuccessEmbed
 from bot.exceptions import DuplicateInstanceError
 from bot.utils import Case, MockLocator, getDiscordMemberID
 
@@ -289,16 +290,75 @@ async def test_good_set_language(
 	language: str
 ) -> None:
 	await dpytest.message(f"setup lang {language}")
-	reply_embed = SuccessEmbed().add_field(name="Success!", value="Bot language "
-		"set.")
+	reply_message = dpytest.get_message()
+	if language == "en" or language == "english":
+		en_reply_embed = SuccessEmbed().add_field(name="Success!",
+		value="Bot language set.")
+		assert reply_message.embeds[0] == en_reply_embed
+	else:
+		ru_reply_embed = SuccessEmbed().add_field(name="Успешно!",
+		value="Язык бота установлен.")
+		assert reply_message.embeds[0] == ru_reply_embed
+	assert len(reply_message.embeds) <= 1
+	await checkLanguageRecordInDB(db, language, reply_message)
+	await checkLanguageSwitchingBetweenRuAndEn(language)
+	await setEnglish()
 
-	assert dpytest.verify().message().embed(reply_embed)
-	# async with db.cursor() as acur:
-	# 	await acur.execute("SELECT * FROM guilds")
-	# 	row_count = 0
-	# 	for row in await acur.fetchall():
-	# 		row_count += 1
-	# 		# assert row == (reply_message.guild.id, )
-	# 		if row_count > 1:
-	# 			raise DuplicateInstanceError("the record with the same "
-	# 				"guild_id twice.")
+async def checkLanguageRecordInDB(
+	db: psycopg.AsyncConnection[Any],
+	language: str,
+	reply_message: discord.Message
+):
+	async with (db.cursor() as acur):
+		await acur.execute("SELECT * FROM guilds")
+		row_count = 0
+		for row in await acur.fetchall():
+			row_count += 1
+			if reply_message.guild:
+				assert row[:2] == (row[0], str(reply_message.guild.id))
+			elif reply_message.author.id:
+				raise NotImplementedError
+			if len(language) == 2:
+				assert row[2].getFullName()
+				assert row[2].getShortName() == language
+			else:
+				assert row[2].getShortName()
+				assert row[2].getFullName() == language
+		assert row_count <= 1, DuplicateInstanceError
+
+async def checkLanguageSwitchingBetweenRuAndEn(language: str):
+	await dpytest.message("setup")
+	reply_message = dpytest.get_message()
+	assert len(reply_message.embeds) <= 1
+	if language in ["ru", "russian"]:
+		ru_reply_embed = ErrorEmbed().add_field(name="Ошибка!",
+		value="Эта команда может использоваться только с подкомандами.")
+		assert reply_message.embeds[0] == ru_reply_embed
+	elif language in ["en", "english"]:
+		en_reply_embed = ErrorEmbed().add_field(name="Error!",
+		value="This command can only be used with a subcommand.")
+		assert reply_message.embeds[0] == en_reply_embed
+
+async def setEnglish():
+	await dpytest.message("setup lang en")
+	reply_message = dpytest.get_message()
+	en_reply_embed = SuccessEmbed().add_field(name="Success!",
+		value="Bot language set.")
+	assert reply_message.embeds[0] == en_reply_embed
+
+@pytest.mark.parametrize(
+	"language",
+	["af", "hfghfgh"]
+)
+@pytest.mark.asyncio
+async def test_bad_set_language(
+	db: psycopg.AsyncConnection[Any],
+	language: str
+) -> None:
+	with pytest.raises(commands.errors.CommandInvokeError):
+		await dpytest.message(f"setup lang {language}")
+	reply_message = dpytest.get_message()
+	reply_embed = ErrorEmbed().add_field(name="Error!",
+	value=f"{language}: the language isn't supported.")
+	assert len(reply_message.embeds) <= 1
+	assert reply_message.embeds[0] == reply_embed

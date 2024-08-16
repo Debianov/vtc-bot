@@ -15,25 +15,38 @@ from .converters import (
 	ShortSearchExpression,
 	SpecialExpression
 )
-from .data import ActGroup, GuildDescription, TargetGroup
-from .embeds import SuccessEmbed
-from .exceptions import UnhandlePartMessageSignal
+from .data import ActGroup, TargetGroup
+from .embeds import ErrorEmbed, SuccessEmbed
+from .exceptions import UnhandlePartMessageSignal, UnsupportedLanguage
 from .flags import UserLogFlags
 from .main import BotConstructor
-from .utils import ContextProvider, removeNesting
+from .utils import ContextProvider, Language, Translator, removeNesting
 
 logger = logging.getLogger(__name__)
 
 class Settings(commands.Cog):
+
 	def __init__(
 		self,
 		bot: commands.Bot,
 		dbconn: psycopg.AsyncConnection[Any],
-		i18n
+		i18n: Translator
 	) -> None:
 		self.bot = bot
 		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
-		self._ = i18n
+		self.translator = i18n
+
+	async def cog_command_error(
+		self,
+		ctx: commands.Context,
+		error: Exception
+	) -> None:
+		embed_to_send: ErrorEmbed
+		if isinstance(error.original.__class__, UnsupportedLanguage.__class__):
+			embed_to_send = ErrorEmbed().add_field(
+				name=self.translator("error"),
+				value=self.translator(error.original))
+		await ctx.send(embed=embed_to_send) if embed_to_send else None
 
 	@commands.group(invoke_without_command=True)
 	async def setup(
@@ -43,44 +56,42 @@ class Settings(commands.Cog):
 		"""
 		The command to manage bot settings.
 		"""
-		await ctx.send(self._("Make sure you enter a subcommand."))
+		if ctx.guild:
+			await self.translator.installBindedLanguage(ctx.guild.id)
+		elif ctx.author.id:
+			raise NotImplementedError
+		embed = ErrorEmbed().add_field(name=self.translator("error"),
+		value=self.translator("make_sure_subcommand"))
+		await ctx.send(embed=embed)
 
 	@setup.command(aliases=["lang"])
 	async def language(
 		self,
 		ctx: commands.Context,
-		lang_name: str
-	):
+		lang_name: str,
+	) -> None:
 		"""
 		It sets a language the bot will use to communicate.
 
 		:param lang_name: Short or full language name ("en"/"english").
-		Currently only available is english and russian.
+		Currently only available is english and russian (command docs are
+		temporarily not translated).
 		"""
-		# new_instance = GuildDescription(GuildDescriptionAttr(ctx.guild.id, Language(lang_name)))
-		# await new_instance.write()
-		embed = SuccessEmbed().add_field(
-			name=self._("success"),
-			value=self._("success_bot_language_set")
+		lang_instance: Language
+		if len(lang_name) == 2:
+			lang_instance = Language(short_name=lang_name)
+		else:
+			lang_instance = Language(full_name=lang_name)
+		if ctx.guild:
+			await self.translator.bindLanguage(lang_instance, ctx.guild.id)
+			await self.translator.installBindedLanguage(ctx.guild.id)
+		elif ctx.author.id:
+			raise NotImplementedError
+		embed_to_send = SuccessEmbed().add_field(
+			name=self.translator("success"),
+			value=self.translator("success_bot_language_set")
 		)
-		await ctx.send(embed=embed)
-
-class Language:
-
-	def __init__(self, name: str):
-		self.is_supported = True
-		if self._isSupported(name):
-			self.is_supported = False
-		self.unhandled_name = name
-		self.short_name, self.full_name = self.getShortName(), self.getFullName()
-
-	@staticmethod
-	def isSupported(name):
-		#from the locales manually or through gettext library.
-		pass
-
-	def getShortName(self):
-		pass
+		await ctx.send(embed=embed_to_send)
 
 class UserLog(commands.Cog):
 
@@ -93,12 +104,11 @@ class UserLog(commands.Cog):
 		self.bot = bot
 		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
 		self.context_provider: ContextProvider = context_provider
-		bot.on_command_error = self._on_command_error # type: ignore [method-assign]
 
-	async def _on_command_error(
+	async def cog_command_error(
 		self,
 		ctx: commands.Context,
-		error: commands.CommandError
+		error: Exception
 	) -> None:
 		"""
 		The function for handling discord.py and custom errors.

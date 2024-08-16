@@ -39,13 +39,3 @@ class TargetGroupAttrs(Attrs):
 		self.priority = priority
 		self.output = output
 		self.other = other
-
-class GuildDescriptionAttrs(Attrs):
-
-	def __init__(
-		self,
-		guild_id: int,
-		selected_language: str
-	):
-		self.guild_id: int = guild_id
-		self.selected_language: str = selected_language

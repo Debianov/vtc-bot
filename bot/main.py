@@ -3,7 +3,6 @@ The main module that collects all the modules and starting the bot.
 """
 
 import asyncio
-import gettext
 import logging
 import logging.config
 import logging.handlers
@@ -20,7 +19,7 @@ from ._types import IDObjects
 from .exceptions import StartupBotError
 from .help import BotHelpCommand
 from .mock import Mock, MockAsyncConnection
-from .utils import ContextProvider, getEnvIfExist
+from .utils import ContextProvider, Language, Translator, getEnvIfExist
 
 
 def _setup_logging(
@@ -37,11 +36,14 @@ def _setup_logging(
 		raise Exception(f".yaml config on {path} doesn't exist.")
 
 def _setup_i18n(
+	dbconn: psycopg.AsyncConnection[Any],
 	path_to_locale: str = "locale"
-) -> typing.Callable[[str], str]:
-	t = gettext.translation("vtc-bot", path_to_locale, languages=["en", "ru"])
+) -> Translator:
+	supported_languages = [Language("en", "english"), Language("ru", "russian")]
+	translator = Translator("vtc-bot", path_to_locale,
+							supported_languages, dbconn)
 	logging.info("i18n successfully inits.")
-	return t.gettext
+	return translator
 
 class DBConnector:
 	"""
@@ -81,7 +83,7 @@ class BotConstructor(commands.Bot):
 
 	def __init__(
 		self,
-		i18n_translator,
+		i18n_translator: Translator,
 		dbconn: psycopg.AsyncConnection[Any] = MockAsyncConnection(),
 		context_provider: ContextProvider = ContextProvider(),
 		cog_load: bool = True,
@@ -113,6 +115,7 @@ class BotConstructor(commands.Bot):
 	async def _registerDBAdapters(self) -> None:
 
 		context_provider = self.context_provider
+		translator = self.i18n_translator
 
 		class DiscordObjectsDumper(psycopg.adapt.Dumper):
 			"""
@@ -149,10 +152,40 @@ class BotConstructor(commands.Bot):
 						continue
 				return string_data
 
+		class LanguageObjectsDumper(psycopg.adapt.Dumper):
+			"""
+			This adapter converts `utils.Language` to a str in the PostgresSQL database.
+			"""
+
+			def dump(
+				self,
+				elem: Language
+			) -> bytes:
+				return elem.getShortName().encode()
+
+		class LanguageObjectsLoader(psycopg.adapt.Loader):
+			"""
+			This adapter converts str to `utils.Language`.
+			"""
+
+			def load(
+				self,
+				data: bytes
+			) -> Language | str:
+				string_data: str = data.decode()
+				return (
+					translator.getSupportedLanguageByShortName(string_data) or
+					string_data
+				)
+
 		self.dbconn.adapters.register_dumper(  # type: ignore [union-attr]
 			discord.abc.Messageable, DiscordObjectsDumper)
 		self.dbconn.adapters.register_loader("bigint[]", # type: ignore [union-attr]
 			DiscordObjectsLoader)
+		self.dbconn.adapters.register_dumper(  # type: ignore [union-attr]
+			Language, LanguageObjectsDumper)
+		self.dbconn.adapters.register_loader("text", # type: ignore [union-attr]
+			LanguageObjectsLoader)
 
 	async def _initCogs(self) -> None:
 		for module_name in ("commands",):
@@ -184,7 +217,7 @@ def runForPoetry() -> None:
 			"Failed to extract environment variables.")
 	intents = discord.Intents.all()
 	intents.dm_messages = False
-	i18n_translator = _setup_i18n()
+	i18n_translator = _setup_i18n(dbconn)
 	VCSBot = BotConstructor(
 		command_prefix="",
 		dbconn=dbconn,

@@ -25,6 +25,13 @@ msgstr "This command can only be used with a subcommand."
 msgid "success"
 msgstr "Success!"
 
+msgid "error"
+msgstr "Error!"
+
 #: bot/commands.py:64
 msgid "success_bot_language_set"
 msgstr "Bot language set."
+
+#: bot/exceptions.py:98
+msgid "language_isnt_supported"
+msgstr "the language isn't supported."

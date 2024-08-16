@@ -1,7 +1,8 @@
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
 import discord
 import discord.ext.test as dpytest
+import psycopg
 import pytest_asyncio
 from discord.ext import commands
 
@@ -10,9 +11,9 @@ from bot.main import BotConstructor, _setup_i18n
 
 
 @pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
-async def botInit() -> commands.Bot:
+async def botInit(db: psycopg.AsyncConnection[Any]) -> commands.Bot:
 	intents = discord.Intents.all()
-	i18n_translator = _setup_i18n()
+	i18n_translator = _setup_i18n(db)
 	VCSBot = BotConstructor(
 		command_prefix="",
 		intents=intents,

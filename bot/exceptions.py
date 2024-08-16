@@ -2,7 +2,12 @@
 This module contains all exception classes.
 """
 
+import abc
+from typing import List, Tuple
+
 from discord.ext import commands
+
+from bot._types import msgId
 
 
 class ErrorMessage:
@@ -58,4 +63,51 @@ class StartupBotError(Exception):
 	pass
 
 class DuplicateInstanceError(Exception):
+	"""
+	If there are several identical instances, this error is raised.
+	"""
 	pass
+
+class UserException(Exception, metaclass=abc.ABCMeta):
+
+	@abc.abstractmethod
+	def getUserDescriptionPattern(self) -> List[str]:
+		raise NotImplementedError
+
+	@abc.abstractmethod
+	def getMsgId(self) -> str:
+		raise NotImplementedError
+
+class i18nException(Exception, metaclass=abc.ABCMeta):
+
+	@abc.abstractmethod
+	def __repr__(self):
+		raise NotImplementedError
+
+
+class AnyLangNameIsntDefined(i18nException):
+	"""
+	If any language name of `short_name` or `full_name` isn't defined, this
+	exception will be thrown.
+	"""
+
+	def __repr__(self) -> str:
+		return "No language is defined in the `Language` instance."
+
+
+class UnsupportedLanguage(i18nException, UserException):
+	"""
+	If a language isn't supported by the bot, this error will be raised.
+	"""
+
+	def __init__(self, lang: 'Language') -> None:
+		self.short_name = lang.getShortName() or lang.getFullName()
+
+	def __repr__(self) -> str:
+		return "the language isn't supported."
+
+	def getUserDescriptionPattern(self) -> Tuple[str, msgId]:
+		return [self.short_name, ": ", "place_for_translated"]
+
+	def getMsgId(self) -> str:
+		return "language_isnt_supported"

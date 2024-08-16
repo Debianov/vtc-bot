@@ -1,15 +1,16 @@
 """
 The module contains classes for working with databases.
 """
-
-from typing import Any, Iterable, List, Optional, Sequence, Type, Union
+import abc
+from typing import Any, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
 import psycopg
 from discord.ext import commands
 
 from ._types import DiscordGuildObjects
-from .attrs import GuildDescriptionAttrs, TargetGroupAttrs
+from .attrs import TargetGroupAttrs
 
+sql = psycopg.sql.SQL
 
 class DataGroupAnalyzator:
 	"""
@@ -231,43 +232,169 @@ class TargetGroup(DBObjectsGroup):
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
 
+
+# class DBObjectsGroup(metaclass=abc.ABCMeta):
+#
+	#
+	# @property
+	# def _written(self) -> bool:
+	# 	raise NotImplementedError
+	#
+	# def isWritten(self):
+	# 	return self._written
+	#
+	# def _writtenNow(self):
+	# 	self._written = True
+	#
+# 	@property
+# 	def TABLE_NAME(self) -> str:
+# 		raise NotImplementedError
+#
+#
+# 	@property
+# 	def DB_RECORD_FIELDS(self) -> List[str]:
+# 		raise NotImplementedError
+#
+# 	@property
+# 	def record_id(self) -> int:
+# 		"""
+# 		-1 if instance isn't written.
+# 		"""
+# 		raise NotImplementedError
+#
+# 	@property
+# 	def change_map(self) -> Dict[str, bool]:
+# 		raise NotImplementedError
+#
+# 	@abc.abstractmethod
+# 	def __setattr__(self, key: str, value: Any) -> None:
+# 		super().__setattr__(key, value)
+#
+# 	def __iter__():
+# 		self._writtenNow()
+
+
 class GuildDescription(DBObjectsGroup):
+
+	TABLE_NAME: str = "guilds"
+	DB_RECORD_FIELDS: List[str] = ['record_id', 'guild_id', 'selected_language']
 
 	def __init__(
 		self,
-		attrs: GuildDescriptionAttrs
-	):
-		self.guild_id: int = attrs["guild_id"]
-		self.selected_language: str = attrs["selected_language"]
+		record_id: int,
+		guild_id: int,
+		selected_language: 'Language'
+	) -> None:
+		self._written = False
+		self._change_map: Dict[str, bool] = {}
+		self.record_id: int = record_id
+		self.guild_id: int = guild_id
+		self.selected_language: 'Language' = selected_language
 
-	def _checkLanguageName(self):
-		pass
+	def isWritten(self):
+		return self._written
 
-	async def write(self) -> None:
-		async with self.dbconn.cursor() as acur:
-			await acur.execute("""
-				INSERT INTO guilds(guild_id, selected_language)
-				VALUES (%s, %s);""",
-				[self.guild_id, self.selected_language])
+	def __setattr__(self, key: str, value: Any) -> None:
+		if key in self.DB_RECORD_FIELDS:
+			self._change_map.update({key: True})
+		super().__setattr__(key, value)
 
-	@staticmethod
-	async def extract(
-		dbconn: psycopg.AsyncConnection[Any],
-		guild_id: int
-	) -> List[Union['GuildDescription', None]]:
-		query = [psycopg.sql.SQL(
-			"SELECT * FROM guilds WHERE guild_id = %s")]
-		async with dbconn.cursor() as acur:
-			await acur.execute(
-				query,
-				guild_id
-			)
-			result: List[GuildDescription] = []
-			for row in await acur.fetchall():
-				guild_id, selected_language = row[0], row[1]
-				result.append(GuildDescription(
-					GuildDescriptionAttrs(guild_id, selected_language)))
-		if len(result) > 1:
-			raise ValueError("Received an unexpected number of DB records.") # one
-			# guild - one record
-		return result
+	def __iter__(self) -> 'self':
+		self.field_cursor = 0
+		return self
+
+	def __next__(self) -> Tuple[bool, Tuple[str, Any]]:
+		"""
+		Returns:
+			change_flag - `True` if an attr has been changed after instance
+			init.
+			field - of the DB record.
+			value - of the field.
+		"""
+		if self.field_cursor > len(self.DB_RECORD_FIELDS) - 1:
+			self._written = True
+			raise StopIteration
+		field = self.DB_RECORD_FIELDS[self.field_cursor]
+		self.field_cursor += 1
+		value = getattr(self, field)
+		if flag := self._change_map.get(field):
+			return flag, (field, value)
+		else:
+			return False, (field, value)
+
+class DBObjectsGroupFabrics(metaclass=abc.ABCMeta):
+	"""
+	The class used to create a `DBObjectsGroup` instance, that isn't written
+	in DB now.
+	"""
+	pass
+
+class GuildDescriptionFabric(DBObjectsGroupFabrics):
+
+	def __init__(
+		self,
+		guild_id: int,
+		lang_instance: 'Language'
+	) -> None:
+		self.instance = GuildDescription(-1, guild_id, lang_instance)
+
+	def getInstance(self) -> GuildDescription:
+		return self.instance
+
+
+async def updateDBRecord(
+	dbconn: psycopg.AsyncConnection[Any],
+	instance: Iterable[DBObjectsGroup]
+) -> None:
+	head_part: str = f"UPDATE {instance.TABLE_NAME}"
+	mid_part: List[str] = ["SET"]
+	end_part: str = "WHERE record_id = "
+	parameters: List[Any] = []
+	for attr_was_changed_flag, (attr, value) in instance:
+		if attr == "record_id":
+			end_part += value
+		elif attr_was_changed_flag:
+			mid_part.append(f"{attr} = %s")
+			parameters.append(value)
+	query = (head_part + "\n" + mid_part[0] + " " + ", ".join(mid_part[1:]) +
+		"\n" + end_part + ";")
+	async with dbconn.cursor() as acur:
+		await acur.execute(sql(query), parameters)
+
+async def findFromDB(
+	dbconn: psycopg.AsyncConnection[Any],
+	db_object_class: Type[DBObjectsGroup],
+	**kwargs
+) -> List[Union[Type[DBObjectsGroup], None]]:
+	result: List[db_object_class] = []
+	table_name: str = db_object_class.TABLE_NAME
+	head_query: str = f"SELECT * FROM {table_name}"
+	condition_query: List[str] = ["WHERE"]
+	for key, value in kwargs.items():
+		condition_query.append(f"{key} = {value}")
+	async with dbconn.cursor() as acur:
+		await acur.execute(sql("\n".join([head_query,
+		" ".join(condition_query)]) + ";"))
+		for row in await acur.fetchall():
+			result.append(db_object_class(*row))
+	return result
+
+async def createDBRecord(
+	dbconn: psycopg.AsyncConnection[Any],
+	instance: DBObjectsGroup
+) -> None:
+	head_part: str = f"INSERT INTO {instance.TABLE_NAME}"
+	columns_part: List[str] = []
+	values_part: List[str] = []
+	parameters: List[Any] = []
+	for _, (attr, value) in instance:
+		if attr == "record_id":
+			continue
+		else:
+			columns_part.append(attr)
+			values_part.append("%s")
+			parameters.append(value)
+	query = (head_part + "(" + ", ".join(columns_part) + ")" + "\n" +
+		"VALUES " + "(" + ", ".join(values_part) + ")" + ";")
+	async with dbconn.cursor() as acur:
+		await acur.execute(sql(query), parameters)
