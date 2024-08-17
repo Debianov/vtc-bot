@@ -39,10 +39,10 @@ class Settings(commands.Cog):
 	async def cog_command_error(
 		self,
 		ctx: commands.Context,
-		error: Exception
+		error: commands.CommandInvokeError # type: ignore[override]
 	) -> None:
 		embed_to_send: ErrorEmbed
-		if isinstance(error.original.__class__, UnsupportedLanguage.__class__):
+		if isinstance(error.original.__class__, UnsupportedLanguage.__class__): # type: ignore[arg-type]
 			embed_to_send = ErrorEmbed().add_field(
 				name=self.translator("error"),
 				value=self.translator(error.original))
@@ -64,7 +64,7 @@ class Settings(commands.Cog):
 		value=self.translator("make_sure_subcommand"))
 		await ctx.send(embed=embed)
 
-	@setup.command(aliases=["lang"])
+	@setup.command(aliases=["lang"]) # type: ignore[arg-type]
 	async def language(
 		self,
 		ctx: commands.Context,

@@ -1,14 +1,30 @@
 """
 The module contains classes for working with databases.
 """
+from __future__ import annotations
 import abc
-from typing import Any, Iterable, List, Optional, Sequence, Tuple, Type, Union
+from typing import (
+	Any,
+	Dict,
+	Iterable,
+	List,
+	Optional,
+	Self,
+	Sequence,
+	Tuple,
+	Type,
+	Union,
+	TYPE_CHECKING
+)
 
 import psycopg
 from discord.ext import commands
 
 from ._types import DiscordGuildObjects
 from .attrs import TargetGroupAttrs
+
+if TYPE_CHECKING:
+	from .utils import Language
 
 sql = psycopg.sql.SQL
 
@@ -283,13 +299,13 @@ class GuildDescription(DBObjectsGroup):
 		self,
 		record_id: int,
 		guild_id: int,
-		selected_language: 'Language'
+		selected_language: Language
 	) -> None:
 		self._written = False
 		self._change_map: Dict[str, bool] = {}
 		self.record_id: int = record_id
 		self.guild_id: int = guild_id
-		self.selected_language: 'Language' = selected_language
+		self.selected_language: Language = selected_language
 
 	def isWritten(self):
 		return self._written
@@ -299,7 +315,7 @@ class GuildDescription(DBObjectsGroup):
 			self._change_map.update({key: True})
 		super().__setattr__(key, value)
 
-	def __iter__(self) -> 'self':
+	def __iter__(self) -> Self:
 		self.field_cursor = 0
 		return self
 
@@ -344,7 +360,7 @@ class GuildDescriptionFabric(DBObjectsGroupFabrics):
 
 async def updateDBRecord(
 	dbconn: psycopg.AsyncConnection[Any],
-	instance: Iterable[DBObjectsGroup]
+	instance: DBObjectsGroup
 ) -> None:
 	head_part: str = f"UPDATE {instance.TABLE_NAME}"
 	mid_part: List[str] = ["SET"]
@@ -365,7 +381,7 @@ async def findFromDB(
 	dbconn: psycopg.AsyncConnection[Any],
 	db_object_class: Type[DBObjectsGroup],
 	**kwargs
-) -> List[Union[Type[DBObjectsGroup], None]]:
+) -> List[Union[DBObjectsGroup, None]]:
 	result: List[db_object_class] = []
 	table_name: str = db_object_class.TABLE_NAME
 	head_query: str = f"SELECT * FROM {table_name}"

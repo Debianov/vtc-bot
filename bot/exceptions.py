@@ -1,14 +1,17 @@
 """
 This module contains all exception classes.
 """
+from __future__ import annotations
 
 import abc
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
 
 from discord.ext import commands
 
 from bot._types import msgId
 
+if TYPE_CHECKING:
+	from bot.utils import Language
 
 class ErrorMessage:
 	"""
@@ -100,13 +103,13 @@ class UnsupportedLanguage(i18nException, UserException):
 	If a language isn't supported by the bot, this error will be raised.
 	"""
 
-	def __init__(self, lang: 'Language') -> None:
+	def __init__(self, lang: Language) -> None:
 		self.short_name = lang.getShortName() or lang.getFullName()
 
 	def __repr__(self) -> str:
 		return "the language isn't supported."
 
-	def getUserDescriptionPattern(self) -> Tuple[str, msgId]:
+	def getUserDescriptionPattern(self) -> List[str]:
 		return [self.short_name, ": ", "place_for_translated"]
 
 	def getMsgId(self) -> str:

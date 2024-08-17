@@ -3,7 +3,7 @@ This module contains overriding `embeds <https://discordpy.readthedocs.io/
 en/stable/api.html?highlight=embed#discord.Embed>`_.
 """
 
-from typing import Any
+from typing import Any, Self
 
 import discord
 
@@ -23,7 +23,7 @@ class BaseEmbed(discord.Embed):
 		name: str,
 		value: str,
 		inline: bool = False
-	) -> 'BaseEmbed':
+	) -> Self:
 		super().add_field(name=name, value=value, inline=inline)
 		return self
 

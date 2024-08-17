@@ -460,8 +460,8 @@ class Translator:
 		"""
 		It writes `new_language` into the relative DB record.
 		"""
-		supported_language: Language
-		instance: GuildDescription
+		supported_language: Union[Language, None]
+		instance: Union[GuildDescription, None]
 		if short_name := new_language.getShortName():
 			if (supported_language :=
 			self.getSupportedLanguageByShortName(short_name)):
@@ -509,7 +509,7 @@ class Translator:
 		instances = await findFromDB(self.dbconn, GuildDescription,
 		guild_id=guild_id)
 		assert len(instances) <= 1, DuplicateInstanceError
-		if len(instances) == 1:
+		if len(instances) == 1 and isinstance(instances[0], GuildDescription):
 			return instances[0]
 		else:
 			return None

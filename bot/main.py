@@ -7,7 +7,6 @@ import logging
 import logging.config
 import logging.handlers
 import os
-import typing
 from typing import Any, Dict, Optional, Union
 
 import discord
