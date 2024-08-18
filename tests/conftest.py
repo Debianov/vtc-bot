@@ -104,43 +104,12 @@ async def setupDB() -> psycopg.AsyncConnection[Any]:
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="package", autouse=True)
-async def createTargetTable(db) -> AsyncGenerator[None, None]:
+async def deleteTablesRecords(db) -> AsyncGenerator[None, None]:
 	async with db.cursor() as acur:
-		await acur.execute(
-			"""CREATE TABLE public.target (
-			id bigint GENERATED ALWAYS AS IDENTITY,
-			context_id bigint,
-			target bigint[],
-			act text,
-			d_in bigint[],
-			name text,
-			priority integer,
-			output text,
-			other text
-			);"""
-		)
-		await acur.execute("""CREATE TABLE public.guilds (
-			record_id bigint GENERATED ALWAYS AS IDENTITY,
-			guild_id bigint,
-			selected_language text
-		);
-		""")
 		yield
 		await acur.execute(
 			"""
-			DROP TABLE target;
-			DROP TABLE guilds;
-			"""
-		)
-
-@pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="function", autouse=True)
-async def deleteTargetTable(db) -> AsyncGenerator[None, None]:
-	yield
-	async with db.cursor() as acur:
-		await acur.execute(
-			"""
-			DELETE FROM target;
+			DELETE FROM log_targets;
 			DELETE FROM guilds;
 			"""
 		)
