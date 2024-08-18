@@ -42,7 +42,8 @@ class Settings(commands.Cog):
 		error: commands.CommandInvokeError # type: ignore[override]
 	) -> None:
 		embed_to_send: ErrorEmbed
-		if isinstance(error.original.__class__, UnsupportedLanguage.__class__): # type: ignore[arg-type]
+		if isinstance(error.original.__class__,
+		UnsupportedLanguage.__class__): # type: ignore[arg-type]
 			embed_to_send = ErrorEmbed().add_field(
 				name=self.translator("error"),
 				value=self.translator(error.original))

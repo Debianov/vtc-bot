@@ -4,11 +4,9 @@ This module contains all exception classes.
 from __future__ import annotations
 
 import abc
-from typing import List, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from discord.ext import commands
-
-from bot._types import msgId
 
 if TYPE_CHECKING:
 	from bot.utils import Language

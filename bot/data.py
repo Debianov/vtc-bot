@@ -2,8 +2,10 @@
 The module contains classes for working with databases.
 """
 from __future__ import annotations
+
 import abc
 from typing import (
+	TYPE_CHECKING,
 	Any,
 	Dict,
 	Iterable,
@@ -13,8 +15,7 @@ from typing import (
 	Sequence,
 	Tuple,
 	Type,
-	Union,
-	TYPE_CHECKING
+	Union
 )
 
 import psycopg
@@ -39,7 +40,7 @@ class DataGroupAnalyzator:
 		self.relevant_groups: List[DiscordObjectsGroup] = []
 		self.ctx = ctx
 
-	def analyze(self) -> List['DiscordObjectsGroup']:
+	def analyze(self) -> List[DiscordObjectsGroup]:
 		"""
 		The main method for detecting the :class:`DiscordObjectsGroup`
 		instance.
@@ -181,7 +182,7 @@ class TargetGroup(DBObjectsGroup):
 		self,
 		placeholder: Optional[str] = "*",
 		**object_parameters: Any
-	) -> List['TargetGroup']:
+	) -> List[TargetGroup]:
 		r"""
 		Args:
 			\**object_parameters: the parameters that will be passed in the
@@ -232,7 +233,7 @@ class TargetGroup(DBObjectsGroup):
 			comparable_attrs.append(self.name)
 		return comparable_attrs
 
-	def getCoincidenceTo(self, target: 'TargetGroup') -> str:
+	def getCoincidenceTo(self, target: TargetGroup) -> str:
 		"""
 		Compares attributes of the current instance with others of
 		the :class:`TargetGroup` instance.
@@ -350,7 +351,7 @@ class GuildDescriptionFabric(DBObjectsGroupFabrics):
 	def __init__(
 		self,
 		guild_id: int,
-		lang_instance: 'Language'
+		lang_instance: Language
 	) -> None:
 		self.instance = GuildDescription(-1, guild_id, lang_instance)
 
@@ -381,8 +382,8 @@ async def findFromDB(
 	dbconn: psycopg.AsyncConnection[Any],
 	db_object_class: Type[DBObjectsGroup],
 	**kwargs
-) -> List[Union[DBObjectsGroup, None]]:
-	result: List[db_object_class] = []
+) -> List[DBObjectsGroup]:
+	result: List[DBObjectsGroup] = []
 	table_name: str = db_object_class.TABLE_NAME
 	head_query: str = f"SELECT * FROM {table_name}"
 	condition_query: List[str] = ["WHERE"]

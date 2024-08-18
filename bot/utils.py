@@ -415,8 +415,8 @@ class Translator:
 		self.domain = domain
 		self.path_to_locale = path_to_locale
 		self.supported_languages = supported_languages
-		self.translators: Dict[Language, Any] = {}
-		self.current_translator: Union[None] = None
+		self.translators: Dict[Language, gettext.GNUTranslations] = {}
+		self.current_translator: gettext.GNUTranslations
 		self._createLanguageGettext()
 		self.dbconn = dbconn
 
@@ -448,7 +448,8 @@ class Translator:
 
 	async def installBindedLanguage(self, guild_id: int) -> None:
 		instance = await self._findGuildDescription(guild_id)
-		lang_instance = instance.selected_language
+		if instance:
+			lang_instance = instance.selected_language
 		self.current_translator = self.translators[lang_instance]
 		self.current_translator.install()
 
@@ -475,10 +476,13 @@ class Translator:
 			else:
 				raise UnsupportedLanguage(new_language)
 		if instance:
-			instance.selected_language = supported_language
+			instance.selected_language = supported_language # type: ignore[assignment]
+			# supported_language is True or this code cannot be reached due to the
+			# exception will be thrown.
 			await updateDBRecord(self.dbconn, instance)
 		else:
-			fabric = GuildDescriptionFabric(guild_id, supported_language)
+			fabric = GuildDescriptionFabric(guild_id,
+			supported_language) # type: ignore[arg-type]
 			await createDBRecord(self.dbconn, fabric.getInstance())
 
 	def getSupportedLanguageByShortName(self, short_name: str) -> Union[Language,
