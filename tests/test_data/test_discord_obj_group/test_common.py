@@ -3,18 +3,18 @@ from typing import Type
 import pytest
 from discord.ext import commands
 
-from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
+from bot.data import ChannelGroup, DiscordObjectGroup, UserGroup
 
 
 @pytest.mark.parametrize(
 	"check_class",
 	[
-		DiscordObjectsGroup, UserGroup, ChannelGroup
+		DiscordObjectGroup, UserGroup, ChannelGroup
 	]
 )
 def test_main_discord_object_group(
 	discordContext: commands.Context,
-	check_class: Type[DiscordObjectsGroup]
+	check_class: Type[DiscordObjectGroup]
 ):
 	a = check_class(discordContext)
 	assert a.ctx == discordContext
@@ -22,14 +22,14 @@ def test_main_discord_object_group(
 @pytest.mark.parametrize(
 	"check_class, user_identif",
 	[
-		(DiscordObjectsGroup, ""),
+		(DiscordObjectGroup, ""),
 		(UserGroup, "usr"),
 		(ChannelGroup, "ch")
 	]
 )
 def test_equal_discord_object_group(
 	discordContext: commands.Context,
-	check_class: Type[DiscordObjectsGroup],
+	check_class: Type[DiscordObjectGroup],
 	user_identif: str
 ):
 	a = check_class(discordContext)
@@ -38,6 +38,6 @@ def test_equal_discord_object_group(
 def test_extractData_discord_object_group(
 	discordContext: commands.Context,
 ):
-	a = DiscordObjectsGroup(discordContext)
+	a = DiscordObjectGroup(discordContext)
 	with pytest.raises(NotImplementedError):
 		a.extractData()

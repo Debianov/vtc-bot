@@ -99,7 +99,7 @@ async def setupDB() -> psycopg.AsyncConnection[Any]:
 			user=envs[1]
 		)
 	else:
-		raise StartupBotError("Не удалось извлечь переменные окружения.")
+		raise StartupBotError("Failed to extract environment variables.")
 	return future_dbconn
 
 @pytest.mark.asyncio

@@ -15,7 +15,7 @@ from .converters import (
 	ShortSearchExpression,
 	SpecialExpression
 )
-from .data import ActGroup, TargetGroup
+from .data import ActGroup, TargetGroup, createDBRecord, findFromDB
 from .embeds import ErrorEmbed, SuccessEmbed
 from .exceptions import UnhandlePartMessageSignal, UnsupportedLanguage
 from .flags import UserLogFlags
@@ -176,39 +176,38 @@ class UserLog(commands.Cog):
 		if not d_in: # if the last required parameter is omitted — the
 			# exceptation isn't raised, so we have to work around it.
 			raise commands.MissingRequiredArgument(ctx.
-				command.clean_params["d_in"]) # type: ignore [union-attr]
+				command.clean_params["d_in"]) # type: ignore[union-attr]
 
-		target_instance = TargetGroup(TargetGroupAttrs(
-			self.dbconn,
-			ctx.guild.id,
-			target=target,  # type: ignore [arg-type]
-			act=act,  # type: ignore [arg-type]
-			d_in=d_in  # type: ignore [arg-type]
-		)
+		coincidence_log_targets = await findFromDB(
+			dbconn=self.dbconn,
+			db_object_class=LogTarget,
+			guild_id=ctx.guild.id,
+			target=target,
+			act=act,
+			d_in=d_in,
+			name=flags["name"],
+			operators_dict_map={"0": "AND", "1-4": OR}
 		)
 
-		for key in flags.get_flags().keys():
-			if flags.__dict__[key]:
-				setattr(target_instance, key, flags.__dict__[key])
-
-		coincidence_targets_instance = await target_instance.extractData(
-			target=target_instance.target,
-			act=target_instance.act,
-			d_in=target_instance.d_in,
-			name=target_instance.name
-		)
-		if coincidence_targets_instance:
-			coincidence_target = coincidence_targets_instance[0]
+		if coincidence_log_targets:
+			coincidence_target = coincidence_log_targets[0]
 			await ctx.send(f"Цель с подобными параметрами уже существует: "
 			f"{coincidence_target.dbrecord_id} ({coincidence_target.name})"
 			f". Совпадающие элементы: "
 			f"{target_instance.getCoincidenceTo(coincidence_target)}")
 		else:
-			await target_instance.writeData()
+			log_target = LogTargetFabric(
+				target=target,
+				act=act,
+				d_in=d_in,
+				guild_id=ctx.guild.id,
+				**dict(flags)
+			).getInstance()
+			await createDBRecord(self.dbconn, log_target)
 			await ctx.send("Цель добавлена успешно.")
 
 async def setup(
-	bot: BotConstructor, # type: ignore [name-defined]
+	bot: BotConstructor, # type: ignore[name-defined]
 ) -> None:
 	await bot.add_cog(UserLog(bot, bot.dbconn, bot.context_provider))
 	await bot.add_cog(Settings(bot, bot.dbconn, bot.i18n_translator))

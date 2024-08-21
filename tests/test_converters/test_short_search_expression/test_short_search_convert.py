@@ -3,7 +3,7 @@ import pytest
 from discord.ext import commands
 
 from bot.converters import ShortSearchExpression
-from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
+from bot.data import ChannelGroup, DiscordObjectGroup, UserGroup
 from bot.exceptions import ShortSearchExpressionNotFound
 
 
@@ -27,7 +27,7 @@ async def test_good(
 @pytest.mark.parametrize(
 	"wildcard, data_group, expected_exception",
 	[
-		("*", DiscordObjectsGroup, NotImplementedError),
+		("*", DiscordObjectGroup, NotImplementedError),
 		("*", [ChannelGroup, UserGroup], TypeError),
 		("+", ChannelGroup, ShortSearchExpressionNotFound),
 		("-", UserGroup, ShortSearchExpressionNotFound)

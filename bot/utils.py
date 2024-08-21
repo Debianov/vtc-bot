@@ -19,20 +19,20 @@ import discord
 import discord.abc
 import psycopg
 from discord.ext import commands
-from exceptions import (
-	AnyLangNameIsntDefined,
-	DuplicateInstanceError,
-	UnsupportedLanguage,
-	UserException
-)
 
 from bot.data import (
-	DiscordObjectsGroup,
+	DiscordObjectGroup,
 	GuildDescription,
 	GuildDescriptionFabric,
 	createDBRecord,
 	findFromDB,
 	updateDBRecord
+)
+from bot.exceptions import (
+	AnyLangNameIsntDefined,
+	DuplicateInstanceError,
+	UnsupportedLanguage,
+	UserException
 )
 
 logger = logging.getLogger(__name__)
@@ -94,10 +94,10 @@ def removeNesting(instance: List[Any]) -> List[Any]:
 
 
 def createDiscordObjectsGroupInstance(
-	instance_list: List[Type[DiscordObjectsGroup]],
+	instance_list: List[Type[DiscordObjectGroup]],
 	discord_context: commands.Context
-) -> List[DiscordObjectsGroup]:
-	result: List[DiscordObjectsGroup] = []
+) -> List[DiscordObjectGroup]:
+	result: List[DiscordObjectGroup] = []
 	for instance in instance_list:
 		result.append(instance(discord_context))
 	return result

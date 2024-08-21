@@ -6,7 +6,7 @@ from discord.ext import commands
 from bot.data import (
 	ChannelGroup,
 	DataGroupAnalyzator,
-	DiscordObjectsGroup,
+	DiscordObjectGroup,
 	UserGroup
 )
 from bot.utils import createDiscordObjectsGroupInstance
@@ -36,7 +36,7 @@ def test_main(discordContext: commands.Context, group_identif: str):
 def test_good_analyze(
 	discordContext: commands.Context,
 	group_identif: str,
-	compare_relevant_groups: List[Type[DiscordObjectsGroup]]
+	compare_relevant_groups: List[Type[DiscordObjectGroup]]
 ) -> None:
 	instance = DataGroupAnalyzator(discordContext, group_identif)
 	compare_relevenat_groups_instance = createDiscordObjectsGroupInstance(

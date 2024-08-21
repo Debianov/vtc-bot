@@ -2,12 +2,12 @@
 import pytest
 
 from bot.converters import ShortSearchExpression
-from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
+from bot.data import ChannelGroup, DiscordObjectGroup, UserGroup
 
 
 @pytest.mark.parametrize(
 	"data_group_class",
-	[UserGroup, ChannelGroup, DiscordObjectsGroup]
+	[UserGroup, ChannelGroup, DiscordObjectGroup]
 )
 def test_good(data_group_class) -> None:
 	a = ShortSearchExpression[data_group_class]

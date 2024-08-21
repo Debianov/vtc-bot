@@ -15,3 +15,8 @@ class IDObjects(Protocol):
 DiscordGuildObjects = Union[GuildChannel, Member]
 
 msgId = str
+
+OR = 0
+AND = 1
+
+operator = Union[OR, AND]

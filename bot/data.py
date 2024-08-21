@@ -21,8 +21,7 @@ from typing import (
 import psycopg
 from discord.ext import commands
 
-from ._types import DiscordGuildObjects
-from .attrs import TargetGroupAttrs
+from ._types import DiscordGuildObjects, IDObjects, operator
 
 if TYPE_CHECKING:
 	from .utils import Language
@@ -37,16 +36,16 @@ class DataGroupAnalyzator:
 
 	def __init__(self, ctx: commands.Context, string: str) -> None:
 		self.split_string: List[str] = string.split("+")
-		self.relevant_groups: List[DiscordObjectsGroup] = []
+		self.relevant_groups: List[DiscordObjectGroup] = []
 		self.ctx = ctx
 
-	def analyze(self) -> List[DiscordObjectsGroup]:
+	def analyze(self) -> List[DiscordObjectGroup]:
 		"""
 		The main method for detecting the :class:`DiscordObjectsGroup`
 		instance.
 		"""
-		to_check: List[Type[DiscordObjectsGroup]] =\
-			DiscordObjectsGroup.__subclasses__()
+		to_check: List[Type[DiscordObjectGroup]] =\
+			DiscordObjectGroup.__subclasses__()
 		copy_string: List[str] = self.split_string
 		for group_name in copy_string:
 			for group_type in to_check:
@@ -56,7 +55,7 @@ class DataGroupAnalyzator:
 					break
 		return self.relevant_groups
 
-class DiscordObjectsGroup:
+class DiscordObjectGroup(metaclass=abc.ABCMeta):
 	"""
 	The abstract class implements access to data via Discord API.
 	"""
@@ -69,13 +68,14 @@ class DiscordObjectsGroup:
 	def __eq__(self, right_operand: Any) -> bool:
 		return self.USER_IDENTIFICATOR == right_operand
 
+	@abc.abstractmethod
 	def extractData(
 		self,
 		d_id: Optional[str] = None
 	) -> Sequence[DiscordGuildObjects]:
 		raise NotImplementedError
 
-class UserGroup(DiscordObjectsGroup):
+class UserGroup(DiscordObjectGroup):
 	"""
 	The class implements access to `discord.Member <https://discordpy.\
 	readthedocs.io/en/stable/api.html?highlight=member#discord.Member>`_ in
@@ -92,7 +92,7 @@ class UserGroup(DiscordObjectsGroup):
 			return self.ctx.guild.members
 		return []
 
-class ChannelGroup(DiscordObjectsGroup):
+class ChannelGroup(DiscordObjectGroup):
 	"""
 	The class implements access to `discord.abc.Channel \
 	<https://discordpy.readthedocs.io/en/stable/api.\
@@ -110,206 +110,68 @@ class ChannelGroup(DiscordObjectsGroup):
 			return self.ctx.guild.channels
 		return []
 
-class DBObjectsGroup:
+class DBObjectGroup(metaclass=abc.ABCMeta):
 	"""
-	The abstract class implements accessing and writing data to the database.
-	"""
-	pass
-
-class ActGroup(DBObjectsGroup):
-	"""
-	The class implements an object of user actions.
-	"""
-	def extractData(self, coord: Optional[str] = None) -> Iterable[str]:
-		if not coord:
-			pass
-		return [""]
-
-class TargetGroup(DBObjectsGroup):
-	"""
-	The class implements an object of the logging target.
+	The abstract class implements the database structures.
 	"""
 
-	def __init__(
-		self,
-		attrs: TargetGroupAttrs
-	) -> None:
-		self.dbconn = attrs["dbconn"]
-		self.context_id = attrs["context_id"]
-		self.dbrecord_id = attrs["dbrecord_id"]
-		self.target = attrs["target"]
-		self.act = attrs["act"]
-		self.d_in = attrs["d_in"]
-		self.name = attrs["name"]
-		self.output = attrs["output"]
-		self.priority = attrs["priority"]
-		self.other = attrs["other"]
-
-	def _generateID(self) -> int:
-		return 0
-
-	def __setattr__(
-		self,
-		name: str,
-		nvalue: Optional[str]
-	) -> None:
-		if nvalue:
-			match name:
-				case "act":
-					try:
-						checking_nvalue = nvalue.replace(" ", "")
-					except AttributeError:
-						pass
-					else:
-						if not checking_nvalue.isalpha():
-							if not checking_nvalue.isdigit():
-								raise ValueError(name, nvalue)
-				case "name":
-					if not nvalue.isprintable():
-						raise ValueError(name, nvalue)
-		super().__setattr__(name, nvalue)
-
-	async def writeData(self) -> None:
-		async with self.dbconn.cursor() as acur:
-			await acur.execute("""
-				INSERT INTO target(context_id, target, act, d_in, name,
-				priority, output, other)
-				VALUES (%s, %s, %s, %s, %s, %s, %s, %s);""",
-				[self.context_id, self.target, self.act, self.d_in,
-				self.name, self.priority, self.output, self.other])
-
-	async def extractData(
-		self,
-		placeholder: Optional[str] = "*",
-		**object_parameters: Any
-	) -> List[TargetGroup]:
-		r"""
-		Args:
-			\**object_parameters: the parameters that will be passed in the
-			SQL query. If the parameters is several then they will be
-			concatenated through "OR" logical operator.
+	@property
+	def TABLE_NAME(self) -> str:
 		"""
-		values_for_parameters: List[Any] = []
-		query = [psycopg.sql.SQL(
-			f"SELECT {placeholder} FROM target WHERE context_id = %s")]
-		values_for_parameters.append(self.context_id)
-		if object_parameters:
-			parameters_query_part: List[str] = []
-			for (parameter, value) in object_parameters.items():
-				parameters_query_part.append(f"{parameter} = %s")
-				values_for_parameters.append(value)
-			query.append(psycopg.sql.SQL(
-				f"AND ({(' OR ').join(parameters_query_part)})"))
-
-		async with self.dbconn.cursor() as acur:
-			await acur.execute(
-				psycopg.sql.SQL(" ").join(query) + psycopg.sql.SQL(";"),
-				values_for_parameters
-			)
-			result: List[TargetGroup] = []
-			for row in await acur.fetchall():
-				dbrecord_id, context_id, target, act, d_in, name, priority, output, \
-				other = row[0], row[1], row[2], row[3], row[4], row[5], row[6], \
-				row[7], row[8]
-				result.append(TargetGroup(TargetGroupAttrs(self.dbconn, context_id, target,
-					act, d_in, name, priority, output, other, dbrecord_id)))
-		return result
-
-	def _getComparableAttrs(self) -> Union[List[Any]]:
+		The table_name that's associated with the `DBObjectGroup` instance.
 		"""
-		Forms comparable attributes.
+		try:
+			return self._TABLE_NAME
+		except AttributeError:
+			return ""
 
-		Returns:
-			List[Any]: the attributes list that make sense for comparison
-			with other instances of :class:`TargetGroup`.
+	@TABLE_NAME.setter
+	def TABLE_NAME(self, new_value: str) -> None:
+		self._TABLE_NAME = new_value
+
+	@property
+	def DB_RECORD_FIELDS(self) -> List[str]:
+		try:
+			return self._DB_RECORD_FIELDS
+		except AttributeError:
+			return []
+
+	@DB_RECORD_FIELDS.setter
+	def DB_RECORD_FIELDS(self, new_value: List[str]) -> None:
+		self._DB_RECORD_FIELDS = new_value
+
+	@property
+	def record_id(self) -> int:
 		"""
-		comparable_attrs: List[Any] = []
-		if self.target and self.d_in:
-			objects_id: List[Any] = []
-			for discord_objects in (self.target + self.d_in):
-				objects_id.append(str(discord_objects.id))
-			comparable_attrs += objects_id
-			comparable_attrs.insert(len(self.target), self.act)
-			comparable_attrs.append(self.name)
-		return comparable_attrs
-
-	def getCoincidenceTo(self, target: TargetGroup) -> str:
+		-1 if instance isn't written to the DB or isn't specified.
+		It is autogenerated by the DB when a record is writing.
 		"""
-		Compares attributes of the current instance with others of
-		the :class:`TargetGroup` instance.
+		try:
+			return self._record_id
+		except AttributeError:
+			return -1
 
-		Returns:
-			str: all matching values separated by commas.
+	@record_id.setter
+	def record_id(self, new_value: int) -> None:
+		self._record_id = new_value
+
+	@property
+	def _change_map(self) -> Dict[str, bool]:
 		"""
-		current_attrs: List[Any] = self._getComparableAttrs()
-		compared_attrs: List[Any] = target._getComparableAttrs()
-		coincidence_attrs: List[Any] = []
-		for current_attr in current_attrs:
-			if current_attr in compared_attrs and current_attr is not None:
-				coincidence_attrs.append(current_attr)
-		return ", ".join(list(coincidence_attrs))
+		Used in `__next__`.
 
+		:return: the dict that contains keys of attrs from
+		the `DB_RECORD_FIELDS` that have been modified by another
+		funcs. A value is always True.
+		"""
+		try:
+			return self._internal_change_map
+		except AttributeError:
+			return {}
 
-# class DBObjectsGroup(metaclass=abc.ABCMeta):
-#
-	#
-	# @property
-	# def _written(self) -> bool:
-	# 	raise NotImplementedError
-	#
-	# def isWritten(self):
-	# 	return self._written
-	#
-	# def _writtenNow(self):
-	# 	self._written = True
-	#
-# 	@property
-# 	def TABLE_NAME(self) -> str:
-# 		raise NotImplementedError
-#
-#
-# 	@property
-# 	def DB_RECORD_FIELDS(self) -> List[str]:
-# 		raise NotImplementedError
-#
-# 	@property
-# 	def record_id(self) -> int:
-# 		"""
-# 		-1 if instance isn't written.
-# 		"""
-# 		raise NotImplementedError
-#
-# 	@property
-# 	def change_map(self) -> Dict[str, bool]:
-# 		raise NotImplementedError
-#
-# 	@abc.abstractmethod
-# 	def __setattr__(self, key: str, value: Any) -> None:
-# 		super().__setattr__(key, value)
-#
-# 	def __iter__():
-# 		self._writtenNow()
-
-
-class GuildDescription(DBObjectsGroup):
-
-	TABLE_NAME: str = "guilds"
-	DB_RECORD_FIELDS: List[str] = ['record_id', 'guild_id', 'selected_language']
-
-	def __init__(
-		self,
-		record_id: int,
-		guild_id: int,
-		selected_language: Language
-	) -> None:
-		self._written = False
-		self._change_map: Dict[str, bool] = {}
-		self.record_id: int = record_id
-		self.guild_id: int = guild_id
-		self.selected_language: Language = selected_language
-
-	def isWritten(self):
-		return self._written
+	@_change_map.setter
+	def _change_map(self, new_value: Dict[str, bool]) -> None:
+		self._internal_change_map = new_value
 
 	def __setattr__(self, key: str, value: Any) -> None:
 		if key in self.DB_RECORD_FIELDS:
@@ -329,7 +191,6 @@ class GuildDescription(DBObjectsGroup):
 			value - of the field.
 		"""
 		if self.field_cursor > len(self.DB_RECORD_FIELDS) - 1:
-			self._written = True
 			raise StopIteration
 		field = self.DB_RECORD_FIELDS[self.field_cursor]
 		self.field_cursor += 1
@@ -339,14 +200,37 @@ class GuildDescription(DBObjectsGroup):
 		else:
 			return False, (field, value)
 
-class DBObjectsGroupFabrics(metaclass=abc.ABCMeta):
+class DBObjectsGroupFabric(metaclass=abc.ABCMeta):
 	"""
 	The class used to create a `DBObjectsGroup` instance, that isn't written
 	in DB now.
+	It isn't recommended to manually create an instance based on this superclass.
+	Use `DBObjectsGroupFabrics`.
 	"""
-	pass
 
-class GuildDescriptionFabric(DBObjectsGroupFabrics):
+	instance: Any
+
+	def getInstance(self) -> Any:
+		return self.instance
+
+class GuildDescription(DBObjectGroup):
+
+	TABLE_NAME: str = "guilds"
+	DB_RECORD_FIELDS: List[str] = ['record_id', 'guild_id', 'selected_language']
+
+	def __init__(
+		self,
+		record_id: int,
+		guild_id: int,
+		selected_language: Language
+	) -> None:
+		self._change_map: Dict[str, bool] = {}
+		self.record_id: int = record_id
+		self.guild_id: int = guild_id
+		self.selected_language: Language = selected_language
+
+
+class GuildDescriptionFabric(DBObjectsGroupFabric):
 
 	def __init__(
 		self,
@@ -358,10 +242,102 @@ class GuildDescriptionFabric(DBObjectsGroupFabrics):
 	def getInstance(self) -> GuildDescription:
 		return self.instance
 
+class LogTarget(DBObjectGroup):
+	"""
+	The class implements an object of the logging target.
+	"""
+
+	TABLE_NAME: str = "log_targets"
+	DB_RECORD_FIELDS: List[str] = ['record_id', 'guild_id',
+	'target', 'act', 'd_in', 'name', 'priority', 'output', 'other']
+
+	def __init__(
+		self,
+		record_id: int,
+		guild_id: int,
+		target: List[IDObjects],
+		act: List[Union[IDObjects, str]],
+		d_in: List[IDObjects],
+		name: Union[str, None],
+		priority: Union[int, None],
+		output: Union[str, None],
+		other: Union[str, None]
+	) -> None:
+		self.record_id = record_id
+		self.guild_id = guild_id
+		self.target = target
+		self.act = act
+		self.d_in = d_in
+		self.name = name
+		self.priority = priority
+		self.output = output
+		self.other = other
+
+	def _getComparableAttrs(self) -> Union[List[Any]]:
+		"""
+		It forms comparable attributes.
+
+		Returns:
+			List[Any]: the attributes list that make sense for comparison
+			with other instances of :class:`LogTarget`.
+		"""
+		comparable_attrs: List[Any] = []
+		if self.target and self.d_in:
+			objects_id: List[Any] = []
+			for discord_objects in (self.target + self.d_in):
+				objects_id.append(str(discord_objects.id))
+			comparable_attrs += objects_id
+			comparable_attrs.insert(len(self.target), self.act)
+			comparable_attrs.append(self.name)
+		return comparable_attrs
+
+	def getCoincidenceTo(self, target: LogTarget) -> str:
+		"""
+		It compares attributes of the current instance with others of
+		the :class:`LogTarget` instance.
+
+		Returns:
+			str: all matching values separated by commas.
+		"""
+		current_attrs: List[Any] = self._getComparableAttrs()
+		compared_attrs: List[Any] = target._getComparableAttrs()
+		coincidence_attrs: List[Any] = []
+		for current_attr in current_attrs:
+			if current_attr in compared_attrs and current_attr is not None:
+				coincidence_attrs.append(current_attr)
+		return ", ".join(list(coincidence_attrs))
+
+class LogTargetFabric(DBObjectsGroupFabric):
+	def __init__(
+		self,
+		guild_id: int,
+		target: List[IDObjects],
+		act: List[Union[IDObjects, str]],
+		d_in: List[IDObjects],
+		name: Union[str, None] = None,
+		priority: Union[int, None] = None,
+		output: Union[str, None] = None,
+		other: Union[str, None] = None
+	) -> None:
+		self.instance = LogTarget(-1, guild_id, target, act, d_in,
+		name, priority, output, other)
+
+	def getInstance(self) -> LogTarget:
+		return self.instance
+
+class ActGroup:
+	"""
+	The class implements an object of user actions.
+	"""
+	def extractData(self, coord: Optional[str] = None) -> Iterable[str]:
+		if not coord:
+			pass
+		return [""]
+
 
 async def updateDBRecord(
 	dbconn: psycopg.AsyncConnection[Any],
-	instance: DBObjectsGroup
+	instance: DBObjectGroup
 ) -> None:
 	head_part: str = f"UPDATE {instance.TABLE_NAME}"
 	mid_part: List[str] = ["SET"]
@@ -380,15 +356,33 @@ async def updateDBRecord(
 
 async def findFromDB(
 	dbconn: psycopg.AsyncConnection[Any],
-	db_object_class: Type[DBObjectsGroup],
+	db_object_class: Type[DBObjectGroup],
+	operators_dict_map: Dict[str, operator] = {},
 	**kwargs
-) -> List[DBObjectsGroup]:
-	result: List[DBObjectsGroup] = []
+) -> List[DBObjectGroup]:
+	"""
+	:param operators_dict_map: It specifies where logical operators `OR`/`AND`
+	are located in the `SELECT WHERE` SQL statement.
+	The key is an index range, the value is logical operator `_types.OR`/
+	`_types.AND`.
+	If an index is missing, `IndexError` is thrown.
+	If the parameter isn't specified, `AND` operator is used by default.
+	The parameter isn't needed if there is only one parameter in the kwargs.
+	For example: {0: OR, 1-4: AND} — OR on index 0, AND on index 1 to 4.
+	.. important:: indexes must be enums in ascending order.
+	"""
+	result: List[DBObjectGroup] = []
 	table_name: str = db_object_class.TABLE_NAME
 	head_query: str = f"SELECT * FROM {table_name}"
 	condition_query: List[str] = ["WHERE"]
-	for key, value in kwargs.items():
-		condition_query.append(f"{key} = {value}")
+	if len(kwargs.items()) <= 1:
+		for ind, (key, value) in enumerate(kwargs.items()):
+			condition_query.append(f"{key} = {value}")
+	else:
+		operators_map = convertToListMap(operators_dict_map)
+		for ind, (key, value) in enumerate(kwargs.items()):
+			condition_query.append(f"{key} = {value}")
+			condition_query.append(operators_map[ind])
 	async with dbconn.cursor() as acur:
 		await acur.execute(sql("\n".join([head_query,
 		" ".join(condition_query)]) + ";"))
@@ -396,9 +390,22 @@ async def findFromDB(
 			result.append(db_object_class(*row))
 	return result
 
+def convertToListMap(dict_map: Dict[str, operator]) -> List[operator]:
+	result: List[operator] = []
+	str_operators: List[str] = ["OR", "AND"]
+	for ind, (key, value) in enumerate(dict_map.items()):
+		if "-" in key:
+			start_range, end_range = key.split("-")
+			for _ in range(start_range, end_range + 1):
+				result.append(str_operators[value])
+				raise IndexError("missed index in the map") if not (
+				ind == len(result) - 1) else ...
+		else:
+			result.append(str_operators[value])
+
 async def createDBRecord(
 	dbconn: psycopg.AsyncConnection[Any],
-	instance: DBObjectsGroup
+	instance: DBObjectGroup
 ) -> None:
 	head_part: str = f"INSERT INTO {instance.TABLE_NAME}"
 	columns_part: List[str] = []
