@@ -103,7 +103,7 @@ async def setupDB() -> psycopg.AsyncConnection[Any]:
 	return future_dbconn
 
 @pytest.mark.asyncio
-@pytest_asyncio.fixture(scope="package", autouse=True)
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def deleteTablesRecords(db) -> AsyncGenerator[None, None]:
 	async with db.cursor() as acur:
 		yield
