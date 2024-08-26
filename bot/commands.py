@@ -9,18 +9,19 @@ import discord
 import psycopg
 from discord.ext import commands
 
-from .attrs import TargetGroupAttrs
 from .converters import (
 	SearchExpression,
 	ShortSearchExpression,
 	SpecialExpression
 )
-from .data import ActGroup, TargetGroup, createDBRecord, findFromDB
+from .data import (ActGroup, LogTarget, LogTargetFabric, createDBRecord,
+				   findFromDB)
 from .embeds import ErrorEmbed, SuccessEmbed
 from .exceptions import UnhandlePartMessageSignal, UnsupportedLanguage
 from .flags import UserLogFlags
 from .main import BotConstructor
 from .utils import ContextProvider, Language, Translator, removeNesting
+from ._types import OR, AND
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +179,16 @@ class UserLog(commands.Cog):
 			raise commands.MissingRequiredArgument(ctx.
 				command.clean_params["d_in"]) # type: ignore[union-attr]
 
+		flags_as_dict = dict(flags)
+
+		log_target = LogTargetFabric(
+			target=target,
+			act=act,
+			d_in=d_in,
+			guild_id=ctx.guild.id,
+			**flags_as_dict
+		).getInstance()
+
 		coincidence_log_targets = await findFromDB(
 			dbconn=self.dbconn,
 			db_object_class=LogTarget,
@@ -185,24 +196,17 @@ class UserLog(commands.Cog):
 			target=target,
 			act=act,
 			d_in=d_in,
-			name=flags["name"],
-			operators_dict_map={"0": "AND", "1-4": OR}
+			name=flags_as_dict["name"],
+			operators_dict_map={"0": AND, "1-4": OR}
 		)
 
 		if coincidence_log_targets:
 			coincidence_target = coincidence_log_targets[0]
 			await ctx.send(f"Цель с подобными параметрами уже существует: "
-			f"{coincidence_target.dbrecord_id} ({coincidence_target.name})"
+			f"{coincidence_target.record_id} ({coincidence_target.name})"
 			f". Совпадающие элементы: "
-			f"{target_instance.getCoincidenceTo(coincidence_target)}")
+			f"{log_target.getCoincidenceTo(coincidence_target)}")
 		else:
-			log_target = LogTargetFabric(
-				target=target,
-				act=act,
-				d_in=d_in,
-				guild_id=ctx.guild.id,
-				**dict(flags)
-			).getInstance()
 			await createDBRecord(self.dbconn, log_target)
 			await ctx.send("Цель добавлена успешно.")
 

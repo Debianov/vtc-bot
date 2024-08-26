@@ -16,7 +16,8 @@ from bot.data import (
 	convertToListMap,
 	createDBRecord,
 	findFromDB,
-	updateDBRecord
+	updateDBRecord,
+    DBRecord
 )
 from bot.exceptions import DuplicateInstanceError
 from bot.utils import Language
@@ -31,16 +32,18 @@ from bot.utils import Language
 )
 @pytest.mark.asyncio
 async def test_writingToDB(
-        dbconn: psycopg.AsyncConnection[Any],
+        db: psycopg.AsyncConnection[Any],
         instance: DBObjectGroup,
         changed_attrs: Dict[str, Any]
 ):
-    await createDBRecord(dbconn, instance)
-    instance.record_id = 0
-    for key, value in changed_attrs:
+    record = DBRecord(db, instance)
+    await createDBRecord(db, instance)
+    await record.create()
+    instance.record_id = record.getID()
+    for key, value in changed_attrs.items():
         setattr(instance, key, value)
-    await updateDBRecord(dbconn, instance)
-    instances = await findFromDB(dbconn, instance.__class__, record_id=0)
+    await record.update()
+    instances = await DBRecord.find(instance.__class__, record_id=instance.record_id)
     assert instances[0] == instance
     assert len(instances) <= 1, DuplicateInstanceError
 
@@ -53,17 +56,17 @@ async def test_writingToDB(
 )
 @pytest.mark.asyncio
 async def test_createDBRecordAsUpdate(
-        dbconn: psycopg.AsyncConnection[Any],
+        db: psycopg.AsyncConnection[Any],
         instance: DBObjectGroup,
         changed_attrs: Dict[str, Any]
 ):
-    await createDBRecord(dbconn, instance)
+    await createDBRecord(db, instance)
     instance.record_id = 0
     changed_instance = instance
     for key, value in changed_attrs:
         setattr(changed_instance, key, value)
-    await createDBRecord(dbconn, changed_instance)
-    instances = await findFromDB(dbconn, instance.__class__, record_id=0)
+    await createDBRecord(db, changed_instance)
+    instances = await findFromDB(db, instance.__class__, record_id=0)
     assert instances[0] == instance
     assert instances[1] == changed_instance
     assert len(instances) <= 2

@@ -64,7 +64,7 @@ async def test_good_log_create_with_flags(
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
-			"SELECT * FROM target"
+			"SELECT * FROM log_targets;"
 		)
 		for row in await acur.fetchall():
 			assert row == (row[0], str(mockLocator.guild.id),
@@ -85,13 +85,14 @@ async def test_good_log_create_without_flags(
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
-			"SELECT * FROM target"
+			"SELECT * FROM log_targets"
 		)
 		for row in await acur.fetchall():
-			flags_values = [None, 0, None, None]
+			name, output, priority, other = (flag_values :=
+											 [None, None, None, None])
 			assert row == (row[0], str(mockLocator.guild.id),
 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
-				*flags_values)
+				*flag_values)
 
 @pytest.mark.asyncio
 async def test_log_without_subcommand() -> None:
@@ -219,13 +220,14 @@ async def test_log_1_good_expression(
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
-			"SELECT * FROM target"
+			"SELECT * FROM log_targets"
 		)
 		for row in await acur.fetchall():
-			flags_values = [None, 0, None, None]
+			name, output, priority, other = (flag_values :=
+											 [None, None, None, None])
 			assert row == (row[0], str(mockLocator.guild.id),
 				compared_objects["target"], '23', compared_objects["d_in"],
-				*flags_values)
+				*flag_values)
 
 @pytest.mark.parametrize(
 	"exp1, exp2, missing_params",

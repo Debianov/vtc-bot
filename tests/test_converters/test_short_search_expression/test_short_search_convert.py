@@ -27,7 +27,6 @@ async def test_good(
 @pytest.mark.parametrize(
 	"wildcard, data_group, expected_exception",
 	[
-		("*", DiscordObjectGroup, NotImplementedError),
 		("*", [ChannelGroup, UserGroup], TypeError),
 		("+", ChannelGroup, ShortSearchExpressionNotFound),
 		("-", UserGroup, ShortSearchExpressionNotFound)

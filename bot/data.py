@@ -259,7 +259,7 @@ class LogTarget(DBObjectGroup):
 		act: List[Union[IDObjects, str]],
 		d_in: List[IDObjects],
 		name: Union[str, None],
-		priority: Union[int, None],
+		priority: int,
 		output: Union[str, None],
 		other: Union[str, None]
 	) -> None:
@@ -345,7 +345,7 @@ async def updateDBRecord(
 	parameters: List[Any] = []
 	for attr_was_changed_flag, (attr, value) in instance:
 		if attr == "record_id":
-			end_part += value
+			end_part += str(value)
 		elif attr_was_changed_flag:
 			mid_part.append(f"{attr} = %s")
 			parameters.append(value)
@@ -375,17 +375,21 @@ async def findFromDB(
 	table_name: str = db_object_class.TABLE_NAME
 	head_query: str = f"SELECT * FROM {table_name}"
 	condition_query: List[str] = ["WHERE"]
+	parameters: List[Any] = []
 	if len(kwargs.items()) <= 1:
 		for ind, (key, value) in enumerate(kwargs.items()):
-			condition_query.append(f"{key} = {value}")
+			condition_query.append(f"{key} = %s")
+			parameters.append(value)
 	else:
 		operators_map = convertToListMap(operators_dict_map)
 		for ind, (key, value) in enumerate(kwargs.items()):
-			condition_query.append(f"{key} = {value}")
-			condition_query.append(operators_map[ind])
+			condition_query.append(f"{key} = %s")
+			if not ind == len(kwargs.items()) - 1:
+				condition_query.append(operators_map[ind])
+			parameters.append(value)
 	async with dbconn.cursor() as acur:
 		await acur.execute(sql("\n".join([head_query,
-		" ".join(condition_query)]) + ";"))
+		" ".join(condition_query)]) + ";"), parameters)
 		for row in await acur.fetchall():
 			result.append(db_object_class(*row))
 	return result
@@ -393,15 +397,18 @@ async def findFromDB(
 def convertToListMap(dict_map: Dict[str, operator]) -> List[operator]:
 	result: List[operator] = []
 	str_operators: List[str] = ["OR", "AND"]
-	for ind, (key, value) in enumerate(dict_map.items()):
+	for key, value in dict_map.items():
 		if "-" in key:
 			start_range, end_range = key.split("-")
-			for _ in range(start_range, end_range + 1):
+			for ind in range(int(start_range), int(end_range) + 1):
+				if not (ind == len(result)):
+					raise IndexError("missed index in the map")
 				result.append(str_operators[value])
-				raise IndexError("missed index in the map") if not (
-				ind == len(result) - 1) else ...
 		else:
+			if not (int(key) == len(result)):
+				raise IndexError("missed index in the map")
 			result.append(str_operators[value])
+	return result
 
 async def createDBRecord(
 	dbconn: psycopg.AsyncConnection[Any],
@@ -422,3 +429,120 @@ async def createDBRecord(
 		"VALUES " + "(" + ", ".join(values_part) + ")" + ";")
 	async with dbconn.cursor() as acur:
 		await acur.execute(sql(query), parameters)
+
+
+class DBRecord:
+	"""
+	The wrapper for a ``DBObjectGroup instance to communicate with the DB.
+	"""
+
+	def __init__(
+			self,
+			dbconn: psycopg.AsyncConnection[Any],
+			instance: DBObjectGroup
+	):
+		self.dbconn = dbconn
+		self.instance = instance
+
+	async def create(
+		self
+	) -> None:
+		head_part: str = f"INSERT INTO {self.instance.TABLE_NAME}"
+		columns_part: List[str] = []
+		values_part: List[str] = []
+		parameters: List[Any] = []
+		for _, (attr, value) in self.instance:
+			if attr == "record_id":
+				continue
+			else:
+				columns_part.append(attr)
+				values_part.append("%s")
+				parameters.append(value)
+		query = (head_part + "(" + ", ".join(columns_part) + ")" + "\n" +
+				 "VALUES " + "(" + ", ".join(values_part) + ")" + ";")
+		async with self.dbconn.cursor() as acur:
+			await acur.execute(sql(query), parameters)
+
+	async def getId(self) -> int:
+		async with self.dbconn.cursor() as acur:
+			await acur.execute(sql(f"SELECT * FROM {self.instance.TABLE_NAME}"
+							   f"WHERE record_id=(SELECT max(record_id) FROM "
+							   f"{self.instance.TABLE_NAME});"))
+			for row in await acur.fetchall():
+				return row[0]
+
+	async def update(self) -> None:
+		head_part: str = f"UPDATE {self.instance.TABLE_NAME}"
+		mid_part: List[str] = ["SET"]
+		end_part: str = "WHERE record_id = "
+		parameters: List[Any] = []
+		for attr_was_changed_flag, (attr, value) in self.instance:
+			if attr == "record_id":
+				end_part += str(value)
+			elif attr_was_changed_flag:
+				mid_part.append(f"{attr} = %s")
+				parameters.append(value)
+		query = (head_part + "\n" + mid_part[0] + " " + ", ".join(
+			mid_part[1:]) +
+				 "\n" + end_part + ";")
+		async with self.dbconn.cursor() as acur:
+			await acur.execute(sql(query), parameters)
+
+	@classmethod
+	async def find(
+		cls: Type[DBRecord],
+		db_object_class: Type[DBObjectGroup],
+		operators_dict_map: Dict[str, operator] = {},
+		**kwargs
+	) -> List[DBObjectGroup]:
+		"""
+		:param operators_dict_map: It specifies where logical operators `OR`/`AND`
+		are located in the `SELECT WHERE` SQL statement.
+		The key is an index range, the value is logical operator `_types.OR`/
+		`_types.AND`.
+		If an index is missing, `IndexError` is thrown.
+		If the parameter isn't specified, `AND` operator is used by default.
+		The parameter isn't needed if there is only one parameter in the kwargs.
+		For example: {0: OR, 1-4: AND} — OR on index 0, AND on index 1 to 4.
+		.. important:: indexes must be enums in ascending order.
+		"""
+		result: List[DBRecord] = []
+		table_name: str = db_object_class.TABLE_NAME
+		head_query: str = f"SELECT * FROM {table_name}"
+		condition_query: List[str] = ["WHERE"]
+		parameters: List[Any] = []
+		if len(kwargs.items()) <= 1:
+			for ind, (key, value) in enumerate(kwargs.items()):
+				condition_query.append(f"{key} = %s")
+				parameters.append(value)
+		else:
+			operators_map = cls._convertToListMap(operators_dict_map)
+			for ind, (key, value) in enumerate(kwargs.items()):
+				condition_query.append(f"{key} = %s")
+				if not ind == len(kwargs.items()) - 1:
+					condition_query.append(operators_map[ind])
+				parameters.append(value)
+		async with dbconn.cursor() as acur:
+			await acur.execute(sql("\n".join([head_query,
+											  " ".join(
+												  condition_query)]) + ";"),
+							   parameters)
+			for row in await acur.fetchall():
+				result.append(cls(dbconn, db_object_class(*row)))
+		return result
+
+	def _convertToListMap(self, dict_map: Dict[str, operator]) -> List[operator]:
+		result: List[operator] = []
+		str_operators: List[str] = ["OR", "AND"]
+		for key, value in dict_map.items():
+			if "-" in key:
+				start_range, end_range = key.split("-")
+				for ind in range(int(start_range), int(end_range) + 1):
+					if not (ind == len(result)):
+						raise IndexError("missed index in the map")
+					result.append(str_operators[value])
+			else:
+				if not (int(key) == len(result)):
+					raise IndexError("missed index in the map")
+				result.append(str_operators[value])
+		return result
