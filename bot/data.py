@@ -115,7 +115,7 @@ class DBObjectGroup(metaclass=abc.ABCMeta):
 	The abstract class implements the database structures.
 	"""
 
-	FACTORY: DBObjectsGroupFabric
+	FACTORY: DBObjectsGroupFactory
 
 	@property
 	def TABLE_NAME(self) -> str:
@@ -205,7 +205,7 @@ class DBObjectGroup(metaclass=abc.ABCMeta):
 				return False
 		return True
 
-class DBObjectsGroupFabric(metaclass=abc.ABCMeta):
+class DBObjectsGroupFactory(metaclass=abc.ABCMeta):
 	"""
 	The class used to create a `DBObjectsGroup` instance, that isn't written
 	in DB now.
@@ -218,7 +218,7 @@ class DBObjectsGroupFabric(metaclass=abc.ABCMeta):
 	def getInstance(self) -> Any:
 		return self.instance
 
-class GuildDescriptionFabric(DBObjectsGroupFabric):
+class GuildDescriptionFactory(DBObjectsGroupFactory):
 
 	def __init__(
 		self,
@@ -234,7 +234,7 @@ class GuildDescription(DBObjectGroup):
 
 	TABLE_NAME: str = "guilds"
 	DB_RECORD_FIELDS: List[str] = ['guild_id', 'selected_language']
-	FACTORY = GuildDescriptionFabric
+	FACTORY = GuildDescriptionFactory
 
 	def __init__(
 		self,
@@ -245,7 +245,7 @@ class GuildDescription(DBObjectGroup):
 		object.__setattr__(self, "guild_id", guild_id)
 		object.__setattr__(self, "selected_language", selected_language)
 
-class LogTargetFabric(DBObjectsGroupFabric):
+class LogTargetFactory(DBObjectsGroupFactory):
 
 	def __init__(
 		self,
@@ -272,7 +272,7 @@ class LogTarget(DBObjectGroup):
 	TABLE_NAME: str = "log_targets"
 	DB_RECORD_FIELDS: List[str] = ['guild_id', 'target', 'act', 'd_in',
 	'name', 'priority', 'output', 'other']
-	FACTORY = LogTargetFabric
+	FACTORY = LogTargetFactory
 
 	def __init__(
 		self,

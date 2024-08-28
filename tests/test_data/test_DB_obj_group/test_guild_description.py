@@ -1,19 +1,19 @@
 import pytest
 
-from bot.data import GuildDescriptionFabric
+from bot.data import GuildDescriptionFactory
 from bot.utils import Language
 
 
 def test_GildDescriptionFabric():
-    instance = GuildDescriptionFabric(2, Language("ru")).getInstance()
+    instance = GuildDescriptionFactory(2, Language("ru")).getInstance()
 
 def test_GuildDescriptionChangeMap():
-    instance = GuildDescriptionFabric(2, Language("ru")).getInstance()
+    instance = GuildDescriptionFactory(2, Language("ru")).getInstance()
     instance.guild_id = 4
     assert instance._change_map == {'guild_id': True}
 
 def test_GuildDescriptionIteration():
-    instance = GuildDescriptionFabric(2, Language("ru")).getInstance()
+    instance = GuildDescriptionFactory(2, Language("ru")).getInstance()
     instance.guild_id = 4
     for status, (field, _) in instance:
         if field == "guild_id":

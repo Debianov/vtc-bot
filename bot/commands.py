@@ -14,8 +14,8 @@ from .converters import (
 	ShortSearchExpression,
 	SpecialExpression
 )
-from .data import (ActGroup, LogTarget, LogTargetFabric, createDBRecord,
-						findFromDB)
+from .data import (ActGroup, LogTarget, LogTargetFactory, createDBRecord,
+						 findFromDB)
 from .embeds import ErrorEmbed, SuccessEmbed
 from .exceptions import UnhandlePartMessageSignal, UnsupportedLanguage
 from .flags import UserLogFlags
@@ -181,7 +181,7 @@ class UserLog(commands.Cog):
 
 		flags_as_dict = dict(flags)
 
-		log_target = LogTargetFabric(
+		log_target = LogTargetFactory(
 			target=target,
 			act=act,
 			d_in=d_in,

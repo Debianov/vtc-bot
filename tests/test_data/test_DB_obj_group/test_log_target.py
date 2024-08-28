@@ -1,6 +1,6 @@
 import pytest
 
-from bot.data import LogTargetFabric, LogTarget
+from bot.data import LogTargetFactory, LogTarget
 from bot.mock import IDHolder
 from bot.utils import Case
 
@@ -47,14 +47,14 @@ def test_getCoincidenceTo(
 	assert coincidence == expected_coincidence
 
 def test_LogTargetFabric():
-	instance = LogTargetFabric(2, [target], ["5"], [d_in],
+	instance = LogTargetFactory(2, [target], ["5"], [d_in],
 							  "sdq").getInstance()
 	assert instance.priority is None
 	assert instance.output is None
 	assert instance.other is None
 
 def test_LogTargetChangeMap():
-	instance = LogTargetFabric(2, [target], ["5"], [d_in],
+	instance = LogTargetFactory(2, [target], ["5"], [d_in],
 							  "sdq").getInstance()
 	instance.priority = -1
 	instance.output = -1
@@ -63,7 +63,7 @@ def test_LogTargetChangeMap():
 		True}
 
 def test_LogTargetIteration():
-	instance = LogTargetFabric(2, [target], ["5"], [d_in],
+	instance = LogTargetFactory(2, [target], ["5"], [d_in],
 							   "sdq").getInstance()
 	instance.priority = -1
 	instance.output = 56

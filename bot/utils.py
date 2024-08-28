@@ -24,7 +24,7 @@ from discord.ext import commands
 from bot.data import (
 	DiscordObjectGroup,
 	GuildDescription,
-	GuildDescriptionFabric,
+	GuildDescriptionFactory,
 	createDBRecord,
 	findFromDB,
 	updateDBRecord
@@ -488,8 +488,8 @@ class Translator:
 			# exception will be thrown.
 			await updateDBRecord(self.dbconn, instance)
 		else:
-			fabric = GuildDescriptionFabric(guild_id,
-			supported_language) # type: ignore[arg-type]
+			fabric = GuildDescriptionFactory(guild_id,
+														supported_language) # type: ignore[arg-type]
 			await createDBRecord(self.dbconn, fabric.getInstance())
 
 	def getSupportedLanguageByShortName(self, short_name: str) -> Union[Language,

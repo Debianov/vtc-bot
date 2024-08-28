@@ -10,9 +10,9 @@ from .all_db_objects_group_subs import (
 
 from bot.utils import MockLocator
 from bot.data import (
-	DBObjectsGroupFabric,
-	GuildDescriptionFabric,
-	LogTargetFabric,
+	DBObjectsGroupFactory,
+	GuildDescriptionFactory,
+	LogTargetFactory,
 	createDBRecord,
 	findFromDB,
 	updateDBRecord
@@ -23,8 +23,8 @@ from bot.exceptions import DuplicateInstanceError
 @pytest.mark.parametrize(
 	"fabric, attrs_for_instance, changed_attrs",
 	(
-			[GuildDescriptionFabric, guild_description_attrs, guild_desc_instance_changed_attrs],
-			[LogTargetFabric, log_target_attrs, log_target_instance_changed_attrs]
+			[GuildDescriptionFactory, guild_description_attrs, guild_desc_instance_changed_attrs],
+			[LogTargetFactory, log_target_attrs, log_target_instance_changed_attrs]
 	)
 )
 @pytest.mark.doDelayedExpression
@@ -32,7 +32,7 @@ from bot.exceptions import DuplicateInstanceError
 async def test_writingToDB(
 	db: psycopg.AsyncConnection[Any],
 	mockLocator: MockLocator,
-	fabric: Type[DBObjectsGroupFabric],
+	fabric: Type[DBObjectsGroupFactory],
 	attrs_for_instance: List[Any],
 	changed_attrs: Dict[str, Any]
 ):
@@ -51,8 +51,8 @@ async def test_writingToDB(
 @pytest.mark.parametrize(
 	"fabric, attrs_for_instance, changed_attrs",
 	(
-			[GuildDescriptionFabric, guild_description_attrs, guild_desc_instance_changed_attrs],
-			[LogTargetFabric, log_target_attrs, log_target_instance_changed_attrs]
+			[GuildDescriptionFactory, guild_description_attrs, guild_desc_instance_changed_attrs],
+			[LogTargetFactory, log_target_attrs, log_target_instance_changed_attrs]
 	)
 )
 @pytest.mark.doDelayedExpression
@@ -60,7 +60,7 @@ async def test_writingToDB(
 async def test_createDBRecordAsUpdate(
 	db: psycopg.AsyncConnection[Any],
 	mockLocator: MockLocator,
-	fabric: Type[DBObjectsGroupFabric],
+	fabric: Type[DBObjectsGroupFactory],
 	attrs_for_instance: List[Any],
 	changed_attrs: Dict[str, Any]
 ):
