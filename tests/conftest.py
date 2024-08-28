@@ -4,13 +4,16 @@ import sys
 from typing import Any, AsyncGenerator, Dict, Generator, Iterable
 
 import discord.ext.test as dpytest
+import discord.ext.commands as commands
+import discord
 import psycopg
 import pytest
 import pytest_asyncio
 
 from bot.exceptions import StartupBotError
-from bot.main import DBConnFactory
-from bot.utils import DelayedExpressionReplacer, getEnvIfExist, isIterable
+from bot.main import DBConnFactory, _setup_i18n, BotConstructor
+from bot.utils import DelayedExpressionReplacer, getEnvIfExist, isIterable, MockLocator, ContextProvider
+from bot.help import BotHelpCommand
 
 root = pathlib.Path.cwd()
 
@@ -104,7 +107,7 @@ async def setupDB() -> psycopg.AsyncConnection[Any]:
 
 @pytest.mark.asyncio
 @pytest_asyncio.fixture(scope="function", autouse=True)
-async def deleteTablesRecords(db) -> AsyncGenerator[None, None]:
+async def deleteTablesRecords(db: psycopg.AsyncConnection[Any]) -> AsyncGenerator[None, None]:
 	async with db.cursor() as acur:
 		yield
 		await acur.execute(
@@ -113,3 +116,37 @@ async def deleteTablesRecords(db) -> AsyncGenerator[None, None]:
 			DELETE FROM guilds;
 			"""
 		)
+
+@pytest_asyncio.fixture(scope="package", autouse=True, name="bot")
+async def botInit(db: psycopg.AsyncConnection[Any]) -> commands.Bot:
+	intents = discord.Intents.all()
+	i18n_translator = _setup_i18n(db)
+	VCSBot = BotConstructor(
+		dbconn=db,
+		context_provider=ContextProvider(),
+		command_prefix="",
+		intents=intents,
+		help_command=BotHelpCommand(),
+		load_cogs=False,
+		i18n_translator=i18n_translator
+	)
+	await VCSBot._async_setup_hook()
+	await VCSBot.prepare()
+	dpytest.configure(VCSBot, num_members=6)
+	return VCSBot
+
+@pytest.fixture(scope="package", autouse=True, name="mockLocator")
+def initLocator() -> MockLocator:
+	config = dpytest.get_config()
+	locator = MockLocator(
+		guild=config.guilds[0],
+		channel=config.channels[0],
+		members=list(config.guilds[0].members)
+	)
+	return locator
+
+@pytest_asyncio.fixture(scope="package", autouse=True, name="discordContext")
+async def createDiscordContext(bot: commands.Bot) -> commands.Context:
+	message = await dpytest.message("help")
+	current_ctx = await bot.get_context(message)
+	return current_ctx
