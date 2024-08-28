@@ -115,6 +115,8 @@ class DBObjectGroup(metaclass=abc.ABCMeta):
 	The abstract class implements the database structures.
 	"""
 
+	FACTORY: DBObjectsGroupFabric
+
 	@property
 	def TABLE_NAME(self) -> str:
 		"""
@@ -216,20 +218,6 @@ class DBObjectsGroupFabric(metaclass=abc.ABCMeta):
 	def getInstance(self) -> Any:
 		return self.instance
 
-class GuildDescription(DBObjectGroup):
-
-	TABLE_NAME: str = "guilds"
-	DB_RECORD_FIELDS: List[str] = ['guild_id', 'selected_language']
-
-	def __init__(
-		self,
-		guild_id: int,
-		selected_language: Language
-	) -> None:
-		object.__setattr__(self, "_change_map", {})
-		object.__setattr__(self, "guild_id", int(guild_id))
-		object.__setattr__(self, "selected_language", selected_language)
-
 class GuildDescriptionFabric(DBObjectsGroupFabric):
 
 	def __init__(
@@ -237,9 +225,43 @@ class GuildDescriptionFabric(DBObjectsGroupFabric):
 		guild_id: int,
 		lang_instance: Language
 	) -> None:
-		self.instance = GuildDescription(guild_id, lang_instance)
+		self.instance = GuildDescription(int(guild_id), lang_instance)
 
 	def getInstance(self) -> GuildDescription:
+		return self.instance
+
+class GuildDescription(DBObjectGroup):
+
+	TABLE_NAME: str = "guilds"
+	DB_RECORD_FIELDS: List[str] = ['guild_id', 'selected_language']
+	FACTORY = GuildDescriptionFabric
+
+	def __init__(
+		self,
+		guild_id: int,
+		selected_language: Language
+	) -> None:
+		object.__setattr__(self, "_change_map", {})
+		object.__setattr__(self, "guild_id", guild_id)
+		object.__setattr__(self, "selected_language", selected_language)
+
+class LogTargetFabric(DBObjectsGroupFabric):
+
+	def __init__(
+		self,
+		guild_id: int,
+		target: List[IDObjects],
+		act: str,
+		d_in: List[IDObjects],
+		name: Union[str, None] = None,
+		priority: Union[int, None] = None,
+		output: Union[str, None] = None,
+		other: Union[str, None] = None
+	) -> None:
+		self.instance = LogTarget(int(guild_id), target, str(act), d_in,
+		name, int(priority) if priority is not None else None, output, other)
+
+	def getInstance(self) -> LogTarget:
 		return self.instance
 
 class LogTarget(DBObjectGroup):
@@ -250,24 +272,25 @@ class LogTarget(DBObjectGroup):
 	TABLE_NAME: str = "log_targets"
 	DB_RECORD_FIELDS: List[str] = ['guild_id', 'target', 'act', 'd_in',
 	'name', 'priority', 'output', 'other']
+	FACTORY = LogTargetFabric
 
 	def __init__(
 		self,
 		guild_id: int,
 		target: List[IDObjects],
-		act: Union[IDObjects, str],
+		act: int,
 		d_in: List[IDObjects],
 		name: Union[str, None],
 		priority: int,
 		output: Union[str, None],
 		other: Union[str, None]
 	) -> None:
-		object.__setattr__(self, "guild_id", int(guild_id))
+		object.__setattr__(self, "guild_id", guild_id)
 		object.__setattr__(self, "target", target)
 		object.__setattr__(self, "act", act)
 		object.__setattr__(self, "d_in", d_in)
 		object.__setattr__(self, "name", name)
-		object.__setattr__(self, "priority", int(priority) if priority is not None else None)
+		object.__setattr__(self, "priority", priority)
 		object.__setattr__(self, "output", output)
 		object.__setattr__(self, "other", other)
 
@@ -304,25 +327,6 @@ class LogTarget(DBObjectGroup):
 			if current_attr in compared_attrs and current_attr is not None:
 				coincidence_attrs.append(current_attr)
 		return ", ".join(list(coincidence_attrs))
-
-class LogTargetFabric(DBObjectsGroupFabric):
-
-	def __init__(
-		self,
-		guild_id: int,
-		target: List[IDObjects],
-		act: Union[IDObjects, str],
-		d_in: List[IDObjects],
-		name: Union[str, None] = None,
-		priority: Union[int, None] = None,
-		output: Union[str, None] = None,
-		other: Union[str, None] = None
-	) -> None:
-		self.instance = LogTarget(guild_id, target, act, d_in,
-		name, priority, output, other)
-
-	def getInstance(self) -> LogTarget:
-		return self.instance
 
 class ActGroup:
 	"""
@@ -372,6 +376,7 @@ async def findFromDB(
 	.. important:: indexes must be enums in ascending order.
 	"""
 	result: List[DBObjectGroup] = []
+	factory = db_object_class.FACTORY
 	table_name: str = db_object_class.TABLE_NAME
 	head_query: str = f"SELECT * FROM {table_name}"
 	condition_query: List[str] = ["WHERE"]
@@ -391,7 +396,7 @@ async def findFromDB(
 		await acur.execute(sql("\n".join([head_query,
 		" ".join(condition_query)]) + ";"), parameters)
 		for row in await acur.fetchall():
-			result.append(db_object_class(*row))
+			result.append(factory(*row).getInstance())
 	return result
 
 def _convertToListMap(dict_map: Dict[str, operator]) -> List[operator]:

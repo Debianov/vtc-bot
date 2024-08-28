@@ -1,6 +1,5 @@
 from bot.utils import Language, DelayedExpression
 
-
 guild_description_attrs = [
     435,
     Language(short_name="en")
@@ -10,7 +9,7 @@ guild_desc_instance_changed_attrs = {"selected_language": Language(short_name="r
 log_target_attrs = [
     2,
     [DelayedExpression("mockLocator.members[0]")],
-    ["5"],
+    5,
     [DelayedExpression("mockLocator.members[1]")],
     "sdq"
 ]

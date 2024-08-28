@@ -149,7 +149,7 @@ class UserLog(commands.Cog):
 		ctx: commands.Context,
 		target: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, discord.CategoryChannel, SearchExpression]],
-		act: Union[ShortSearchExpression[ActGroup], str],
+		act: Union[ShortSearchExpression[ActGroup], int],
 		d_in: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, SearchExpression, SpecialExpression]],
 		*,
@@ -194,7 +194,7 @@ class UserLog(commands.Cog):
 			db_object_class=LogTarget,
 			guild_id=ctx.guild.id,
 			target=target,
-			act=act,
+			act=str(act),
 			d_in=d_in,
 			name=flags_as_dict["name"],
 			operators_dict_map={"0": AND, "1-4": OR}

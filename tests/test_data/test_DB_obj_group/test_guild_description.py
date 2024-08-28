@@ -1,6 +1,6 @@
 import pytest
 
-from bot.data import GuildDescription, GuildDescriptionFabric
+from bot.data import GuildDescriptionFabric
 from bot.utils import Language
 
 
