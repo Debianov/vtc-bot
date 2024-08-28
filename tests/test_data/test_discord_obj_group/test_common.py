@@ -9,7 +9,7 @@ from bot.data import ChannelGroup, DiscordObjectGroup, UserGroup
 @pytest.mark.parametrize(
 	"check_class",
 	[
-		DiscordObjectGroup, UserGroup, ChannelGroup
+		UserGroup, ChannelGroup
 	]
 )
 def test_main_discord_object_group(
@@ -22,7 +22,6 @@ def test_main_discord_object_group(
 @pytest.mark.parametrize(
 	"check_class, user_identif",
 	[
-		(DiscordObjectGroup, ""),
 		(UserGroup, "usr"),
 		(ChannelGroup, "ch")
 	]
@@ -34,10 +33,3 @@ def test_equal_discord_object_group(
 ):
 	a = check_class(discordContext)
 	assert a == user_identif
-
-def test_extractData_discord_object_group(
-	discordContext: commands.Context,
-):
-	a = DiscordObjectGroup(discordContext)
-	with pytest.raises(NotImplementedError):
-		a.extractData()

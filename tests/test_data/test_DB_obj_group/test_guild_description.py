@@ -6,7 +6,6 @@ from bot.utils import Language
 
 def test_GildDescriptionFabric():
     instance = GuildDescriptionFabric(2, Language("ru")).getInstance()
-    assert instance.record_id == -1
 
 def test_GuildDescriptionChangeMap():
     instance = GuildDescriptionFabric(2, Language("ru")).getInstance()
@@ -20,4 +19,4 @@ def test_GuildDescriptionIteration():
         if field == "guild_id":
             assert status is True
         else:
-            assert statis is False
+            assert status is False

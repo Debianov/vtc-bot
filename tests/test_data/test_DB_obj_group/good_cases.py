@@ -2,7 +2,6 @@ from bot.mock import IDHolder
 from bot.utils import Case, DelayedExpression
 
 base_case = Case(
-	record_id=-1,
 	guild_id=2,
 	target=[IDHolder(1)],
 	act=[IDHolder(4)],

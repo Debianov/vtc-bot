@@ -67,7 +67,7 @@ async def test_good_log_create_with_flags(
 			"SELECT * FROM log_targets;"
 		)
 		for row in await acur.fetchall():
-			assert row == (row[0], str(mockLocator.guild.id),
+			assert row == (str(mockLocator.guild.id),
 				case["target"], case["act"], case["d_in"],
 				*list(case["flags"].values()))
 
@@ -90,7 +90,7 @@ async def test_good_log_create_without_flags(
 		for row in await acur.fetchall():
 			name, output, priority, other = (flag_values :=
 											 [None, None, None, None])
-			assert row == (row[0], str(mockLocator.guild.id),
+			assert row == (str(mockLocator.guild.id),
 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
 				*flag_values)
 
@@ -225,7 +225,7 @@ async def test_log_1_good_expression(
 		for row in await acur.fetchall():
 			name, output, priority, other = (flag_values :=
 											 [None, None, None, None])
-			assert row == (row[0], str(mockLocator.guild.id),
+			assert row == (str(mockLocator.guild.id),
 				compared_objects["target"], '23', compared_objects["d_in"],
 				*flag_values)
 
@@ -317,15 +317,15 @@ async def checkLanguageRecordInDB(
 		for row in await acur.fetchall():
 			row_count += 1
 			if reply_message.guild:
-				assert row[:2] == (row[0], str(reply_message.guild.id))
+				assert row[:1] == (str(reply_message.guild.id),)
 			elif reply_message.author.id:
 				raise NotImplementedError
 			if len(language) == 2:
-				assert row[2].getFullName()
-				assert row[2].getShortName() == language
+				assert row[1].getFullName()
+				assert row[1].getShortName() == language
 			else:
-				assert row[2].getShortName()
-				assert row[2].getFullName() == language
+				assert row[1].getShortName()
+				assert row[1].getFullName() == language
 		assert row_count <= 1, DuplicateInstanceError
 
 async def checkLanguageSwitchingBetweenRuAndEn(language: str):

@@ -27,32 +27,15 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.guilds (
-    record_id bigint NOT NULL,
     guild_id bigint,
     selected_language text
 );
-
-
---
--- Name: guilds_record_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.guilds ALTER COLUMN record_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.guilds_record_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
 
 --
 -- Name: log_targets; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.log_targets (
-    record_id bigint NOT NULL,
     guild_id bigint,
     target bigint[],
     act text,
@@ -61,20 +44,6 @@ CREATE TABLE public.log_targets (
     priority integer,
     output text,
     other text
-);
-
-
---
--- Name: log_targets_record_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.log_targets ALTER COLUMN record_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.log_targets_record_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
 );
 
 

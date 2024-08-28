@@ -1,6 +1,6 @@
 import pytest
 
-from bot.data import LogTargetFabric
+from bot.data import LogTargetFabric, LogTarget
 from bot.mock import IDHolder
 from bot.utils import Case
 
@@ -17,7 +17,7 @@ target = IDHolder(2)
 d_in = IDHolder(5)
 
 def test_getComparableAttrs():
-	test_instance = LogTarget(-1, 2, [target], ["5"], [d_in],
+	test_instance = LogTarget(2, [target], ["5"], [d_in],
 							  "sdq", None, None, None)
 	comparable_attrs = test_instance._getComparableAttrs()
 	expected_comparable_attrs = [[target], ["5"], [d_in], "sdq"]
@@ -49,7 +49,6 @@ def test_getCoincidenceTo(
 def test_LogTargetFabric():
 	instance = LogTargetFabric(2, [target], ["5"], [d_in],
 							  "sdq").getInstance()
-	assert instance.record_id == -1
 	assert instance.priority is None
 	assert instance.output is None
 	assert instance.other is None
@@ -73,4 +72,4 @@ def test_LogTargetIteration():
 		if field in ["priority", "output", "target"]:
 			assert status is True
 		else:
-			assert statis is False
+			assert status is False

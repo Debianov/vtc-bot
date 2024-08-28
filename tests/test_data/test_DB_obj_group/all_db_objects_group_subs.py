@@ -1,18 +1,17 @@
-from bot.data import GuildDescriptionFabric, LogTargetFabric
-from bot.mock import IDHolder
-from bot.utils import Language
+from bot.utils import Language, DelayedExpression
 
-guild_description_instance = GuildDescriptionFabric(
+
+guild_description_attrs = [
     435,
-    Language("english")
-).getInstance()
-guild_desc_instance_changed_attrs = {"guild_id": "4536456"}
+    Language(short_name="en")
+]
+guild_desc_instance_changed_attrs = {"selected_language": Language(short_name="ru")}
 
-log_target_instance = LogTargetFabric(
+log_target_attrs = [
     2,
-    [IDHolder(2345)],
+    [DelayedExpression("mockLocator.members[0]")],
     ["5"],
-    [IDHolder(57567)],
+    [DelayedExpression("mockLocator.members[1]")],
     "sdq"
-).getInstance()
-log_target_instance_changed_attrs = {"target": IDHolder(768)}
+]
+log_target_instance_changed_attrs = {"target": [DelayedExpression("mockLocator.members[2]")]}

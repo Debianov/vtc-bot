@@ -12,7 +12,8 @@ from typing import (
 	Tuple,
 	Type,
 	TypeVar,
-	Union
+	Union,
+	Self
 )
 
 import discord
@@ -402,6 +403,12 @@ class Language:
 
 	def getFullName(self) -> str:
 		return self._full_name
+
+	def __eq__(self, other: Self) -> bool:
+		return self._short_name == other._short_name or self._full_name == other._full_name
+
+	def __hash__(self) -> int:
+		return hash(self._short_name)
 
 class Translator:
 

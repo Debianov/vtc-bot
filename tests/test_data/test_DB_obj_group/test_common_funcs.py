@@ -1,72 +1,76 @@
-from typing import Any, Dict
-
+from typing import Any, Dict, Type, List
 import psycopg
 import pytest
 from .all_db_objects_group_subs import (
 	guild_desc_instance_changed_attrs,
-	guild_description_instance,
-	log_target_instance,
+	guild_description_attrs,
+	log_target_attrs,
 	log_target_instance_changed_attrs
 )
 
+from bot.utils import MockLocator
 from bot.data import (
-	DBObjectGroup,
-	GuildDescription,
+	DBObjectsGroupFabric,
 	GuildDescriptionFabric,
-	convertToListMap,
+	LogTargetFabric,
 	createDBRecord,
 	findFromDB,
-	updateDBRecord,
-    DBRecord
+	updateDBRecord
 )
 from bot.exceptions import DuplicateInstanceError
-from bot.utils import Language
 
 
 @pytest.mark.parametrize(
-    "instance, changed_attrs",
-    (
-        [guild_description_instance, guild_desc_instance_changed_attrs],
-        [log_target_instance, log_target_instance_changed_attrs]
-    )
+	"fabric, attrs_for_instance, changed_attrs",
+	(
+			[GuildDescriptionFabric, guild_description_attrs, guild_desc_instance_changed_attrs],
+			[LogTargetFabric, log_target_attrs, log_target_instance_changed_attrs]
+	)
 )
+@pytest.mark.doDelayedExpression
 @pytest.mark.asyncio
 async def test_writingToDB(
-        db: psycopg.AsyncConnection[Any],
-        instance: DBObjectGroup,
-        changed_attrs: Dict[str, Any]
+	db: psycopg.AsyncConnection[Any],
+	mockLocator: MockLocator,
+	fabric: Type[DBObjectsGroupFabric],
+	attrs_for_instance: List[Any],
+	changed_attrs: Dict[str, Any]
 ):
-    record = DBRecord(db, instance)
-    await createDBRecord(db, instance)
-    await record.create()
-    instance.record_id = record.getID()
-    for key, value in changed_attrs.items():
-        setattr(instance, key, value)
-    await record.update()
-    instances = await DBRecord.find(instance.__class__, record_id=instance.record_id)
-    assert instances[0] == instance
-    assert len(instances) <= 1, DuplicateInstanceError
+	instance = fabric(*attrs_for_instance).getInstance()
+	await createDBRecord(db, instance)
+	for key, value in changed_attrs.items():
+		setattr(instance, key, value)
+	await updateDBRecord(db, instance)
+	instances = await findFromDB(db, instance.__class__, guild_id=instance.guild_id)
+	finded_instance = instances[0]
+	assert len(instances) <= 1, DuplicateInstanceError
+	for _, (key, value) in finded_instance:
+		value_of_instance = getattr(instance, key)
+		assert value_of_instance == value
 
 @pytest.mark.parametrize(
-    "instance, changed_attrs",
-    (
-        [guild_description_instance, guild_desc_instance_changed_attrs],
-        [log_target_instance, log_target_instance_changed_attrs]
-    )
+	"fabric, attrs_for_instance, changed_attrs",
+	(
+			[GuildDescriptionFabric, guild_description_attrs, guild_desc_instance_changed_attrs],
+			[LogTargetFabric, log_target_attrs, log_target_instance_changed_attrs]
+	)
 )
+@pytest.mark.doDelayedExpression
 @pytest.mark.asyncio
 async def test_createDBRecordAsUpdate(
-        db: psycopg.AsyncConnection[Any],
-        instance: DBObjectGroup,
-        changed_attrs: Dict[str, Any]
+	db: psycopg.AsyncConnection[Any],
+	mockLocator: MockLocator,
+	fabric: Type[DBObjectsGroupFabric],
+	attrs_for_instance: List[Any],
+	changed_attrs: Dict[str, Any]
 ):
-    await createDBRecord(db, instance)
-    instance.record_id = 0
-    changed_instance = instance
-    for key, value in changed_attrs:
-        setattr(changed_instance, key, value)
-    await createDBRecord(db, changed_instance)
-    instances = await findFromDB(db, instance.__class__, record_id=0)
-    assert instances[0] == instance
-    assert instances[1] == changed_instance
-    assert len(instances) <= 2
+	instance = fabric(*attrs_for_instance).getInstance()
+	await createDBRecord(db, instance)
+	changed_instance = fabric(*attrs_for_instance).getInstance()
+	for key, value in changed_attrs.items():
+		setattr(changed_instance, key, value)
+	await createDBRecord(db, changed_instance)
+	instances = await findFromDB(db, instance.__class__, guild_id=instance.guild_id)
+	assert instances[0] == instance
+	assert instances[1] == changed_instance
+	assert len(instances) <= 2

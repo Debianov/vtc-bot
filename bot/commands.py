@@ -15,7 +15,7 @@ from .converters import (
 	SpecialExpression
 )
 from .data import (ActGroup, LogTarget, LogTargetFabric, createDBRecord,
-				   findFromDB)
+						findFromDB)
 from .embeds import ErrorEmbed, SuccessEmbed
 from .exceptions import UnhandlePartMessageSignal, UnsupportedLanguage
 from .flags import UserLogFlags
@@ -203,8 +203,7 @@ class UserLog(commands.Cog):
 		if coincidence_log_targets:
 			coincidence_target = coincidence_log_targets[0]
 			await ctx.send(f"Цель с подобными параметрами уже существует: "
-			f"{coincidence_target.record_id} ({coincidence_target.name})"
-			f". Совпадающие элементы: "
+			f"({coincidence_target.name}). Совпадающие элементы: "
 			f"{log_target.getCoincidenceTo(coincidence_target)}")
 		else:
 			await createDBRecord(self.dbconn, log_target)
