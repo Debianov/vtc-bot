@@ -4,7 +4,7 @@ from bot.utils import Case, DelayedExpression
 base_case = Case(
 	guild_id=2,
 	target=[IDHolder(1)],
-	act=[IDHolder(4)],
+	act="4",
 	d_in=[IDHolder(3), IDHolder(2)],
 	name="sudo",
 	output="deb",
@@ -22,7 +22,7 @@ case_with_differents_name_and_target.update({"target": [IDHolder(10)]})
 
 case_with_differents_name_and_act_and_target = (
 	case_with_differents_name_and_target.copy())
-case_with_differents_name_and_act_and_target.update({"act": [IDHolder(45)]})
+case_with_differents_name_and_act_and_target.update({"act": "45"})
 
 case_with_differents_all_comparable_attrs = (
 	case_with_differents_name_and_act_and_target.copy())

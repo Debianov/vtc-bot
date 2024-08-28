@@ -13,14 +13,14 @@ from .good_cases import (
 	case_without_differents
 )
 
-target = IDHolder(2)
-d_in = IDHolder(5)
+target = IDHolder(8)
+d_in = IDHolder(4)
 
 def test_getComparableAttrs():
-	test_instance = LogTarget(2, [target], ["5"], [d_in],
+	test_instance = LogTarget(2, [target], "5", [d_in],
 							  "sdq", None, None, None)
 	comparable_attrs = test_instance._getComparableAttrs()
-	expected_comparable_attrs = [[target], ["5"], [d_in], "sdq"]
+	expected_comparable_attrs = ['8', '5', '4', 'sdq']
 	assert comparable_attrs == expected_comparable_attrs
 
 @pytest.mark.parametrize(
