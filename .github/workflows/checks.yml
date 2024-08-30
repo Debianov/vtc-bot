@@ -46,13 +46,13 @@ jobs:
       - name: Run mypy
         run: poetry run mypy .
       - name: Create tables of schema.sql
-        run: poetry run scripts/setupdb.sh postgres postgres
-      - name: Run tests        
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
           POSTGRES_PASSWORD: postgres
           POSTGRES_TEST_DBNAME: postgres
           POSTGRES_USER: postgres
+        run: poetry run scripts/setupdb.sh postgres postgres
+      - name: Run tests
         run: |
           poetry run pytest
