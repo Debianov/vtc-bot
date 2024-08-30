@@ -88,7 +88,6 @@ async def setupDB() -> psycopg.AsyncConnection[Any]:
 	if github_action_envs := getEnvIfExist(
 		"POSTGRES_HOST",
 		"POSTGRES_PORT",
-		"POSTGRES_PASSWORD",
 		"POSTGRES_TEST_DBNAME",
 		"POSTGRES_USER"
 	):

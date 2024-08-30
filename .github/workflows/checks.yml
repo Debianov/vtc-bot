@@ -15,7 +15,6 @@ jobs:
         env:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
         ports:
           - 5432/tcp
         options: >-
@@ -49,7 +48,6 @@ jobs:
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
-          PGPASSWORD: postgres
           POSTGRES_TEST_DBNAME: postgres
           POSTGRES_USER: postgres
         run: poetry run psql --set=ON_ERROR_STOP=1 --host=${{ env.POSTGRES_HOST }} --port=${{ env.POSTGRES_PORT }} --username=${{ env.POSTGRES_USER }} --dbname=${{ env.POSTGRES_TEST_DBNAME }}  --file=schema.sql --echo-errors
