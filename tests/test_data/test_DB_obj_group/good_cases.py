@@ -1,5 +1,5 @@
 from bot.mock import IDHolder
-from bot.utils import Case, DelayedExpression
+from bot.utils import Case
 
 base_case = Case(
 	guild_id=2,
@@ -27,4 +27,4 @@ case_with_differents_name_and_act_and_target.update({"act": "45"})
 case_with_differents_all_comparable_attrs = (
 	case_with_differents_name_and_act_and_target.copy())
 case_with_differents_all_comparable_attrs.update({"d_in": [IDHolder(23),
-														   IDHolder(56)]})
+														IDHolder(56)]})

@@ -75,6 +75,14 @@ class DiscordObjectGroup(metaclass=abc.ABCMeta):
 	) -> Sequence[DiscordGuildObjects]:
 		raise NotImplementedError
 
+class DefaultObjectGroup(DiscordObjectGroup):
+
+	def extractData(
+		self,
+		d_id: Optional[str] = None
+	) -> Sequence[DiscordGuildObjects]:
+		return []
+
 class UserGroup(DiscordObjectGroup):
 	"""
 	The class implements access to `discord.Member <https://discordpy.\
@@ -115,7 +123,14 @@ class DBObjectGroup(metaclass=abc.ABCMeta):
 	The abstract class implements the database structures.
 	"""
 
-	FACTORY: DBObjectsGroupFactory
+	FACTORY: Type[DBObjectsGroupFactory]
+
+	def __init__(self):
+		"""
+		Implement by calling object.__setattr__ to avoid
+		the superclass __setattr__.
+		"""
+		raise NotImplementedError
 
 	@property
 	def TABLE_NAME(self) -> str:
@@ -165,7 +180,7 @@ class DBObjectGroup(metaclass=abc.ABCMeta):
 		try:
 			return self._internal_change_map
 		except AttributeError:
-			self._internal_change_map = {}
+			self._internal_change_map: Dict[str, bool] = {}
 			return self._internal_change_map
 
 	@_change_map.setter
@@ -199,11 +214,14 @@ class DBObjectGroup(metaclass=abc.ABCMeta):
 		else:
 			return False, (field, value)
 
-	def __eq__(self, other: DBObjectGroup) -> bool:
-		for _, (field, value) in other:
-			if not getattr(self, field) == value:
-				return False
-		return True
+	def __eq__(self, other: object) -> bool:
+		if isinstance(other, DBObjectGroup):
+			for _, (field, value) in other:
+				if not getattr(self, field) == value:
+					return False
+			return True
+		else:
+			return False
 
 class DBObjectsGroupFactory(metaclass=abc.ABCMeta):
 	"""
@@ -278,10 +296,10 @@ class LogTarget(DBObjectGroup):
 		self,
 		guild_id: int,
 		target: List[IDObjects],
-		act: int,
+		act: str,
 		d_in: List[IDObjects],
 		name: Union[str, None],
-		priority: int,
+		priority: Union[int, None],
 		output: Union[str, None],
 		other: Union[str, None]
 	) -> None:
@@ -303,13 +321,15 @@ class LogTarget(DBObjectGroup):
 			with other instances of :class:`LogTarget`.
 		"""
 		comparable_attrs: List[Any] = []
-		if self.target and self.d_in:
+		if self.target and self.d_in: # type: ignore[attr-defined]
 			objects_id: List[Any] = []
-			for discord_objects in (self.target + self.d_in):
+			for discord_objects in (self.target + # type: ignore[attr-defined]
+			self.d_in): # type: ignore[attr-defined]
 				objects_id.append(str(discord_objects.id))
 			comparable_attrs += objects_id
-			comparable_attrs.insert(len(self.target), self.act)
-			comparable_attrs.append(self.name)
+			comparable_attrs.insert(len(self.target), # type:ignore[attr-defined]
+				self.act) # type: ignore[attr-defined]
+			comparable_attrs.append(self.name) # type: ignore[attr-defined]
 		return comparable_attrs
 
 	def getCoincidenceTo(self, target: LogTarget) -> str:
@@ -353,8 +373,7 @@ async def updateDBRecord(
 			mid_part.append(f"{attr} = %s")
 			parameters.append(value)
 	query = (head_part + "\n" + mid_part[0] + " " + ", ".join(
-		mid_part[1:]) +
-				"\n" + end_part + ";")
+		mid_part[1:]) + "\n" + end_part + ";")
 	async with dbconn.cursor() as acur:
 		await acur.execute(sql(query), parameters)
 
@@ -377,7 +396,7 @@ async def findFromDB(
 	"""
 	result: List[DBObjectGroup] = []
 	factory = db_object_class.FACTORY
-	table_name: str = db_object_class.TABLE_NAME
+	table_name: str = db_object_class.TABLE_NAME # type: ignore[assignment]
 	head_query: str = f"SELECT * FROM {table_name}"
 	condition_query: List[str] = ["WHERE"]
 	parameters: List[Any] = []

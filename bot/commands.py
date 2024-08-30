@@ -9,19 +9,28 @@ import discord
 import psycopg
 from discord.ext import commands
 
+from ._types import AND, OR
 from .converters import (
 	SearchExpression,
 	ShortSearchExpression,
 	SpecialExpression
 )
-from .data import (ActGroup, LogTarget, LogTargetFactory, createDBRecord,
-						 findFromDB)
+from .data import (
+	ActGroup,
+	LogTarget,
+	LogTargetFactory,
+	createDBRecord,
+	findFromDB
+)
 from .embeds import ErrorEmbed, SuccessEmbed
-from .exceptions import UnhandlePartMessageSignal, UnsupportedLanguage
+from .exceptions import (
+	UnhandlePartMessageSignal,
+	UnsupportedLanguage,
+	UserException
+)
 from .flags import UserLogFlags
 from .main import BotConstructor
 from .utils import ContextProvider, Language, Translator, removeNesting
-from ._types import OR, AND
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +52,9 @@ class Settings(commands.Cog):
 		error: commands.CommandInvokeError # type: ignore[override]
 	) -> None:
 		embed_to_send: ErrorEmbed
-		if isinstance(error.original.__class__,
-		UnsupportedLanguage.__class__): # type: ignore[arg-type]
+		if (isinstance(error.original.__class__,
+		UnsupportedLanguage.__class__) and # type: ignore[arg-type]
+		isinstance(error.original, UserException)):
 			embed_to_send = ErrorEmbed().add_field(
 				name=self.translator("error"),
 				value=self.translator(error.original))
@@ -182,9 +192,9 @@ class UserLog(commands.Cog):
 		flags_as_dict = dict(flags)
 
 		log_target = LogTargetFactory(
-			target=target,
-			act=act,
-			d_in=d_in,
+			target=target, # type: ignore[arg-type]
+			act=act, # type: ignore[arg-type]
+			d_in=d_in, # type: ignore[arg-type]
 			guild_id=ctx.guild.id,
 			**flags_as_dict
 		).getInstance()
@@ -200,10 +210,12 @@ class UserLog(commands.Cog):
 			operators_dict_map={"0": AND, "1-4": OR}
 		)
 
-		if coincidence_log_targets:
-			coincidence_target = coincidence_log_targets[0]
+		if (coincidence_log_targets and
+		isinstance(coincidence_target := coincidence_log_targets[0],
+		LogTarget)):
 			await ctx.send(f"Цель с подобными параметрами уже существует: "
-			f"({coincidence_target.name}). Совпадающие элементы: "
+			f"({coincidence_target.name}). "  # type: ignore[attr-defined]
+			f"Совпадающие элементы: "
 			f"{log_target.getCoincidenceTo(coincidence_target)}")
 		else:
 			await createDBRecord(self.dbconn, log_target)

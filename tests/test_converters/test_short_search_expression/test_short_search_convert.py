@@ -3,7 +3,7 @@ import pytest
 from discord.ext import commands
 
 from bot.converters import ShortSearchExpression
-from bot.data import ChannelGroup, DiscordObjectGroup, UserGroup
+from bot.data import ChannelGroup, UserGroup
 from bot.exceptions import ShortSearchExpressionNotFound
 
 

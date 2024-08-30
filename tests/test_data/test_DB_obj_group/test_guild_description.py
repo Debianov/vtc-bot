@@ -1,11 +1,6 @@
-import pytest
-
 from bot.data import GuildDescriptionFactory
 from bot.utils import Language
 
-
-def test_GildDescriptionFabric():
-    instance = GuildDescriptionFactory(2, Language("ru")).getInstance()
 
 def test_GuildDescriptionChangeMap():
     instance = GuildDescriptionFactory(2, Language("ru")).getInstance()

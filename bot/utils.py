@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import builtins
 import gettext
 import logging
@@ -12,8 +14,7 @@ from typing import (
 	Tuple,
 	Type,
 	TypeVar,
-	Union,
-	Self
+	Union
 )
 
 import discord
@@ -404,8 +405,14 @@ class Language:
 	def getFullName(self) -> str:
 		return self._full_name
 
-	def __eq__(self, other: Self) -> bool:
-		return self._short_name == other._short_name or self._full_name == other._full_name
+	def __eq__(self, other: object) -> bool:
+		"""
+		Comparison with `Language` instances is only accessible.
+		"""
+		if hasattr(other, "_short_name") and hasattr(other, "_full_name"):
+			return (self._short_name == other._short_name or
+					self._full_name == other._full_name)
+		return False
 
 	def __hash__(self) -> int:
 		return hash(self._short_name)
@@ -456,7 +463,7 @@ class Translator:
 	async def installBindedLanguage(self, guild_id: int) -> None:
 		instance = await self._findGuildDescription(guild_id)
 		if instance:
-			lang_instance = instance.selected_language
+			lang_instance = instance.selected_language # type: ignore[attr-defined]
 		self.current_translator = self.translators[lang_instance]
 		self.current_translator.install()
 

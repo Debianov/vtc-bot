@@ -3,17 +3,23 @@ import pathlib
 import sys
 from typing import Any, AsyncGenerator, Dict, Generator, Iterable
 
-import discord.ext.test as dpytest
-import discord.ext.commands as commands
 import discord
+import discord.ext.commands as commands
+import discord.ext.test as dpytest
 import psycopg
 import pytest
 import pytest_asyncio
 
 from bot.exceptions import StartupBotError
-from bot.main import DBConnFactory, _setup_i18n, BotConstructor
-from bot.utils import DelayedExpressionReplacer, getEnvIfExist, isIterable, MockLocator, ContextProvider
 from bot.help import BotHelpCommand
+from bot.main import BotConstructor, DBConnFactory, _setup_i18n
+from bot.utils import (
+	ContextProvider,
+	DelayedExpressionReplacer,
+	MockLocator,
+	getEnvIfExist,
+	isIterable
+)
 
 root = pathlib.Path.cwd()
 

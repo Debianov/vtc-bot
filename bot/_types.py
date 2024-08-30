@@ -16,7 +16,7 @@ DiscordGuildObjects = Union[GuildChannel, Member]
 
 msgId = str
 
-OR = 0
-AND = 1
+OR: int = 0
+AND: int = 1
 
-operator = Union[OR, AND]
+operator = Union[OR, AND] # type: ignore[valid-type]

@@ -89,7 +89,7 @@ async def test_good_log_create_without_flags(
 		)
 		for row in await acur.fetchall():
 			name, output, priority, other = (flag_values :=
-											 [None, None, None, None])
+											[None, None, None, None])
 			assert row == (str(mockLocator.guild.id),
 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
 				*flag_values)
@@ -195,7 +195,7 @@ async def test_log_1_good_expression(
 		)
 		for row in await acur.fetchall():
 			name, output, priority, other = (flag_values :=
-											 [None, None, None, None])
+											[None, None, None, None])
 			assert row == (str(mockLocator.guild.id),
 				compared_objects["target"], '23', compared_objects["d_in"],
 				*flag_values)

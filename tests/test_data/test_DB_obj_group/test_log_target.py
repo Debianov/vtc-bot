@@ -1,6 +1,6 @@
 import pytest
 
-from bot.data import LogTargetFactory, LogTarget
+from bot.data import LogTarget, LogTargetFactory
 from bot.mock import IDHolder
 from bot.utils import Case
 
@@ -18,7 +18,7 @@ d_in = IDHolder(4)
 
 def test_getComparableAttrs():
 	test_instance = LogTarget(2, [target], "5", [d_in],
-							  "sdq", None, None, None)
+	"sdq", None, None, None)
 	comparable_attrs = test_instance._getComparableAttrs()
 	expected_comparable_attrs = ['8', '5', '4', 'sdq']
 	assert comparable_attrs == expected_comparable_attrs
@@ -29,11 +29,11 @@ def test_getComparableAttrs():
 		(base_case, case_without_differents, "1, 4, 3, 2, sudo"),
 		(base_case, case_with_differents_name, "1, 4, 3, 2"),
 		(base_case,
-		 case_with_differents_name_and_target, "4, 3, 2"),
+		case_with_differents_name_and_target, "4, 3, 2"),
 		(base_case,
-		 case_with_differents_name_and_act_and_target, "3, 2"),
+		case_with_differents_name_and_act_and_target, "3, 2"),
 		(base_case,
-		 case_with_differents_all_comparable_attrs, "")
+		case_with_differents_all_comparable_attrs, "")
 	]
 )
 def test_getCoincidenceTo(
@@ -48,14 +48,14 @@ def test_getCoincidenceTo(
 
 def test_LogTargetFabric():
 	instance = LogTargetFactory(2, [target], ["5"], [d_in],
-							  "sdq").getInstance()
+	"sdq").getInstance()
 	assert instance.priority is None
 	assert instance.output is None
 	assert instance.other is None
 
 def test_LogTargetChangeMap():
 	instance = LogTargetFactory(2, [target], ["5"], [d_in],
-							  "sdq").getInstance()
+	"sdq").getInstance()
 	instance.priority = -1
 	instance.output = -1
 	instance.target = [IDHolder(87)]
@@ -64,7 +64,7 @@ def test_LogTargetChangeMap():
 
 def test_LogTargetIteration():
 	instance = LogTargetFactory(2, [target], ["5"], [d_in],
-							   "sdq").getInstance()
+	"sdq").getInstance()
 	instance.priority = -1
 	instance.output = 56
 	instance.target = [IDHolder(87)]
