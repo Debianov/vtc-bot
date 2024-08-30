@@ -16,8 +16,8 @@ make html
 # Start autotests
 Create a secret file with the db name and username:
 ```sh
-POSTGRES_TEST_DBNAME=...
-POSTGRES_USER=...
+export POSTGRES_TEST_DBNAME=...
+export POSTGRES_USER=...
 ```
 And export it:
 ```sh
@@ -27,3 +27,21 @@ Then:
 ```sh
 poetry run pytest
 ```
+Note that the working directory (`pwd`) must be `/project/`. Any other path will cause an error when starting pytest. 
+# How to update locale
+`locale` directory contains all the msgids for translating to the current language.
+For updating to change a `.po` file in any dir of `locale`.
+Then run
+```sh
+msgfmt -o locale/current_language_dir/LC_MESSAGES/vtc-bot.mo locale/current_language_dir/LC_MESSAGES/vtc-bot.po"
+```
+# How to get the DB up
+Create a PostgreSQL database, then type
+```shell
+scripts/setupdb.sh <dbname> <postgresql_username>
+```
+If you want to update `schema.sql`, use
+```shell
+scripts/dumpdb.sh <dbname> <postgresql_username>
+```
+The script will automatically update `schema.sql`.

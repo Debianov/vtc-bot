@@ -1,10 +1,13 @@
 from typing import Any, Dict
 
+import discord
 import discord.ext.test as dpytest
 import psycopg
 import pytest
 from discord.ext import commands
 
+from bot.embeds import ErrorEmbed, SuccessEmbed
+from bot.exceptions import DuplicateInstanceError
 from bot.utils import Case, MockLocator, getDiscordMemberID
 
 from .bad_cases import (  # empty_case
@@ -56,15 +59,15 @@ async def test_good_log_create_with_flags(
 	mockLocator: MockLocator,
 	case: Case
 ) -> None:
-	await dpytest.message(case.getMessageStringWith("sudo log 1",
+	await dpytest.message(case.getMessageStringWith("log 1",
 		getDiscordMemberID))
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
-			"SELECT * FROM target"
+			"SELECT * FROM log_targets;"
 		)
 		for row in await acur.fetchall():
-			assert row == (row[0], str(mockLocator.guild.id),
+			assert row == (str(mockLocator.guild.id),
 				case["target"], case["act"], case["d_in"],
 				*list(case["flags"].values()))
 
@@ -74,7 +77,7 @@ async def test_good_log_create_without_flags(
 	mockLocator: MockLocator
 ) -> None:
 	parts = []
-	parts.append("sudo log 1")
+	parts.append("log 1")
 	parts.append(str(mockLocator.members[0].id))
 	parts.append("23")
 	parts.append(str(mockLocator.members[1].id))
@@ -82,17 +85,18 @@ async def test_good_log_create_without_flags(
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
-			"SELECT * FROM target"
+			"SELECT * FROM log_targets"
 		)
 		for row in await acur.fetchall():
-			flags_values = [None, 0, None, None]
-			assert row == (row[0], str(mockLocator.guild.id),
+			name, output, priority, other = (flag_values :=
+											[None, None, None, None])
+			assert row == (str(mockLocator.guild.id),
 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
-				*flags_values)
+				*flag_values)
 
 @pytest.mark.asyncio
 async def test_log_without_subcommand() -> None:
-	await dpytest.message("sudo log")
+	await dpytest.message("log")
 	assert dpytest.verify().message().content(
 		"Убедитесь, что вы указали подкоманду.")
 
@@ -111,43 +115,14 @@ async def test_log_without_require_params(
 	missing_params: str
 ) -> None:
 	with pytest.raises(commands.MissingRequiredArgument):
-		await dpytest.message(case.getMessageStringWith("sudo log 1"))
+		await dpytest.message(case.getMessageStringWith("log 1"))
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали "
 		f"все обязательные параметры. Не найденный параметр: "
 		f"{missing_params}")
 
-"""
-https://github.com/GREEN-Corporation/discord-bot/issues/79
-"""
-# @pytest.mark.doDelayedExpression
-# @pytest.mark.parametrize(
-# 	"case, unhandle_message_part",
-# 	[(case_without_explicit_flag, "barhatniy_tyagi")]
-# )
-# @pytest.mark.asyncio
-# async def test_log_bad_flag(
-# 	case: Case,
-# 	unhandle_message_part: str
-# ) -> None:
-# 	with pytest.raises(commands.CommandInvokeError):
-# 		await dpytest.message(case.getMessageStringWith("sudo log 1"))
-# 	assert dpytest.verify().message().content("Убедитесь, что вы "
-# 		"указали флаги явно, либо указали корректные данные."
-# 		f" Необработанная часть сообщения: {unhandle_message_part}")
-
-# @pytest.mark.asyncio
-# async def test_log_bad_parameters() -> None:
-# 	with pytest.raises(commands.CommandInvokeError):
-# 		incorrect_id = 1107606170375565372
-# 		await dpytest.message("sudo log 1 336420570449051649 43 "
-# 		f"{incorrect_id}")
-# 	assert dpytest.verify().message().content("Убедитесь, что вы указали "
-# 		"флаги явно, либо указали корректные данные. "
-# 		"Необработанная часть сообщения: 1107606170375565372")
-
 @pytest.mark.asyncio
 async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
-	await dpytest.message(f"sudo log 1 <@{mockLocator.members[0].id}> 23"
+	await dpytest.message(f"log 1 <@{mockLocator.members[0].id}> 23"
 		f" <@{mockLocator.members[1].id}>")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 
@@ -177,11 +152,11 @@ async def test_coincidence_targets(
 ) -> None:
 
 	await dpytest.message(case.getMessageStringWith(
-		"sudo log 1"))
+		"log 1"))
 	dpytest.get_message()
 
 	await dpytest.message(compared_case.getMessageStringWith(
-		"sudo log 1"))
+		"log 1"))
 	bot_reply = dpytest.get_message().content
 	coincidence_error_message_part = (f"({error_part['name']}). "
 		f"Совпадающие элементы: "
@@ -211,25 +186,23 @@ async def test_log_1_good_expression(
 	compared_objects: Case,
 	mockLocator: MockLocator,
 ) -> None:
-	await dpytest.message(f"sudo log 1 {case['target']} 23"
+	await dpytest.message(f"log 1 {case['target']} 23"
 		f" {case['d_in']}")
 	assert dpytest.verify().message().content("Цель добавлена успешно.")
 	async with db.cursor() as acur:
 		await acur.execute(
-			"SELECT * FROM target"
+			"SELECT * FROM log_targets"
 		)
 		for row in await acur.fetchall():
-			flags_values = [None, 0, None, None]
-			assert row == (row[0], str(mockLocator.guild.id),
+			name, output, priority, other = (flag_values :=
+											[None, None, None, None])
+			assert row == (str(mockLocator.guild.id),
 				compared_objects["target"], '23', compared_objects["d_in"],
-				*flags_values)
+				*flag_values)
 
 @pytest.mark.parametrize(
 	"exp1, exp2, missing_params",
 	[
-		# ( # improved in discord.py library
-		# 	"fger", "erert", "target",
-		# ),
 		(
 			"usr:*", "*df", "d_in"
 		)
@@ -242,37 +215,89 @@ async def test_log_1_bad_expression(
 	missing_params: str
 ) -> None:
 	with pytest.raises(commands.CommandError):
-		await dpytest.message(f"sudo log 1 {exp1} 23"
+		await dpytest.message(f"log 1 {exp1} 23"
 			f" {exp2}")
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
 		f" обязательные параметры. Не найденный параметр: {missing_params}")
 
-"""
-https://github.com/Debianov/vtc-bot/issues/72
-"""
-# @pytest.mark.asyncio
-# async def test_log_double_entry_call(
-# 	db: psycopg.AsyncConnection[Any],
-# 	mockLocator: MockLocator
-# ) -> None:
-# 	parts = []
-# 	parts.append("sudo log 1")
-# 	parts.append(str(mockLocator.members[0].id))
-# 	parts.append("23")
-# 	parts.append(str(mockLocator.members[1].id))
-# 	parts.extend(parts)
-# 	await dpytest.message(" ".join(parts))
-# 	assert dpytest.verify().message().content("Цель добавлена успешно.")
-# 	async with db.cursor() as acur:
-# 		await acur.execute(
-# 			"SELECT * FROM target"
-# 		)
-# 		row_count = 0
-# 		for row in await acur.fetchall():
-# 			row_count += 1
-# 			flags_values = [None, 0, None, None]
-# 			assert row == ("0", str(mockLocator.guild.id),
-# 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
-# 				*flags_values)
-# 		if row_count <= 1:
-# 			raise AssertionError
+@pytest.mark.parametrize(
+	"language",
+	["en", "english", "ru", "russian"]
+)
+@pytest.mark.asyncio
+async def test_good_set_language(
+	db: psycopg.AsyncConnection[Any],
+	language: str
+) -> None:
+	await dpytest.message(f"setup lang {language}")
+	reply_message = dpytest.get_message()
+	if language == "en" or language == "english":
+		en_reply_embed = SuccessEmbed().add_field(name="Success!",
+		value="Bot language set.")
+		assert reply_message.embeds[0] == en_reply_embed
+	else:
+		ru_reply_embed = SuccessEmbed().add_field(name="Успешно!",
+		value="Язык бота установлен.")
+		assert reply_message.embeds[0] == ru_reply_embed
+	assert len(reply_message.embeds) <= 1
+	await checkLanguageRecordInDB(db, language, reply_message)
+	await checkLanguageSwitchingBetweenRuAndEn(language)
+	await setEnglish()
+
+async def checkLanguageRecordInDB(
+	db: psycopg.AsyncConnection[Any],
+	language: str,
+	reply_message: discord.Message
+):
+	async with (db.cursor() as acur):
+		await acur.execute("SELECT * FROM guilds")
+		row_count = 0
+		for row in await acur.fetchall():
+			row_count += 1
+			if reply_message.guild:
+				assert row[:1] == (str(reply_message.guild.id),)
+			elif reply_message.author.id:
+				raise NotImplementedError
+			if len(language) == 2:
+				assert row[1].getFullName()
+				assert row[1].getShortName() == language
+			else:
+				assert row[1].getShortName()
+				assert row[1].getFullName() == language
+		assert row_count <= 1, DuplicateInstanceError
+
+async def checkLanguageSwitchingBetweenRuAndEn(language: str):
+	await dpytest.message("setup")
+	reply_message = dpytest.get_message()
+	assert len(reply_message.embeds) <= 1
+	if language in ["ru", "russian"]:
+		ru_reply_embed = ErrorEmbed().add_field(name="Ошибка!",
+		value="Эта команда может использоваться только с подкомандами.")
+		assert reply_message.embeds[0] == ru_reply_embed
+	elif language in ["en", "english"]:
+		en_reply_embed = ErrorEmbed().add_field(name="Error!",
+		value="This command can only be used with a subcommand.")
+		assert reply_message.embeds[0] == en_reply_embed
+
+async def setEnglish():
+	await dpytest.message("setup lang en")
+	reply_message = dpytest.get_message()
+	en_reply_embed = SuccessEmbed().add_field(name="Success!",
+		value="Bot language set.")
+	assert reply_message.embeds[0] == en_reply_embed
+
+@pytest.mark.parametrize(
+	"language",
+	["af", "hfghfgh"]
+)
+@pytest.mark.asyncio
+async def test_bad_set_language(
+	language: str
+) -> None:
+	with pytest.raises(commands.errors.CommandInvokeError):
+		await dpytest.message(f"setup lang {language}")
+	reply_message = dpytest.get_message()
+	reply_embed = ErrorEmbed().add_field(name="Error!",
+	value=f"{language}: the language isn't supported.")
+	assert len(reply_message.embeds) <= 1
+	assert reply_message.embeds[0] == reply_embed

@@ -13,3 +13,10 @@ class IDObjects(Protocol):
 	id: int
 
 DiscordGuildObjects = Union[GuildChannel, Member]
+
+msgId = str
+
+OR: int = 0
+AND: int = 1
+
+operator = Union[OR, AND] # type: ignore[valid-type]

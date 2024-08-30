@@ -5,7 +5,7 @@ import pytest
 from discord.ext import commands
 
 from bot.converters import SearchExpression
-from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
+from bot.data import ChannelGroup, DiscordObjectGroup, UserGroup
 from bot.exceptions import SearchExpressionNotFound
 from bot.utils import createDiscordObjectsGroupInstance
 
@@ -22,7 +22,7 @@ from bot.utils import createDiscordObjectsGroupInstance
 async def test_good_analyzeWildcard_with_one_group(
 	discordContext: commands.Context,
 	wildcard: str,
-	compare_data_groups: List[Type[DiscordObjectsGroup]]
+	compare_data_groups: List[Type[DiscordObjectGroup]]
 ) -> None:
 	compare_data_groups_instance = createDiscordObjectsGroupInstance(
 		compare_data_groups,

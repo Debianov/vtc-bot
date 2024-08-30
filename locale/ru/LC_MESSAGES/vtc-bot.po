@@ -1,0 +1,37 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-08-03 01:08+0800\n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: bot/commands.py:46
+msgid "make_sure_subcommand"
+msgstr "Эта команда может использоваться только с подкомандами."
+
+#: bot/commands.py:63
+msgid "success"
+msgstr "Успешно!"
+
+msgid "error"
+msgstr "Ошибка!"
+
+#: bot/commands.py:64
+msgid "success_bot_language_set"
+msgstr "Язык бота установлен."
+
+#: bot/exceptions.py:98
+msgid "language_isnt_supported"
+msgstr "язык не поддерживается."

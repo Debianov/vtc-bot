@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import builtins
+import gettext
 import logging
 import os
 from typing import (
@@ -16,9 +19,23 @@ from typing import (
 
 import discord
 import discord.abc
+import psycopg
 from discord.ext import commands
 
-from bot.data import DiscordObjectsGroup
+from bot.data import (
+	DiscordObjectGroup,
+	GuildDescription,
+	GuildDescriptionFactory,
+	createDBRecord,
+	findFromDB,
+	updateDBRecord
+)
+from bot.exceptions import (
+	AnyLangNameIsntDefined,
+	DuplicateInstanceError,
+	UnsupportedLanguage,
+	UserException
+)
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +96,10 @@ def removeNesting(instance: List[Any]) -> List[Any]:
 
 
 def createDiscordObjectsGroupInstance(
-	instance_list: List[Type[DiscordObjectsGroup]],
+	instance_list: List[Type[DiscordObjectGroup]],
 	discord_context: commands.Context
-) -> List[DiscordObjectsGroup]:
-	result: List[DiscordObjectsGroup] = []
+) -> List[DiscordObjectGroup]:
+	result: List[DiscordObjectGroup] = []
 	for instance in instance_list:
 		result.append(instance(discord_context))
 	return result
@@ -361,3 +378,156 @@ def getDiscordMemberID(obj: Any) -> Any:
 		logger.info("getDiscordMemberID, the id attr hasn't been found in "
 			f"{obj}. Skip.")
 		return obj
+
+class Language:
+	"""
+	Language instance for handling all language names that are specified in
+	startup files of the bot and also specified by users.
+	"""
+	def __init__(self, short_name: str = "", full_name: str = "") -> None:
+		"""
+		At least one parameter must be defined. Otherwise -
+		`AnyLangNameIsntDefined` will be thrown.
+		:param short_name: can't be specified, but should be later. For example,
+		"ru".
+		:param full_name: can't be specified, but should be later. For example,
+		"russian".
+		At least the one parameter should be specified.
+		"""
+		self._short_name = short_name
+		self._full_name = full_name
+		if not self._short_name and not self._full_name:
+			raise AnyLangNameIsntDefined
+
+	def getShortName(self) -> str:
+		return self._short_name
+
+	def getFullName(self) -> str:
+		return self._full_name
+
+	def __eq__(self, other: object) -> bool:
+		"""
+		Comparison with `Language` instances is only accessible.
+		"""
+		if hasattr(other, "_short_name") and hasattr(other, "_full_name"):
+			return (self._short_name == other._short_name or
+					self._full_name == other._full_name)
+		return False
+
+	def __hash__(self) -> int:
+		return hash(self._short_name)
+
+class Translator:
+
+	def __init__(
+		self,
+		domain: str,
+		path_to_locale: str,
+		supported_languages: List[Language],
+		dbconn: psycopg.AsyncConnection[Any]
+	):
+		self.domain = domain
+		self.path_to_locale = path_to_locale
+		self.supported_languages = supported_languages
+		self.translators: Dict[Language, gettext.GNUTranslations] = {}
+		self.current_translator: gettext.GNUTranslations
+		self._createLanguageGettext()
+		self.dbconn = dbconn
+
+	def __call__(self, maybeMsgId: Union[str, UserException]) -> Any:
+		if isinstance(maybeMsgId, UserException):
+			userException = maybeMsgId
+			msgId = userException.getMsgId()
+			pattern = userException.getUserDescriptionPattern()
+			for ind, elem in enumerate(pattern):
+				if elem == "place_for_translated":
+					pattern[ind] = self.current_translator.gettext(msgId)
+					break
+			return "".join(pattern)
+		else:
+			return self.current_translator.gettext(msgId := maybeMsgId)
+
+	def _createLanguageGettext(self) -> None:
+		for lang in self.supported_languages:
+			short_lang = lang.getShortName()
+			self.translators.update(
+				{
+					lang: gettext.translation
+						(
+							self.domain, self.path_to_locale,
+							languages=[short_lang]
+						)
+				}
+			)
+
+	async def installBindedLanguage(self, guild_id: int) -> None:
+		instance = await self._findGuildDescription(guild_id)
+		if instance:
+			lang_instance = instance.selected_language # type: ignore[attr-defined]
+		self.current_translator = self.translators[lang_instance]
+		self.current_translator.install()
+
+	async def bindLanguage(
+		self,
+		new_language: Language,
+		guild_id: int
+	) -> None:
+		"""
+		It writes `new_language` into the relative DB record.
+		"""
+		supported_language: Union[Language, None]
+		instance: Union[GuildDescription, None]
+		if short_name := new_language.getShortName():
+			if (supported_language :=
+			self.getSupportedLanguageByShortName(short_name)):
+				instance = await self._findGuildDescription(guild_id)
+			else:
+				raise UnsupportedLanguage(new_language)
+		elif full_name := new_language.getFullName():
+			if (supported_language :=
+			self.getSupportedLanguageByFullName(full_name)):
+				instance = await self._findGuildDescription(guild_id)
+			else:
+				raise UnsupportedLanguage(new_language)
+		if instance:
+			instance.selected_language = supported_language # type: ignore[assignment]
+			# supported_language is True or this code cannot be reached due to the
+			# exception will be thrown.
+			await updateDBRecord(self.dbconn, instance)
+		else:
+			fabric = GuildDescriptionFactory(guild_id,
+														supported_language) # type: ignore[arg-type]
+			await createDBRecord(self.dbconn, fabric.getInstance())
+
+	def getSupportedLanguageByShortName(self, short_name: str) -> Union[Language,
+	None]:
+		"""
+		Used for acquiring the `Language` instance with both `short_name` and
+		`full_name` attrs.
+		"""
+		for lang in self.supported_languages:
+			if short_name == lang.getShortName():
+				return lang
+		return None
+
+	def getSupportedLanguageByFullName(self, short_name: str) -> Union[Language,
+	None]:
+		"""
+		Used for acquiring the `Language` instance with both `short_name` and
+		`full_name` attrs.
+		"""
+		for lang in self.supported_languages:
+			if short_name == lang.getFullName():
+				return lang
+		return None
+
+	async def _findGuildDescription(self, guild_id: int) -> Union[
+		GuildDescription, None
+	]:
+		instances = await findFromDB(self.dbconn, GuildDescription,
+		guild_id=guild_id)
+		assert len(instances) <= 1, DuplicateInstanceError
+		if len(instances) == 1 and isinstance(instances[0], GuildDescription):
+			return instances[0]
+		else:
+			return None

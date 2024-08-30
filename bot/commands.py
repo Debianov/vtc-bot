@@ -9,19 +9,101 @@ import discord
 import psycopg
 from discord.ext import commands
 
-from .attrs import TargetGroupAttrs
+from ._types import AND, OR
 from .converters import (
 	SearchExpression,
 	ShortSearchExpression,
 	SpecialExpression
 )
-from .data import ActGroup, TargetGroup
-from .exceptions import UnhandlePartMessageSignal
+from .data import (
+	ActGroup,
+	LogTarget,
+	LogTargetFactory,
+	createDBRecord,
+	findFromDB
+)
+from .embeds import ErrorEmbed, SuccessEmbed
+from .exceptions import (
+	UnhandlePartMessageSignal,
+	UnsupportedLanguage,
+	UserException
+)
 from .flags import UserLogFlags
 from .main import BotConstructor
-from .utils import ContextProvider, removeNesting
+from .utils import ContextProvider, Language, Translator, removeNesting
 
 logger = logging.getLogger(__name__)
+
+class Settings(commands.Cog):
+
+	def __init__(
+		self,
+		bot: commands.Bot,
+		dbconn: psycopg.AsyncConnection[Any],
+		i18n: Translator
+	) -> None:
+		self.bot = bot
+		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
+		self.translator = i18n
+
+	async def cog_command_error(
+		self,
+		ctx: commands.Context,
+		error: commands.CommandInvokeError # type: ignore[override]
+	) -> None:
+		embed_to_send: ErrorEmbed
+		if (isinstance(error.original.__class__,
+		UnsupportedLanguage.__class__) and # type: ignore[arg-type]
+		isinstance(error.original, UserException)):
+			embed_to_send = ErrorEmbed().add_field(
+				name=self.translator("error"),
+				value=self.translator(error.original))
+		await ctx.send(embed=embed_to_send) if embed_to_send else None
+
+	@commands.group(invoke_without_command=True)
+	async def setup(
+		self,
+		ctx: commands.Context
+	):
+		"""
+		The command to manage bot settings.
+		"""
+		if ctx.guild:
+			await self.translator.installBindedLanguage(ctx.guild.id)
+		elif ctx.author.id:
+			raise NotImplementedError
+		embed = ErrorEmbed().add_field(name=self.translator("error"),
+		value=self.translator("make_sure_subcommand"))
+		await ctx.send(embed=embed)
+
+	@setup.command(aliases=["lang"]) # type: ignore[arg-type]
+	async def language(
+		self,
+		ctx: commands.Context,
+		lang_name: str,
+	) -> None:
+		"""
+		It sets a language the bot will use to communicate.
+
+		:param lang_name: Short or full language name ("en"/"english").
+		Currently only available is english and russian (command docs are
+		temporarily not translated).
+		"""
+		lang_instance: Language
+		if len(lang_name) == 2:
+			lang_instance = Language(short_name=lang_name)
+		else:
+			lang_instance = Language(full_name=lang_name)
+		if ctx.guild:
+			await self.translator.bindLanguage(lang_instance, ctx.guild.id)
+			await self.translator.installBindedLanguage(ctx.guild.id)
+		elif ctx.author.id:
+			raise NotImplementedError
+		embed_to_send = SuccessEmbed().add_field(
+			name=self.translator("success"),
+			value=self.translator("success_bot_language_set")
+		)
+		await ctx.send(embed=embed_to_send)
 
 class UserLog(commands.Cog):
 
@@ -29,17 +111,16 @@ class UserLog(commands.Cog):
 		self,
 		bot: commands.Bot,
 		dbconn: psycopg.AsyncConnection[Any],
-		context_provider: ContextProvider
+		context_provider: ContextProvider,
 	) -> None:
 		self.bot = bot
 		self.dbconn: psycopg.AsyncConnection[Any] = dbconn
 		self.context_provider: ContextProvider = context_provider
-		bot.on_command_error = self._on_command_error # type: ignore [method-assign]
 
-	async def _on_command_error(
+	async def cog_command_error(
 		self,
 		ctx: commands.Context,
-		error: commands.CommandError
+		error: Exception
 	) -> None:
 		"""
 		The function for handling discord.py and custom errors.
@@ -78,7 +159,7 @@ class UserLog(commands.Cog):
 		ctx: commands.Context,
 		target: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, discord.CategoryChannel, SearchExpression]],
-		act: Union[ShortSearchExpression[ActGroup], str],
+		act: Union[ShortSearchExpression[ActGroup], int],
 		d_in: commands.Greedy[Union[discord.TextChannel,
 			discord.Member, SearchExpression, SpecialExpression]],
 		*,
@@ -106,38 +187,42 @@ class UserLog(commands.Cog):
 		if not d_in: # if the last required parameter is omitted — the
 			# exceptation isn't raised, so we have to work around it.
 			raise commands.MissingRequiredArgument(ctx.
-				command.clean_params["d_in"]) # type: ignore [union-attr]
+				command.clean_params["d_in"]) # type: ignore[union-attr]
 
-		target_instance = TargetGroup(TargetGroupAttrs(
-			self.dbconn,
-			ctx.guild.id,
-			target=target,  # type: ignore [arg-type]
-			act=act,  # type: ignore [arg-type]
-			d_in=d_in  # type: ignore [arg-type]
-		)
+		flags_as_dict = dict(flags)
+
+		log_target = LogTargetFactory(
+			target=target, # type: ignore[arg-type]
+			act=act, # type: ignore[arg-type]
+			d_in=d_in, # type: ignore[arg-type]
+			guild_id=ctx.guild.id,
+			**flags_as_dict
+		).getInstance()
+
+		coincidence_log_targets = await findFromDB(
+			dbconn=self.dbconn,
+			db_object_class=LogTarget,
+			guild_id=ctx.guild.id,
+			target=target,
+			act=str(act),
+			d_in=d_in,
+			name=flags_as_dict["name"],
+			operators_dict_map={"0": AND, "1-4": OR}
 		)
 
-		for key in flags.get_flags().keys():
-			if flags.__dict__[key]:
-				setattr(target_instance, key, flags.__dict__[key])
-
-		coincidence_targets_instance = await target_instance.extractData(
-			target=target_instance.target,
-			act=target_instance.act,
-			d_in=target_instance.d_in,
-			name=target_instance.name
-		)
-		if coincidence_targets_instance:
-			coincidence_target = coincidence_targets_instance[0]
+		if (coincidence_log_targets and
+		isinstance(coincidence_target := coincidence_log_targets[0],
+		LogTarget)):
 			await ctx.send(f"Цель с подобными параметрами уже существует: "
-			f"{coincidence_target.dbrecord_id} ({coincidence_target.name})"
-			f". Совпадающие элементы: "
-			f"{target_instance.getCoincidenceTo(coincidence_target)}")
+			f"({coincidence_target.name}). "  # type: ignore[attr-defined]
+			f"Совпадающие элементы: "
+			f"{log_target.getCoincidenceTo(coincidence_target)}")
 		else:
-			await target_instance.writeData()
+			await createDBRecord(self.dbconn, log_target)
 			await ctx.send("Цель добавлена успешно.")
 
 async def setup(
-	bot: BotConstructor, # type: ignore [name-defined]
+	bot: BotConstructor, # type: ignore[name-defined]
 ) -> None:
 	await bot.add_cog(UserLog(bot, bot.dbconn, bot.context_provider))
+	await bot.add_cog(Settings(bot, bot.dbconn, bot.i18n_translator))

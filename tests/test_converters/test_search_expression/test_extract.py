@@ -4,7 +4,7 @@ import pytest
 from discord.ext import commands
 
 from bot.converters import SearchExpression
-from bot.data import ChannelGroup, DiscordObjectsGroup, UserGroup
+from bot.data import ChannelGroup, DiscordObjectGroup, UserGroup
 from bot.exceptions import SearchExpressionNotFound
 
 
@@ -21,7 +21,7 @@ from bot.exceptions import SearchExpressionNotFound
 async def test_good_extractDataGroup(
 	discordContext: commands.Context,
 	group_identif: str,
-	compare_data_group: List[Type[DiscordObjectsGroup]]
+	compare_data_group: List[Type[DiscordObjectGroup]]
 ) -> None:
 	a = SearchExpression()
 	a.ctx = discordContext

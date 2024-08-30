@@ -3,13 +3,13 @@ The module for parsing the user commands with converters that support
 discord.py.
 """
 import abc
-from typing import Generic, List, Type, TypeVar, Union
+from typing import Any, Generic, List, Type, TypeVar, Union
 
 import discord
 from discord.ext import commands
 
 from ._types import DiscordGuildObjects
-from .data import DataGroupAnalyzator, DiscordObjectsGroup
+from .data import DataGroupAnalyzator, DefaultObjectGroup, DiscordObjectGroup
 from .exceptions import (
 	SearchExpressionNotFound,
 	ShortSearchExpressionNotFound,
@@ -73,7 +73,7 @@ class SearchExpression(Expression):
 			SearchExpressionNotFound: raised when any expressions don't
 			match.
 		"""
-		self.data_groups: List[DiscordObjectsGroup] = DataGroupAnalyzator(
+		self.data_groups: List[DiscordObjectGroup] = DataGroupAnalyzator(
 			self.ctx, self.group_identif).analyze()
 		if not self.data_groups:
 			raise SearchExpressionNotFound(self.argument)
@@ -98,16 +98,16 @@ class ShortSearchExpression(Expression, Generic[T]):
 		\* — passes all objects.
 	"""
 
-	data_group: Type[DiscordObjectsGroup] = DiscordObjectsGroup
+	data_group = DefaultObjectGroup
 
 	@classmethod
 	def __class_getitem__(
 		cls,
-		default_data_group: Type[DiscordObjectsGroup] = DiscordObjectsGroup,
+		default_data_group: Type[Any] = DefaultObjectGroup,
 	) -> Type['ShortSearchExpression']:
 		"""
 		Args:
-			default_data_group (DiscordObjectsGroup): the :class:`DataGroup`
+			default_data_group (DiscordObjectGroup): the :class:`DataGroup`
 			instance that's used next.
 		"""
 		cls.data_group = default_data_group

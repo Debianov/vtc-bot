@@ -2,18 +2,18 @@ import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
 
-from bot.embeds import BotEmbed
+from bot.embeds import BaseEmbed
 
 
 @pytest.mark.asyncio
 async def test_main_help_page() -> None:
-	await dpytest.message("sudo help")
+	await dpytest.message("help")
 	assert dpytest.verify().message()
 
 @pytest.mark.asyncio
 async def test_commands_help_page(bot: commands.Bot) -> None:
 	for command in bot.walk_commands():
-		await dpytest.message(f"sudo help {command.qualified_name}")
+		await dpytest.message(f"help {command.qualified_name}")
 		assert dpytest.verify().message()
 
 @pytest.mark.parametrize(
@@ -27,8 +27,8 @@ async def test_commands_help_page(bot: commands.Bot) -> None:
 async def test_bad_commands_help_page(
 	command_arg: str
 ) -> None:
-	await dpytest.message(f"sudo help {command_arg}")
-	check_embed = BotEmbed(title="Documentation")
+	await dpytest.message(f"help {command_arg}")
+	check_embed = BaseEmbed(title="Documentation")
 	check_embed.add_field(
 		name="Error",
 		value="The command wasn't found."

@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  POSTGRES_HOST: localhost
+  POSTGRES_DB: postgres
+  POSTGRES_USER: postgres
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,7 +20,7 @@ jobs:
         env:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432/tcp
         options: >-
@@ -45,12 +50,12 @@ jobs:
         run: poetry run flake8
       - name: Run mypy
         run: poetry run mypy .
-      - name: Run tests        
+      - name: Create tables of schema.sql
         env:
-          POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_TEST_DBNAME: postgres
-          POSTGRES_USER: postgres
+        run: poetry run psql --set=ON_ERROR_STOP=1 --host=${{ env.POSTGRES_HOST }} --port=${{ env.POSTGRES_PORT }} --username=${{ env.POSTGRES_USER }} --dbname=${{ env.POSTGRES_DB }}  --file=schema.sql --echo-errors
+      - name: Run tests
+        env:
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
         run: |
           poetry run pytest

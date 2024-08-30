@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.2
--- Dumped by pg_dump version 15.2
+-- Dumped from database version 16.3
+-- Dumped by pg_dump version 16.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -16,18 +16,27 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-DROP TABLE IF EXISTS public.target;
+DROP TABLE IF EXISTS public.log_targets;
+DROP TABLE IF EXISTS public.guilds;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: target; Type: TABLE; Schema: public; Owner: -
+-- Name: guilds; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.target (
-    id bigint GENERATED ALWAYS AS IDENTITY,
-    context_id bigint,
+CREATE TABLE public.guilds (
+    guild_id bigint,
+    selected_language text
+);
+
+--
+-- Name: log_targets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.log_targets (
+    guild_id bigint,
     target bigint[],
     act text,
     d_in bigint[],

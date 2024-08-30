@@ -6,7 +6,7 @@ from typing import List, Mapping, Optional
 
 from discord.ext import commands
 
-from .embeds import BotEmbed
+from .embeds import BaseEmbed
 
 
 class BotHelpCommand(commands.HelpCommand):
@@ -16,7 +16,7 @@ class BotHelpCommand(commands.HelpCommand):
 		mapping: Mapping[Optional[commands.Cog],
 		List[commands.Command]]
 	) -> None:
-		embed = BotEmbed(title="Documentation")
+		embed = BaseEmbed(title="Documentation")
 		embed.add_field(
 			name="Welcome to the vtc-bot documentation!",
 			value="Use :keyboard:help <command> to get information about the "
@@ -33,7 +33,7 @@ class BotHelpCommand(commands.HelpCommand):
 	# 	)
 
 	async def send_group_help(self, group: commands.Group) -> None:
-		embed = BotEmbed(title="Documentation")
+		embed = BaseEmbed(title="Documentation")
 		embed.add_field(
 			name="Description",
 			value=group.help if group.help else "Missing."
@@ -57,7 +57,7 @@ class BotHelpCommand(commands.HelpCommand):
 		await channel.send(embed=embed)
 
 	async def send_command_help(self, command: commands.Command) -> None:
-		embed = BotEmbed(title="Documentation")
+		embed = BaseEmbed(title="Documentation")
 		value: str = ""
 		if command.name == "help":
 			value = "The command returns this message."
@@ -71,7 +71,7 @@ class BotHelpCommand(commands.HelpCommand):
 		await channel.send(embed=embed)
 
 	async def send_error_message(self, error: str) -> None:
-		embed = BotEmbed(title="Documentation")
+		embed = BaseEmbed(title="Documentation")
 		embed.add_field(
 			name="Error",
 			value="The command wasn't found."
