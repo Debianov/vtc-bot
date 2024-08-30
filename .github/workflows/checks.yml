@@ -55,5 +55,7 @@ jobs:
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
         run: poetry run psql --set=ON_ERROR_STOP=1 --host=${{ env.POSTGRES_HOST }} --port=${{ env.POSTGRES_PORT }} --username=${{ env.POSTGRES_USER }} --dbname=${{ env.POSTGRES_DB }}  --file=schema.sql --echo-errors
       - name: Run tests
+        env:
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
         run: |
           poetry run pytest
