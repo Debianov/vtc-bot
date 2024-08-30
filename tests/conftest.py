@@ -88,18 +88,17 @@ async def setupDB() -> psycopg.AsyncConnection[Any]:
 	if github_action_envs := getEnvIfExist(
 		"POSTGRES_HOST",
 		"POSTGRES_PORT",
-		"POSTGRES_TEST_DBNAME",
+		"POSTGRES_DB",
 		"POSTGRES_USER"
 	):
 		future_dbconn = await DBConnFactory(
 			host=github_action_envs[0],
 			port=github_action_envs[1],
-			password=github_action_envs[2],
-			dbname=github_action_envs[3],
-			user=github_action_envs[4]
+			dbname=github_action_envs[2],
+			user=github_action_envs[3]
 		)
 	elif envs := getEnvIfExist(
-		"POSTGRES_TEST_DBNAME",
+		"POSTGRES_DB",
 		"POSTGRES_USER"
 	):
 		future_dbconn = await DBConnFactory(

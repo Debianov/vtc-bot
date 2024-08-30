@@ -206,7 +206,7 @@ async def DBConnFactory(**kwargs: str) -> psycopg.AsyncConnection[Any]:
 def runForPoetry() -> None:
 	_setup_logging()
 	loop = asyncio.get_event_loop()
-	if extract_envs := getEnvIfExist("POSTGRES_DBNAME", "POSTGRES_USER"):
+	if extract_envs := getEnvIfExist("POSTGRES_DB", "POSTGRES_USER"):
 		dbconn = loop.run_until_complete(DBConnFactory(
 			dbname=extract_envs[0],
 			user=extract_envs[1]
