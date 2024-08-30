@@ -20,8 +20,8 @@ jobs:
         image: postgres
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: postgres
-          POSTGRES_USER: postgres
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
         ports:
           - 5432/tcp
         options: >-
@@ -52,7 +52,7 @@ jobs:
       - name: Run mypy
         run: poetry run mypy .
       - name: Create tables of schema.sql
-        run: poetry run psql --set=ON_ERROR_STOP=1 --host=${{ env.POSTGRES_HOST }} --port=${{ env.POSTGRES_PORT }} --username=${{ env.POSTGRES_USER }} --dbname=${{ env.POSTGRES_TEST_DBNAME }}  --file=schema.sql --echo-errors
+        run: poetry run psql --set=ON_ERROR_STOP=1 --host=${{ env.POSTGRES_HOST }} --port=${{ env.POSTGRES_PORT }} --username=${{ env.POSTGRES_USER }} --dbname=${{ env.POSTGRES_DB }}  --file=schema.sql --echo-errors
       - name: Run tests
         run: |
           poetry run pytest
