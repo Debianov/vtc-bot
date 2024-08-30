@@ -20,7 +20,7 @@ jobs:
       postgres:
         image: postgres
         ports:
-          - ${{ env.POSTGRES_PORT }}/tcp
+          - 5432/tcp
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
