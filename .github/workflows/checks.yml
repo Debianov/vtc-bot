@@ -9,7 +9,6 @@ on:
 env:
   POSTGRES_DB: postgres
   POSTGRES_USER: postgres
-  POSTGRES_HOST_AUTH_METHOD: trust
   POSTGRES_HOST: localhost
   POSTGRES_PORT: 5432
 
@@ -20,9 +19,9 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_HOST_AUTH_METHOD: ${{ env.POSTGRES_HOST_AUTH_METHOD }}
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
         ports:
           - 5432/tcp
         options: >-
