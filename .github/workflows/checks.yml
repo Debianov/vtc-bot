@@ -45,6 +45,8 @@ jobs:
         run: poetry run flake8
       - name: Run mypy
         run: poetry run mypy .
+      - name: Create tables of schema.sql
+        run: poetry run scripts/setupdb.sh postgres postgres
       - name: Run tests        
         env:
           POSTGRES_HOST: localhost
