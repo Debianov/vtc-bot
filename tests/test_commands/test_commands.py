@@ -120,35 +120,6 @@ async def test_log_without_require_params(
 		f"все обязательные параметры. Не найденный параметр: "
 		f"{missing_params}")
 
-"""
-https://github.com/GREEN-Corporation/discord-bot/issues/79
-"""
-# @pytest.mark.doDelayedExpression
-# @pytest.mark.parametrize(
-# 	"case, unhandle_message_part",
-# 	[(case_without_explicit_flag, "barhatniy_tyagi")]
-# )
-# @pytest.mark.asyncio
-# async def test_log_bad_flag(
-# 	case: Case,
-# 	unhandle_message_part: str
-# ) -> None:
-# 	with pytest.raises(commands.CommandInvokeError):
-# 		await dpytest.message(case.getMessageStringWith("log 1"))
-# 	assert dpytest.verify().message().content("Убедитесь, что вы "
-# 		"указали флаги явно, либо указали корректные данные."
-# 		f" Необработанная часть сообщения: {unhandle_message_part}")
-
-# @pytest.mark.asyncio
-# async def test_log_bad_parameters() -> None:
-# 	with pytest.raises(commands.CommandInvokeError):
-# 		incorrect_id = 1107606170375565372
-# 		await dpytest.message("log 1 336420570449051649 43 "
-# 		f"{incorrect_id}")
-# 	assert dpytest.verify().message().content("Убедитесь, что вы указали "
-# 		"флаги явно, либо указали корректные данные. "
-# 		"Необработанная часть сообщения: 1107606170375565372")
-
 @pytest.mark.asyncio
 async def test_log_1_with_mention(mockLocator: MockLocator) -> None:
 	await dpytest.message(f"log 1 <@{mockLocator.members[0].id}> 23"
@@ -232,9 +203,6 @@ async def test_log_1_good_expression(
 @pytest.mark.parametrize(
 	"exp1, exp2, missing_params",
 	[
-		# ( # improved in discord.py library
-		# 	"fger", "erert", "target",
-		# ),
 		(
 			"usr:*", "*df", "d_in"
 		)
@@ -251,36 +219,6 @@ async def test_log_1_bad_expression(
 			f" {exp2}")
 	assert dpytest.verify().message().content(f"Убедитесь, что вы указали все"
 		f" обязательные параметры. Не найденный параметр: {missing_params}")
-
-"""
-https://github.com/Debianov/vtc-bot/issues/72
-"""
-# @pytest.mark.asyncio
-# async def test_log_double_entry_call(
-# 	db: psycopg.AsyncConnection[Any],
-# 	mockLocator: MockLocator
-# ) -> None:
-# 	parts = []
-# 	parts.append("log 1")
-# 	parts.append(str(mockLocator.members[0].id))
-# 	parts.append("23")
-# 	parts.append(str(mockLocator.members[1].id))
-# 	parts.extend(parts)
-# 	await dpytest.message(" ".join(parts))
-# 	assert dpytest.verify().message().content("Цель добавлена успешно.")
-# 	async with db.cursor() as acur:
-# 		await acur.execute(
-# 			"SELECT * FROM target"
-# 		)
-# 		row_count = 0
-# 		for row in await acur.fetchall():
-# 			row_count += 1
-# 			flags_values = [None, 0, None, None]
-# 			assert row == ("0", str(mockLocator.guild.id),
-# 				[mockLocator.members[0]], '23', [mockLocator.members[1]],
-# 				*flags_values)
-# 		if row_count <= 1:
-# 			raise AssertionError
 
 @pytest.mark.parametrize(
 	"language",
@@ -354,7 +292,6 @@ async def setEnglish():
 )
 @pytest.mark.asyncio
 async def test_bad_set_language(
-	db: psycopg.AsyncConnection[Any],
 	language: str
 ) -> None:
 	with pytest.raises(commands.errors.CommandInvokeError):
