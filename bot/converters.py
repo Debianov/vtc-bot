@@ -3,6 +3,7 @@ The module for parsing the user commands with converters that support
 discord.py.
 """
 import abc
+import datetime
 from typing import Any, Generic, List, Type, TypeVar, Union
 
 import discord
@@ -13,7 +14,8 @@ from .data import DataGroupAnalyzator, DefaultObjectGroup, DiscordObjectGroup
 from .exceptions import (
 	SearchExpressionNotFound,
 	ShortSearchExpressionNotFound,
-	SpecialExpressionNotFound
+	SpecialExpressionNotFound,
+	TimeNotFound
 )
 
 T = TypeVar("T")
@@ -26,13 +28,6 @@ class Expression(commands.Converter, metaclass=abc.ABCMeta):
 
 	@abc.abstractmethod
 	async def convert(self, ctx: commands.Context, argument: str):
-		raise NotImplementedError()
-
-	@abc.abstractmethod
-	def _checkExpression(self, maybe_expression: str):
-		"""
-		Checks the syntax expression.
-		"""
 		raise NotImplementedError()
 
 class SearchExpression(Expression):
@@ -149,3 +144,26 @@ class SpecialExpression(Expression):
 	def _checkExpression(self, maybe_expression: str) -> None:
 		if maybe_expression not in ["df", "default"]:
 			raise SpecialExpressionNotFound(maybe_expression)
+
+class TimeExpression(Expression):
+	"""
+	Examples:
+		10m, 12.12.20, 10:43, 12.12.20 10:43
+	"""
+
+	async def convert(self, ctx: commands.Context, argument: str) -> datetime.datetime:
+		return self._returnIfValid(argument)
+
+	def _returnIfValid(self, maybe_time: str) -> None:
+		supported_formats = {
+			"datetime": "%Y-%m-%d %H:%M:%S",
+			"date": "%Y-%m-%d",
+			"time": "%H:%M:%S"
+		}
+
+		for key, fmt in supported_formats.items():
+			try:
+				parsed_date = datetime.strptime(maybe_time, fmt)
+				return parsed_date
+			except ValueError:
+				raise TimeNotFound(maybe_time)

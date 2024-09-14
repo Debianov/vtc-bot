@@ -51,6 +51,13 @@ class SpecialExpressionNotFound(ExpressionNotFound):
 	def __init__(self, argument: str) -> None:
 		self.argument = "Special expression \"{}\" not found".format(argument)
 
+
+class TimeNotFound(ExpressionNotFound):
+
+	def __init__(self, argument: str) -> None:
+		self.argument = "Time expression \"{}\" not found".format(argument)
+
+
 class UnhandlePartMessageSignal(Exception):
 
 	def __init__(self, argument: str) -> None:

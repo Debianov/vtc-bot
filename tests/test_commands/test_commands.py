@@ -1,4 +1,5 @@
-from typing import Any, Dict
+import asyncio
+from typing import Any, Dict, Callable
 
 import discord
 import discord.ext.test as dpytest
@@ -106,7 +107,6 @@ async def test_log_without_subcommand() -> None:
 	[
 		(case_without_two_required_params, "act"),
 		(case_without_one_required_params, "d_in"),
-		# (empty_case, "target") # TODO improved in discord.py
 	]
 )
 @pytest.mark.asyncio
@@ -301,3 +301,71 @@ async def test_bad_set_language(
 	value=f"{language}: the language isn't supported.")
 	assert len(reply_message.embeds) <= 1
 	assert reply_message.embeds[0] == reply_embed
+
+@pytest.mark.asyncio
+async def test_create_convoy() -> None:
+	await dpytest.message('convoy create Belgrade Warsawa 01.08.24 12:00 (MSK) -rest Метка 1 '
+								 '-map Baltic+Iberia+Южный Регион v12.2 -cargo Локомотив Vossloh G6 -extra_info RP-'
+								 'режим через вкладку "Конвой" в ETS (отдельный сервер).')
+	reply_message = dpytest.get_message()
+	reply_embed = SuccessEmbed(title="Convoy").add_field(name="Description", value="Location: "
+	"Belgrade\nDestination: Warsawa\nTime: 01.08.24 12:00 (MSK)")
+	reply_embed = reply_embed.add_field(name="Information", value="Rest: Метка 1\nDLC maps: Baltic+Iberia+Южный регион "
+	"v12.2\nCargo: Локомотив Vossloh G6")
+	reply_embed.add_field(name="Extra information", value='RP-режим через вкладку "Конвой" в '
+	'ETS (отдельный сервер).')
+	assert reply_message.embeds[0] == reply_embed
+	assert len(reply_message.embeds) <= 1, IndexError
+
+def check_at_positive_vote_result(reply_message: discord.Message, reply_embed: discord.Embed) -> None:
+	reply_embed_with_vote_result = reply_embed.add_field(name="Vote result",
+	value="The vote is over. Convoy accepted.")
+	assert reply_message.embeds[0] == reply_embed_with_vote_result
+
+
+def check_at_negative_vote_result(reply_message: discord.Message, reply_embed: discord.Embed) -> None:
+	reply_embed_with_vote_result = reply_embed.add_field(name="Vote result",
+	value="The vote is over. Convoy rejected.")
+	assert reply_message.embeds[0] == reply_embed_with_vote_result
+
+
+def check_at_neutral_vote_result(reply_message: discord.Message, reply_embed: discord.Embed) -> None:
+	reply_embed_with_vote_result = reply_embed.add_field(name="Vote result",
+	value="The vote is over. Convoy rejected due to neutral vote.")
+	assert reply_message.embeds[0] == reply_embed_with_vote_result
+
+@pytest.mark.parametrize(
+	"reaction, check_func",
+	[
+		(":white_check_mark:", check_at_positive_vote_result),
+		(":x:", check_at_negative_vote_result),
+		(":five:", check_at_neutral_vote_result)
+	]
+)
+@pytest.mark.asyncio
+async def test_create_convoy_with_vote(
+		reaction: str,
+		check_func: Callable[[discord.Message, discord.Embed], None]
+) -> None:
+	await dpytest.message('convoy create Belgrade Warsawa 01.08.24 12:00 (MSK) -rest Метка 1 '
+								 '-map Baltic+Iberia+Южный Регион v12.2 -cargo Локомотив Vossloh G6 -extra_info RP-'
+								 'режим через вкладку "Конвой" в ETS (отдельный сервер). -vote 10s')
+	reply_message = dpytest.get_message()
+	reply_embed = SuccessEmbed(title="Convoy vote").add_field(name="Description", value="Location: "
+																		"Belgrade\nDestination: Warsawa\nTime: 01.08.24 12:00 (MSK)")
+	reply_embed = reply_embed.add_field(name="Information", value="Rest: Метка 1\nDLC maps: Baltic+Iberia+Южный регион "
+																		"v12.2\nCargo: Локомотив Vossloh G6")
+	reply_embed = reply_embed.add_field(name="Extra information", value='RP-режим через вкладку "Конвой" в '
+																		'ETS (отдельный сервер).')
+	reply_embed_with_vote_info = reply_embed.add_field(name="Vote information", value="Vote within 5m.\nDo you accept "
+																		"with the convoy? :white_check_mark: - yes, :x: - no")
+	assert reply_message.embeds[0] == reply_embed_with_vote_info
+	assert len(reply_message.embeds) <= 1, IndexError
+	await dpytest.add_reaction(reply_message, reaction)
+	await asyncio.sleep(10)
+	reply
+	check_func(reply_message, reply_embed)
+	assert reply_message.reactions == []
+
+async def test_create_convoy_without_required_params():
+	pass

@@ -8,6 +8,7 @@ from typing import Optional, Union
 
 from discord.ext import commands
 
+from bot.converters import Time
 
 class UserLogFlags( # type: ignore
 	commands.FlagConverter,
@@ -18,3 +19,14 @@ class UserLogFlags( # type: ignore
 	output: Optional[Union[str]]
 	priority: Optional[int]
 	other: Optional[Union[str]]
+
+class CreatingConvoyFlags(
+	commands.FlagConverter,
+	prefix="-",
+	delimiter=' '
+):
+	rest: str
+	map: str
+	cargo: str
+	extra_info: str
+	vote: Time
