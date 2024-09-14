@@ -30,10 +30,17 @@ poetry run pytest
 Note that the working directory (`pwd`) must be `/project/`. Any other path will cause an error when starting pytest. 
 # How to update locale
 `locale` directory contains all the msgids for translating to the current language.
-For updating to change a `.po` file in any dir of `locale`.
-Then run
+
+If you want to add new `msgid`s from a code file, use:
+```shell
+xgettext -d base -o locale/<any name>.pot bot/<name>.py --keyword=translator
+```
+Then insert new `msgid`s from the `.pot` file in the `.po` file and write theirs translations in `msgstr`.
+Deleted all `.pot` files.
+
+When you are finished, start generating a `.mo` file for each modified `.po` file:
 ```sh
-msgfmt -o locale/current_language_dir/LC_MESSAGES/vtc-bot.mo locale/current_language_dir/LC_MESSAGES/vtc-bot.po"
+msgfmt -o locale/<current_language_dir>/LC_MESSAGES/vtc-bot.mo locale/<current_language_dir>/LC_MESSAGES/vtc-bot.po"
 ```
 # How to get the DB up
 Create a PostgreSQL database, then type
