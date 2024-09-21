@@ -38,9 +38,12 @@ def _setup_i18n(
 	dbconn: psycopg.AsyncConnection[Any],
 	path_to_locale: str = "locale"
 ) -> Translator:
-	supported_languages = [Language("en", "english"), Language("ru", "russian")]
+	supported_languages = [Language("en", "english"),
+						   Language("ru", "russian")]
 	translator = Translator("vtc-bot", path_to_locale,
-							supported_languages, dbconn)
+							supported_languages, dbconn,
+							Language("en", "english")
+							)
 	logging.info("i18n successfully inits.")
 	return translator
 
@@ -227,6 +230,3 @@ def runForPoetry() -> None:
 		i18n_translator=i18n_translator
 	)
 	VCSBot.run(os.getenv("DISCORD_API_TOKEN"))
-
-if __name__ == "__main__":
-	runForPoetry()

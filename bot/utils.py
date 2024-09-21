@@ -424,15 +424,17 @@ class Translator:
 		domain: str,
 		path_to_locale: str,
 		supported_languages: List[Language],
-		dbconn: psycopg.AsyncConnection[Any]
+		dbconn: psycopg.AsyncConnection[Any],
+		default_language: Language
 	):
 		self.domain = domain
 		self.path_to_locale = path_to_locale
 		self.supported_languages = supported_languages
 		self.translators: Dict[Language, gettext.GNUTranslations] = {}
 		self._createLanguageGettext()
-		self.current_translator = self.translators[self.supported_languages[0]]
+		self.current_translator = None
 		self.dbconn = dbconn
+		self.default_language = default_language
 
 	def __call__(self, maybeMsgId: Union[str, UserException]) -> Any:
 		if isinstance(maybeMsgId, UserException):
@@ -464,14 +466,18 @@ class Translator:
 		"""
 		Calling this function guarantees that the language has been set for
 		the guild.
+		If there's no matching records in the `guild` table , a `default_
+		language` translator will be set.
 		"""
-		instance = await self._findGuildDescription(guild_id)
-		if instance:
-			lang_instance = instance.selected_language # type: ignore[attr-defined]
+		guild_desc_record = await self._findGuildDescription(guild_id)
+		lang_instance = None
+		if guild_desc_record:
+			lang_instance = guild_desc_record.selected_language # type: ignore[attr-defined]
 		else:
-			logger.debug(f"No language found for guild {guild_id}.")
-			return
-		self.current_translator = self.translators[lang_instance]
+			logger.debug(f"No language found for guild {guild_id}. Installed"
+						 f"default.")
+		self.current_translator = self.translators[lang_instance or
+												self.default_language]
 		self.current_translator.install()
 
 	async def bindLanguage(
