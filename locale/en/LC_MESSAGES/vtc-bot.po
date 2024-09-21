@@ -35,3 +35,58 @@ msgstr "Bot language set."
 #: bot/exceptions.py:98
 msgid "language_isnt_supported"
 msgstr "the language isn't supported."
+
+msgid "Convoy"
+msgstr "Convoy"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Location: "
+msgstr "Location: "
+
+msgid "\nDestination: "
+msgstr "\nDestination: "
+
+msgid "\nTime: "
+msgstr "\nTime: "
+
+msgid "Rest: "
+msgstr "Rest: "
+
+msgid "DLC maps: "
+msgstr "DLC maps: "
+
+msgid "Cargo: "
+msgstr "Cargo: "
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Extra information"
+msgstr "Extra information"
+
+msgid "Vote information"
+msgstr "Vote information"
+
+msgid "Vote within"
+msgstr "Vote within"
+
+msgid "accept_with_convoy"
+msgstr "\nDo you accept with the convoy? :white_check_mark: - yes, :x: - no"
+
+#: bot/commands.py:315
+msgid "convoy_accepted"
+msgstr "The vote is over. Convoy accepted."
+
+#: bot/commands.py:318
+msgid "convoy_rejected_neutral"
+msgstr "The vote is over. Convoy rejected due to neutral vote."
+
+#: bot/commands.py:321
+msgid "convoy_rejected"
+msgstr "The vote is over. Convoy rejected."
+
+#: bot/commands.py:325
+msgid "vote_result"
+msgstr "Vote result"

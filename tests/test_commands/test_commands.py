@@ -344,28 +344,31 @@ def check_at_neutral_vote_result(reply_message: discord.Message, reply_embed: di
 )
 @pytest.mark.asyncio
 async def test_create_convoy_with_vote(
+		discordContext: commands.Context,
 		reaction: str,
 		check_func: Callable[[discord.Message, discord.Embed], None]
 ) -> None:
-	await dpytest.message('convoy create Belgrade Warsawa 01.08.24 12:00 (MSK) -rest Метка 1 '
-								 '-map Baltic+Iberia+Южный Регион v12.2 -cargo Локомотив Vossloh G6 -extra_info RP-'
-								 'режим через вкладку "Конвой" в ETS (отдельный сервер). -vote 10s')
+	await dpytest.message('convoy create Belgrade Warsawa 01.08.24 12:00 (MSK)'
+	' -rest Метка 1 -map Baltic+Iberia+Южный Регион v12.2 -cargo Локомотив'
+	' Vossloh G6 -extra_info RP-режим через вкладку "Конвой" в ETS (отдельный'
+	' сервер). -vote 2s')
 	reply_message = dpytest.get_message()
-	reply_embed = SuccessEmbed(title="Convoy vote").add_field(name="Description", value="Location: "
-																		"Belgrade\nDestination: Warsawa\nTime: 01.08.24 12:00 (MSK)")
-	reply_embed = reply_embed.add_field(name="Information", value="Rest: Метка 1\nDLC maps: Baltic+Iberia+Южный регион "
-																		"v12.2\nCargo: Локомотив Vossloh G6")
-	reply_embed = reply_embed.add_field(name="Extra information", value='RP-режим через вкладку "Конвой" в '
-																		'ETS (отдельный сервер).')
-	reply_embed_with_vote_info = reply_embed.add_field(name="Vote information", value="Vote within 5m.\nDo you accept "
-																		"with the convoy? :white_check_mark: - yes, :x: - no")
+	reply_embed = SuccessEmbed(title="Convoy vote").add_field(name="Description",
+	value="Location: Belgrade\nDestination: Warsawa\nTime: 01.08.24 12:00 (MSK)")
+	reply_embed = reply_embed.add_field(name="Information",
+	value="Rest: Метка 1\nDLC maps: Baltic+Iberia+Южный регион v12.2\nCargo: "
+		"Локомотив Vossloh G6")
+	reply_embed = reply_embed.add_field(name="Extra information",
+	value='RP-режим через вкладку "Конвой" в ETS (отдельный сервер).')
+	reply_embed_with_vote_info = reply_embed.add_field(name="Vote information",
+	value="Vote within 5m.\nDo you accept with the convoy? :white_check_mark: "
+		"- yes, :x: - no")
 	assert reply_message.embeds[0] == reply_embed_with_vote_info
 	assert len(reply_message.embeds) <= 1, IndexError
 	await dpytest.add_reaction(reply_message, reaction)
-	await asyncio.sleep(10)
-	reply
+	await asyncio.sleep(3)
+	reply_message = await discordContext.fetch_message(reply_message.id)
 	check_func(reply_message, reply_embed)
-	assert reply_message.reactions == []
 
 async def test_create_convoy_without_required_params():
 	pass

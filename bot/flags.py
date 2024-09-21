@@ -8,7 +8,7 @@ from typing import Optional, Union
 
 from discord.ext import commands
 
-from bot.converters import Time
+from bot.converters import TimeExpression
 
 class UserLogFlags( # type: ignore
 	commands.FlagConverter,
@@ -25,8 +25,8 @@ class CreatingConvoyFlags(
 	prefix="-",
 	delimiter=' '
 ):
-	rest: str
-	map: str
-	cargo: str
-	extra_info: str
-	vote: Time
+	rest: Optional[str]
+	map: Optional[str]
+	cargo: Optional[str]
+	extra_info: Optional[str]
+	vote: Optional[TimeExpression]

@@ -263,13 +263,15 @@ class ConvoyManager(commands.Cog):
 		Arguments:
 			location: str - a city name to start
 			destination: str - a city name to finish
-			time: str - it is recommended to use dd.mm.yy hh:mm format and specify in time zone.
+			time: str - it is recommended to use dd.mm.yy hh:mm format and
+			specify a time zone.
 		"""
 		await self.translator.installBindedLanguage(ctx.guild.id)
-		reply_embed = SuccessEmbed(title=self.translator("Convoy")).add_field(name=self.translator("Description"),
-		value=self.translator("Location: ") + location +
-		self.translator("\nDestination: ") + destination +
-		self.translator("\nTime: ") + time)
+		reply_embed = SuccessEmbed(title=self.translator("Convoy")).add_field(
+			name=self.translator("Description"),
+			value=self.translator("Location: ") + location + self.translator(
+			"\nDestination: ") + destination + self.translator("\nTime: ") + time
+		)
 		information_field_value: List[str] = []
 		if flags.rest:
 			information_field_value.append(self.translator("Rest: ") + flags.rest)
@@ -278,24 +280,49 @@ class ConvoyManager(commands.Cog):
 		if flags.cargo:
 			information_field_value.append(self.translator("Cargo: ") + flags.cargo)
 		if information_field_value:
-			reply_embed = reply_embed.add_field(name="Information",
+			reply_embed = reply_embed.add_field(name=self.translator("Information"),
 			value="\n".join(information_field_value))
 		if flags.extra_info:
-			reply_embed = reply_embed.add_field(name="Extra information", value=flags.extra_info)
+			reply_embed = reply_embed.add_field(name=self.translator("Extra information"),
+			value=flags.extra_info)
 		if (datetime := flags.vote):
-			reply_embed = reply_embed.add_field(name="Vote information", value=self.translate("Vote within") + datetime.time() + "\nDo you accept "
-			"with the convoy? :white_check_mark: - yes, :x: - no")
-		current_message = await ctx.send(embeds=reply_embed)
+			reply_embed = reply_embed.add_field(
+			name=self.translator("Vote information"),
+			value=self.translator("Vote within") + str(datetime.time()) + self.translator(
+			"accept_with_convoy")
+			)
+		current_message = await ctx.send(embed=reply_embed)
 		if flags.vote:
-			await current_message.add_reaction(":white_check_mark:")
-			await current_message.add_reaction(":x:")
+			await current_message.add_reaction('✅')
+			await current_message.add_reaction('❌')
 			await asyncio.sleep(datetime.seconds)
+			current_message = await ctx.fetch_message(current_message.id)
 			await _totalVote(current_message, reply_embed)
 
-	async def _totalVote(self, , embed: discord.Embed) -> None:
-		embed.remove_field()
-		if message.embeds[0]
-
+	async def _totalVote(
+		self,
+		message: discord.Message,
+		embed: discord.Embed
+	) -> None:
+		reactions = message.reactions
+		yes_count, no_count = 0, 0
+		for reaction in reactions:
+			if str(reaction) == ":white_check_mark:":
+				yes_count = reaction.count
+			elif str(reaction) == ":x:":
+				no_count = reactions.count
+		if yes_count > no_count:
+			value_for_vote_result_field = self.translator("convoy_accepted")
+		elif yes_count == no_count:
+			value_for_vote_result_field = self.translator("convoy_rejected_neutral")
+		else:
+			value_for_vote_result_field = self.translator("convoy_rejected")
+		embed.set_field_at(
+			-1,
+			name=self.translator("vote_result"),
+			value=value_for_vote_result_field
+		)
+		await message.edit(embed=embed)
 
 async def setup(
 	bot: BotConstructor # type: ignore[name-defined]

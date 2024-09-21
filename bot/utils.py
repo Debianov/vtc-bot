@@ -375,7 +375,7 @@ def getDiscordMemberID(obj: Any) -> Any:
 	if hasattr(obj, "id"):
 		return obj.id
 	else:
-		logger.info("getDiscordMemberID, the id attr hasn't been found in "
+		logger.debug("getDiscordMemberID, the id attr hasn't been found in "
 			f"{obj}. Skip.")
 		return obj
 
@@ -430,8 +430,8 @@ class Translator:
 		self.path_to_locale = path_to_locale
 		self.supported_languages = supported_languages
 		self.translators: Dict[Language, gettext.GNUTranslations] = {}
-		self.current_translator: gettext.GNUTranslations
 		self._createLanguageGettext()
+		self.current_translator = self.translators[self.supported_languages[0]]
 		self.dbconn = dbconn
 
 	def __call__(self, maybeMsgId: Union[str, UserException]) -> Any:
@@ -461,9 +461,16 @@ class Translator:
 			)
 
 	async def installBindedLanguage(self, guild_id: int) -> None:
+		"""
+		Calling this function guarantees that the language has been set for
+		the guild.
+		"""
 		instance = await self._findGuildDescription(guild_id)
 		if instance:
 			lang_instance = instance.selected_language # type: ignore[attr-defined]
+		else:
+			logger.debug(f"No language found for guild {guild_id}.")
+			return
 		self.current_translator = self.translators[lang_instance]
 		self.current_translator.install()
 

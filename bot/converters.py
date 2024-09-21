@@ -4,7 +4,7 @@ discord.py.
 """
 import abc
 import datetime
-from typing import Any, Generic, List, Type, TypeVar, Union
+from typing import Any, Generic, List, Type, TypeVar, Union, Optional
 
 import discord
 from discord.ext import commands
@@ -151,19 +151,23 @@ class TimeExpression(Expression):
 		10m, 12.12.20, 10:43, 12.12.20 10:43
 	"""
 
-	async def convert(self, ctx: commands.Context, argument: str) -> datetime.datetime:
+	async def convert(
+		self,
+		ctx: commands.Context,
+		argument: str
+	) -> datetime.datetime:
 		return self._returnIfValid(argument)
 
-	def _returnIfValid(self, maybe_time: str) -> None:
+	def _returnIfValid(self, maybe_time: str) -> datetime.datetime:
 		supported_formats = {
-			"datetime": "%Y-%m-%d %H:%M:%S",
-			"date": "%Y-%m-%d",
-			"time": "%H:%M:%S"
+			"seconds": "%Ss",
+			"minutes": "%Mm",
+			"hours": "%Hh"
 		}
-
 		for key, fmt in supported_formats.items():
 			try:
-				parsed_date = datetime.strptime(maybe_time, fmt)
+				parsed_date = datetime.datetime.strptime(maybe_time, fmt)
 				return parsed_date
 			except ValueError:
-				raise TimeNotFound(maybe_time)
+				continue
+		raise TimeNotFound(maybe_time)
