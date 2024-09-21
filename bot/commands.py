@@ -269,8 +269,8 @@ class ConvoyManager(commands.Cog):
 		await self.translator.installBindedLanguage(ctx.guild.id)
 		reply_embed = SuccessEmbed(title=self.translator("Convoy")).add_field(
 			name=self.translator("Description"),
-			value=self.translator("Location: ") + location + self.translator(
-			"\nDestination: ") + destination + self.translator("\nTime: ") + time
+			value=self.translator("Location: ") + location + "\n" + self.translator(
+			"Destination: ") + destination + "\n" + self.translator("Time: ") + time
 		)
 		information_field_value: List[str] = []
 		if flags.rest:
@@ -287,17 +287,18 @@ class ConvoyManager(commands.Cog):
 			value=flags.extra_info)
 		if (datetime := flags.vote):
 			reply_embed = reply_embed.add_field(
-			name=self.translator("Vote information"),
-			value=self.translator("Vote within") + str(datetime.time()) + self.translator(
-			"accept_with_convoy")
+				name=self.translator("Vote information"),
+				value=self.translator("Vote within") + " " +
+				str(datetime.time()) + "\n" +
+				self.translator("accept_with_convoy")
 			)
 		current_message = await ctx.send(embed=reply_embed)
 		if flags.vote:
 			await current_message.add_reaction('✅')
 			await current_message.add_reaction('❌')
-			await asyncio.sleep(datetime.seconds)
+			await asyncio.sleep(datetime.second)
 			current_message = await ctx.fetch_message(current_message.id)
-			await _totalVote(current_message, reply_embed)
+			await self._totalVote(current_message, reply_embed)
 
 	async def _totalVote(
 		self,

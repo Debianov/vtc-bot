@@ -45,11 +45,11 @@ msgstr "Description"
 msgid "Location: "
 msgstr "Location: "
 
-msgid "\nDestination: "
-msgstr "\nDestination: "
+msgid "Destination: "
+msgstr "Destination: "
 
-msgid "\nTime: "
-msgstr "\nTime: "
+msgid "Time: "
+msgstr "Time: "
 
 msgid "Rest: "
 msgstr "Rest: "
@@ -73,7 +73,7 @@ msgid "Vote within"
 msgstr "Vote within"
 
 msgid "accept_with_convoy"
-msgstr "\nDo you accept with the convoy? :white_check_mark: - yes, :x: - no"
+msgstr "Do you accept with the convoy? :white_check_mark: - yes, :x: - no"
 
 #: bot/commands.py:315
 msgid "convoy_accepted"

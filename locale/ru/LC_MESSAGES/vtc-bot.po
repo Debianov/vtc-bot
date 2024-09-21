@@ -35,3 +35,58 @@ msgstr "Язык бота установлен."
 #: bot/exceptions.py:98
 msgid "language_isnt_supported"
 msgstr "язык не поддерживается."
+
+msgid "Convoy"
+msgstr "Конвой"
+
+msgid "Description"
+msgstr "Описание"
+
+msgid "Location: "
+msgstr "Начало: "
+
+msgid "Destination: "
+msgstr "Конец: "
+
+msgid "Time: "
+msgstr "Время: "
+
+msgid "Rest: "
+msgstr "Место отдыха: "
+
+msgid "DLC maps: "
+msgstr "DLC карты: "
+
+msgid "Cargo: "
+msgstr "Груз: "
+
+msgid "Information"
+msgstr "Информация"
+
+msgid "Extra information"
+msgstr "Дополнительная информация"
+
+msgid "Vote information"
+msgstr "Информация по голосованию"
+
+msgid "Vote within"
+msgstr "Голосование в течение"
+
+msgid "accept_with_convoy"
+msgstr "Будешь участвовать в конвое? :white_check_mark: - да, :x: - нет"
+
+#: bot/commands.py:315
+msgid "convoy_accepted"
+msgstr "Голосование завершено. Конвой согласован."
+
+#: bot/commands.py:318
+msgid "convoy_rejected_neutral"
+msgstr "Голосование завершено. Конвой отклонён из-за ровного количества голосов."
+
+#: bot/commands.py:321
+msgid "convoy_rejected"
+msgstr "Голосование завершено. Конвой отклонён."
+
+#: bot/commands.py:325
+msgid "vote_result"
+msgstr "Результаты голосования"
