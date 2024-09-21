@@ -136,7 +136,10 @@ async def botInit(db: psycopg.AsyncConnection[Any]) -> commands.Bot:
 	)
 	await VCSBot._async_setup_hook()
 	await VCSBot.prepare()
-	dpytest.configure(VCSBot, num_members=6)
+	dpytest.configure(VCSBot, members=["ETIK", "DIAMAER090", "Vinich233 {UA}",
+									"Cadaver", "Tredje Världen", "Dukol",
+									"whatis_love14", "*Poseydon-_-", "Mancort",
+									"Sir. Shaco"])
 	return VCSBot
 
 @pytest.fixture(scope="package", autouse=True, name="mockLocator")
