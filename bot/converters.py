@@ -148,7 +148,7 @@ class SpecialExpression(Expression):
 class TimeExpression(Expression):
 	"""
 	Examples:
-		10m, 12.12.20, 10:43, 12.12.20 10:43
+		10m, 1s, 2h, 02:43, 02:54:21
 	"""
 
 	async def convert(
@@ -162,9 +162,11 @@ class TimeExpression(Expression):
 		supported_formats = {
 			"seconds": "%Ss",
 			"minutes": "%Mm",
-			"hours": "%Hh"
+			"hours": "%Hh",
+			"hours_and_mins": "%H:%M",
+			"hours_mins_seconds": "%H:%M:%S"
 		}
-		for key, fmt in supported_formats.items():
+		for _, fmt in supported_formats.items():
 			try:
 				parsed_date = datetime.datetime.strptime(maybe_time, fmt)
 				return parsed_date

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import abc
 import builtins
+import datetime
 import gettext
 import logging
 import os
@@ -20,6 +22,7 @@ from typing import (
 import discord
 import discord.abc
 import psycopg
+import datetime
 from discord.ext import commands
 
 from bot.data import (
@@ -544,3 +547,22 @@ class Translator:
 			return instances[0]
 		else:
 			return None
+
+
+class DiscordTimestamp(metaclass=abc.ABCMeta):
+
+	MESSAGE_FORMAT = "<t:{time}:{type}>"
+
+
+class RelativeDiscordTimestamp(DiscordTimestamp):
+
+	INDICATOR = "R"
+
+	def __init__(self, time: datetime.datetime):
+		self.time = time
+		self.posixFormat = time.timestamp()
+
+	def __str__(self) -> str:
+		return self.MESSAGE_FORMAT.format(
+			time=str(self.posixFormat).split(".")[0], type=self.INDICATOR
+		)
