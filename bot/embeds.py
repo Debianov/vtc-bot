@@ -30,16 +30,16 @@ class BaseEmbed(discord.Embed):
 class SuccessEmbed(BaseEmbed):
 
 	def __init__(self, *args: Any, **kwargs: Any) -> None:
-		self.colour = discord.Colour(12).green()
 		super().__init__(*args, **kwargs)
+		self.colour = discord.Colour(12).green()
 
 class WarningEmbed(BaseEmbed):
 
 	def __init__(self, *args: Any, **kwargs: Any) -> None:
-		self.colour = discord.Colour(12).yellow()
 		super().__init__(*args, **kwargs)
+		self.colour = discord.Colour(12).yellow()
 
 class ErrorEmbed(BaseEmbed):
 	def __init__(self, *args: Any, **kwargs: Any) -> None:
-		self.colour = discord.Colour(12).red()
 		super().__init__(*args, **kwargs)
+		self.colour = discord.Colour(12).red()
