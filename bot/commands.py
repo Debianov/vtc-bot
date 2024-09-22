@@ -30,7 +30,9 @@ from .exceptions import (
 )
 from .flags import UserLogFlags, CreatingConvoyFlags
 from .main import BotConstructor
-from .utils import ContextProvider, Language, Translator, removeNesting
+from .utils import (ContextProvider, Language, Translator, removeNesting,
+					RelativeDiscordTimestamp)
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -285,18 +287,23 @@ class ConvoyManager(commands.Cog):
 		if flags.extra_info:
 			reply_embed = reply_embed.add_field(name=self.translator("Extra information"),
 			value=flags.extra_info)
-		if (datetime := flags.vote):
+		if (vote_time := flags.vote):
+			time_now = datetime.datetime.now(datetime.UTC)
+			delta = datetime.timedelta(hours=vote_time.hour,
+				minutes=vote_time.minute, seconds=vote_time.second)
+			vote_to_time_as_object = time_now + delta
+			vote_to_time = discord.utils.format_dt(vote_to_time_as_object, style="R")
 			reply_embed = reply_embed.add_field(
 				name=self.translator("Vote information"),
-				value=self.translator("Vote within") + " " +
-				str(datetime.time()) + "\n" +
+				value=self.translator("Vote to") + " " +
+				vote_to_time + "\n" +
 				self.translator("accept_with_convoy")
 			)
 		current_message = await ctx.send(embed=reply_embed)
 		if flags.vote:
 			await current_message.add_reaction('✅')
 			await current_message.add_reaction('❌')
-			await asyncio.sleep(datetime.second)
+			await asyncio.create
 			current_message = await ctx.fetch_message(current_message.id)
 			await self._totalVote(current_message, reply_embed)
 
