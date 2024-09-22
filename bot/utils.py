@@ -547,3 +547,22 @@ class Translator:
 			return instances[0]
 		else:
 			return None
+
+
+class DiscordTimestamp(metaclass=abc.ABCMeta):
+
+	MESSAGE_FORMAT = "<t:{time}:{type}>"
+
+
+class RelativeDiscordTimestamp(DiscordTimestamp):
+
+	INDICATOR = "R"
+
+	def __init__(self, time: datetime.datetime):
+		self.time = time
+		self.posixFormat = time.timestamp()
+
+	def __str__(self) -> str:
+		return self.MESSAGE_FORMAT.format(
+			time=str(self.posixFormat).split(".")[0], type=self.INDICATOR
+		)

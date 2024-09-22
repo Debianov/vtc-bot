@@ -292,7 +292,7 @@ class ConvoyManager(commands.Cog):
 			delta = datetime.timedelta(hours=vote_time.hour,
 				minutes=vote_time.minute, seconds=vote_time.second)
 			vote_to_time_as_object = time_now + delta
-			vote_to_time = discord.utils.format_dt(vote_to_time_as_object, style="R")
+			vote_to_time = discord.utils.format_dt(vote_to_time_as_object, "R")
 			reply_embed = reply_embed.add_field(
 				name=self.translator("Vote information"),
 				value=self.translator("Vote to") + " " +
@@ -303,7 +303,7 @@ class ConvoyManager(commands.Cog):
 		if flags.vote:
 			await current_message.add_reaction('✅')
 			await current_message.add_reaction('❌')
-			await asyncio.create
+			await asyncio.sleep(vote_time.second)
 			current_message = await ctx.fetch_message(current_message.id)
 			await self._totalVote(current_message, reply_embed)
 
