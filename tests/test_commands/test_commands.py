@@ -1,6 +1,9 @@
 import asyncio
+import sys
 from typing import Any, Dict, Callable
 
+import time
+import threading
 import discord
 import discord.ext.test as dpytest
 import psycopg
@@ -337,38 +340,77 @@ def check_at_neutral_vote_result(reply_message: discord.Message, reply_embed: di
 @pytest.mark.parametrize(
 	"reaction, check_func",
 	[
-		(":white_check_mark:", check_at_positive_vote_result),
-		(":x:", check_at_negative_vote_result),
-		(":five:", check_at_neutral_vote_result)
+		("✅", check_at_positive_vote_result),
+		("❌", check_at_negative_vote_result),
+		("5️⃣", check_at_neutral_vote_result)
 	]
 )
 @pytest.mark.asyncio
 async def test_create_convoy_with_vote(
 		discordContext: commands.Context,
+		mockLocator: MockLocator,
+		event_loop: asyncio.AbstractEventLoopPolicy,
 		reaction: str,
 		check_func: Callable[[discord.Message, discord.Embed], None]
 ) -> None:
-	await dpytest.message('convoy create Belgrade Warsawa 01.08.24 12:00 (MSK)'
+
+	trapped_fields: Union[List[discord.Embed], None] = None
+	reply_message: Union[List[discord.Message], None] = None
+
+	def doAsyncioBetweenCallback(callback, args=None):
+		if args:
+			event_loop.run_until_complete(callback(args))
+		else:
+			event_loop.run_until_complete(callback())
+
+	async def sendMessage(msg):
+		await dpytest.message(msg)
+
+	async def makeFastActions():
+		"""
+		copy an embeds message and reacts to it while the message
+		doesn't change.
+		"""
+		nonlocal reply_message, trapped_fields
+		time.sleep(0.3)
+		reply_message = dpytest.get_message()
+		await dpytest.add_reaction(user=mockLocator.members[0],
+								   message=reply_message, emoji=reaction)
+		trapped_fields = reply_message.embeds[0].fields.copy() # i was forced
+		# to copy a fields list coz an embeds list will be changed anyway even
+		# i use copy() function... wtf
+		
+
+	sender = threading.Thread(target=doAsyncioBetweenCallback, args=(sendMessage,
+	'convoy create Belgrade'
+	' Warsawa 01.08.24 12:00 (MSK)'
 	' -rest Метка 1 -map Baltic+Iberia+Южный Регион v12.2 -cargo Локомотив'
 	' Vossloh G6 -extra_info RP-режим через вкладку "Конвой" в ETS (отдельный'
-	' сервер). -vote 2s')
-	reply_message = dpytest.get_message()
-	reply_embed = SuccessEmbed(title="Convoy vote").add_field(name="Description",
-	value="Location: Belgrade\nDestination: Warsawa\nTime: 01.08.24 12:00 (MSK)")
+	' сервер). -vote 4s'))
+	trapperAndReacter = threading.Thread(target=doAsyncioBetweenCallback, args=
+		(makeFastActions,))
+	sender.start()
+	trapperAndReacter.start()
+	sender.join()
+	trapperAndReacter.join()
+	reply_embed = SuccessEmbed(title="Convoy vote").add_field(
+		name="Description",
+		value="Location: Belgrade\nDestination: Warsawa\nTime: 01.08.24 12:00 (MSK)")
 	reply_embed = reply_embed.add_field(name="Information",
-	value="Rest: Метка 1\nDLC maps: Baltic+Iberia+Южный регион v12.2\nCargo: "
-		"Локомотив Vossloh G6")
+		value="Rest: Метка 1\nDLC maps: Baltic+Iberia+Южный регион v12.2\nCargo: "
+			  "Локомотив Vossloh G6")
 	reply_embed = reply_embed.add_field(name="Extra information",
-	value='RP-режим через вкладку "Конвой" в ETS (отдельный сервер).')
+		value='RP-режим через вкладку "Конвой" в ETS (отдельный сервер).')
 	reply_embed_with_vote_info = reply_embed.add_field(name="Vote information",
-	value="Vote within 5m.\nDo you accept with the convoy? :white_check_mark: "
-		"- yes, :x: - no")
-	assert reply_message.embeds[0] == reply_embed_with_vote_info
-	assert len(reply_message.embeds) <= 1, IndexError
-	await dpytest.add_reaction(reply_message, reaction)
-	await asyncio.sleep(3)
-	reply_message = await discordContext.fetch_message(reply_message.id)
-	check_func(reply_message, reply_embed)
+	   value="Vote within 5m.\nDo you accept with the convoy? :white_check_mark: "
+			 "- yes, :x: - no")
+	if trapped_fields and reply_message:
+		assert trapped_fields == reply_embed_with_vote_info.fields
+		assert len(reply_message.embeds) <= 1, IndexError
+		check_func(reply_message, reply_embed) # reply_message is
+		# changed at this moment. An additional request isn't necessary.
+	else:
+		raise TypeError
 
 async def test_create_convoy_without_required_params():
 	pass
